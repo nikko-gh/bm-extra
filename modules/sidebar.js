@@ -1,8 +1,8 @@
-import { getMain, getSteamFriendlistFromRustApi, getSteamFriendlistFromSteam, getTimeString } from "./misc.js";
+import { getElementWhenAppears, getSteamFriendlistFromRustApi, getSteamFriendlistFromSteam, getTimeString } from "./misc.js";
 
 let insertSidebarsProcess = false;
 export async function insertSidebars() {
-    const mainElement = await getMain();
+    const mainElement = await getElementWhenAppears("main", true);
     if (!mainElement) return console.error("BM-EXTRA: Failed to locate parent of rconContainer for sidebar placements.");
 
     const elementsToRemove = document.querySelectorAll(".bme-sidebar");

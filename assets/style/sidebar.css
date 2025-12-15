@@ -225,6 +225,7 @@ body {
 .bme-team-header-wrapper>h1,
 .bme-team-header-wrapper>h2,
 .player-details>p,
+.player-details>a,
 .bme-team-header p {
     white-space: nowrap;
     overflow: hidden;
