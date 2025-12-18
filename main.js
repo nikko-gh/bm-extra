@@ -44,8 +44,8 @@ async function main(url) {
         setupCacheFor(bmId, "RCON_PROFILE");
 
         if (!urlArray[6]) onOverviewPage(bmId);
-        if (urlArray[6] === "identifiers") onIdentifierPage(bmId, cache[bmId].bmProfile, cache[bmId].steamData, cache[bmId].bmActivity)
-    }else if (urlArray[4] === "bans") { //BANS PAGE
+        if (urlArray[6] === "identifiers") onIdentifierPage(bmId)
+    } else if (urlArray[4] === "bans" && urlArray[5]?.startsWith("add?player=")) { //BANS PAGE
         if (!urlArray[5]?.startsWith("add?player=")) return;
         
         const bmId = urlArray[5].split("=")[1];
@@ -54,6 +54,9 @@ async function main(url) {
         setupCacheFor(bmId, "BAN_PAGE");
 
         onAddBanPage(bmId);
+    }else{
+        const elementsToRemove = document.querySelectorAll(".bme-sidebar");
+        elementsToRemove.forEach(item => item.remove())
     }
 }
 
@@ -122,8 +125,8 @@ async function sidebar(bmId, playerCache, settings) {
     const {
         insertSidebars, insertFriendsSidebarElement,
         insertHistoricFriendsSidebarElement, insertTeaminfoSidebarElement,
-        insertPublicBansSidebarElement, insertFriendComparator
-    } = await import(chrome.runtime.getURL('./modules/sidebar.js'));
+        insertPublicBansSidebarElement, insertFriendComparator, insertBanPresets
+    } = await import(chrome.runtime.getURL('./modules/sidebar.js'));    
 
     await insertSidebars();
     if (settings.friendComparator?.enabled) insertFriendComparator();
@@ -131,6 +134,8 @@ async function sidebar(bmId, playerCache, settings) {
     if (settings.historicFriends?.enabled) insertHistoricFriendsSidebarElement(playerCache.historicFriends, playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData, playerCache.serverPop, settings);
     if (settings.currentTeam?.enabled) insertTeaminfoSidebarElement(playerCache.team, cache.connectedPlayersData, cache.connectedPlayersBanData, settings);
     if (settings.publicBans?.enabled) insertPublicBansSidebarElement(playerCache.publicBans);
+
+    if (settings.presets?.enabled) insertBanPresets(settings, playerCache.bmProfile);
 }
 
 
@@ -206,6 +211,7 @@ function validate(section, { overview, identifier, sidebar, banPage }, bmId) {
         if (cache[bmId]?.bmProfile !== undefined) return false;
         
         if (banPage?.selectLastServer) return true;
+        if (banPage?.presets?.enabled) return true;
 
         if (overview?.showServer) return true;
         if (overview?.showInfoPanel) return true;

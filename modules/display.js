@@ -1,5 +1,5 @@
 import { getTimeString } from "./getInfoPanel.js";
-import { checkIfAlright, getElementWhenAppears, getLastServer, getStreamerModeName, setNativeSelectValue } from "./misc.js";
+import { checkIfAlright, getElementWhenAppears, getLastServer, getStreamerModeName, setNativeValue } from "./misc.js";
 
 export async function displaySettingsButton(bmId) {
     const rconElement = await getElementWhenAppears("RCONPlayerPage");
@@ -20,13 +20,7 @@ export async function displaySettingsButton(bmId) {
 }
 
 export async function displayAlertLink(bmId) {
-    const container = await getElementWhenAppears("RCONContainer");
-    let navbar = null;
-    for (const element of Array.from(container.parentNode.parentNode.children)) {
-        if (element.classList.contains("bme-sidebar") || element.classList.contains("main")) continue;
-        navbar = Array.from(element.lastChild.children);
-        break;
-    }
+    const navbar = (await getElementWhenAppears("container", true))?.children[1]?.children;    
     if (!navbar) return console.error(`BM-EXTRA: Failed to locate navbar!`);    
     for (const navElement of navbar) {
         if (navElement.innerText.trim() !== "Ban Player") continue
@@ -573,7 +567,7 @@ export async function selectLastServer(bmId, bmProfile) {
     if (!servers) return console.error("BM-EXTRA: Failed to find servers!");
     
     const target = String(lastServer.id);
-    setNativeSelectValue(servers, target);
+    setNativeValue(servers, target, true);
 }
 
 function getSteamIdObject(array) {

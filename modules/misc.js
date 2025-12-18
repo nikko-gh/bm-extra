@@ -201,13 +201,21 @@ export function getAuthToken() {
     return authToken;
 }
 
-export function setNativeSelectValue(select, value) {
-    select.value = value;
+export function setNativeValue(select, value, highlight) {
+    const originalValue = select.value;
 
-    const proto = Object.getPrototypeOf(select);
-    const valueSetter = Object.getOwnPropertyDescriptor(proto, "value")?.set;
-    valueSetter ? valueSetter.call(select, value) : (select.value = value);
+    select.value = value;
+    if (select.value !== value) {
+        select.value = originalValue;
+        if (highlight) highlightElement(select, "red");
+        return;
+    }
+    if (highlight) highlightElement(select, "green");
 
     select.dispatchEvent(new Event("input", { bubbles: true }));
     select.dispatchEvent(new Event("change", { bubbles: true }));
+}
+function highlightElement(element, color) {
+    element.classList.add(`bme-${color}-change`);
+    setTimeout(() => { element.classList.remove(`bme-${color}-change`); }, 400);
 }

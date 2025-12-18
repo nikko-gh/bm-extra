@@ -257,6 +257,7 @@
 
 .bme-settings-req {
     margin-left: 20px !important;
+    color: #dcdcdc;
 }
 
 .bme-settings-text-green {
@@ -272,8 +273,12 @@
     margin-left: 50px !important;
     padding-left: 10px !important;
     margin-bottom: 20px !important;
-}
 
+    transition: 150ms;
+}
+.bme-inactive-segment{
+    opacity: 0.4;
+}
 .bme-settings-segment>div {
     margin-top: 8px !important;
 }
@@ -287,7 +292,7 @@
 .bme-key-settings-wrapper,
 .bme-key-settings-detail {
     margin-left: 20px !important;
-    color: rgb(220, 220, 220);
+    color: #dcdcdc;
 }
 
 .bme-key-settings-wrapper {
