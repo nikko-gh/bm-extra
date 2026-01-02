@@ -1,12 +1,8 @@
-import { checkIfAlright, getElementWhenAppears, getLastServer, getStreamerModeName, getSteamIdObject, setNativeValue } from "../misc.js";
+import { checkIfAlright, getElementWhenAppears, getLastServer, getStreamerModeName, getSteamIdObject, setNativeValue, getIdentifierType } from "../misc.js";
 import { displaySettings } from "../settings.js";
 
 export async function displaySettingsButton(bmId) {
     const rconElement = await getElementWhenAppears("RCONPlayerPage");
-
-    const title = rconElement?.firstChild;
-    if (!title) return console.error("BM-EXTRA: Failed to locate title.")
-    title.classList.add("bme-flex");
 
     const button = document.createElement("img");
     button.id = "bme-settings-button"
@@ -15,7 +11,7 @@ export async function displaySettingsButton(bmId) {
     button.addEventListener("click", displaySettings)
 
     const testElement = document.getElementById("bme-settings-button");
-    if (!testElement) title.appendChild(button);
+    if (!testElement) rconElement.before(button);
 }
 
 export async function displayAvatar(bmId, bmProfile, bmSteamData) {
@@ -89,7 +85,7 @@ export async function swapBattleEyeGuid(bmId, bmProfile) {
 }
 
 export async function selectLastServer(bmId, bmProfile) {
-    bmProfile = await bmProfile;    
+    bmProfile = await bmProfile;
 
     const lastServer = await getLastServer(bmProfile, true);
     const form = await getElementWhenAppears("ban-form", true)
@@ -100,12 +96,69 @@ export async function selectLastServer(bmId, bmProfile) {
         if (element.children.length !== 1) continue;
         const child = element.children[0];
         if (!child || child.nodeName !== "SELECT") continue;
-        
+
         servers = child;
         break;
     }
     if (!servers) return console.error("BM-EXTRA: Failed to find servers!");
-    
+
     const target = String(lastServer.id);
     setNativeValue(servers, target, true);
+}
+
+let currentRedactedElements = [] //key, originalText
+let showIdentifiersTimeout = null;
+export async function redactIdentifiers(redactSteamId, redactIps, redactTime) {
+    const table = Array.from((await getElementWhenAppears("css-11gv980", true))?.lastChild?.children || []);
+
+    for (const identifier of table) {
+        const identifierDetails = getIdentifierType(identifier);
+        const type = identifierDetails?.type;
+        if (type === null) continue;
+
+        const span = identifier?.firstChild?.firstChild?.querySelector("span");
+        if (!span) continue;
+
+
+        if ((type === "Steam ID" || type === "BattlEye GUID") && redactSteamId) {
+            redactIdentifier(identifier, span, type);
+        }
+
+        if (type === "IP" && redactIps) {
+            redactIdentifier(identifier, span, type);
+
+            const range = identifier.querySelector(".bme-ip-range");
+            if (range) redactIdentifier(identifier, range, "Range");
+
+            const host = identifier.querySelector(".bme-ip-host");
+            if (host) redactIdentifier(identifier, host, "Host");
+        }
+    }
+
+    if (showIdentifiersTimeout) clearTimeout(showIdentifiersTimeout);
+    showIdentifiersTimeout = setTimeout(() => {
+        showIdentifiers();
+    }, redactTime);
+}
+function redactIdentifier(identifier, span, type) {
+    const spanValue = span.title;
+    const originalValue = span.innerHTML;
+
+    span.innerHTML = span.innerHTML.replaceAll(spanValue, "REDACTED");
+
+    //Store it for later if it changed
+    if (span.innerHTML === originalValue) return
+    currentRedactedElements.push({ element: span, originalValue })
+
+    if (type !== "IP") return;
+    const button = identifier.querySelector(".bme-button");
+    if (button) button.classList.add("bme-button-redacted")
+
+}
+function showIdentifiers() {
+    for (const item of currentRedactedElements) item.element.innerHTML = item.originalValue;
+    currentRedactedElements = [];
+
+    const buttons = Array.from(document.querySelectorAll(".bme-button-redacted"));
+    for (const button of buttons) button.classList.remove("bme-button-redacted")
 }

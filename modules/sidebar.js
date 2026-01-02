@@ -1,6 +1,5 @@
 import { getElementWhenAppears, getLastServer, getSteamFriendlistFromRustApi, getSteamFriendlistFromSteam, getTimeString, setNativeValue } from "./misc.js";
 
-let insertSidebarsProcess = false;
 export async function insertSidebars() {
     const mainElement = await getElementWhenAppears("main", true);
     if (!mainElement) return console.error("BM-EXTRA: Failed to locate parent of rconContainer for sidebar placements.");
@@ -293,7 +292,7 @@ export async function updatePlayerProfileElements(cache) {
 
         const playerElement = getPlayerElement(playerData, sidebarSettings);
 
-        profile.replaceWith(playerElement)
+        profile.replaceWith(playerElement);
     }
 }
 

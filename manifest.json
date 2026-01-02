@@ -45,6 +45,6 @@
         "*://proxycheck.io/*"
     ],
     "permissions": [
-        "storage"
+        "storage", "downloads"
     ]
 }

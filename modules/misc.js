@@ -16,7 +16,7 @@ async function findElementWhenAppears(selector) {
 
     while (!element && count < 100) {
         await new Promise(r => setTimeout(r, 25 + (count * 5)));
-        
+
         element = document.querySelector(selector);
         count++;
     }
@@ -62,17 +62,7 @@ export async function getSteamFriendlistFromSteam(steamId) {
         const STEAM_API_KEY = localStorage.getItem("BME_STEAM_API_KEY");
         if (!STEAM_API_KEY) return "NO_API_KEY";
 
-        let value = null;
-        chrome.runtime.onMessage.addListener(function (response) {
-            if (response.type !== "BME_STEAM_FRIENDLIST_RESOLVED") return;
-            if (response.status === "ERROR") throw new Error(`Failed to request steam friends: \n  ${response.message}`);
-
-            value = response.value;
-        })
-
-        chrome.runtime.sendMessage({ type: "BME_STEAM_FRIENDLIST", subject: steamId, apiKey: STEAM_API_KEY });
-        while (!value) await new Promise(r => { setTimeout(r, 10); })
-        return value;
+        return await talkToBackgroundScript("BME_STEAM_FRIENDLIST", steamId, STEAM_API_KEY)
     } catch (error) {
         console.error(error);
         return "ERROR";
@@ -84,22 +74,13 @@ export async function getSteamFriendlistFromRustApi(steamId) {
         if (!RUST_API_KEY) return "NO_API_KEY";
         if (RUST_API_KEY[54] !== "1") return "MISSING_PERMISSION"
 
-        let value = null;
-        chrome.runtime.onMessage.addListener(function (response) {
-            if (response.type !== "BME_RUST_API_FRIENDLIST_RESOLVED") return;
-            if (response.status === "ERROR") throw new Error(`Failed to request rust api friends: \n  ${response.message}`);
-
-            value = response.value;
-        })
-
-        chrome.runtime.sendMessage({ type: "BME_RUST_API_FRIENDLIST", subject: steamId, apiKey: RUST_API_KEY });
-        while (!value) await new Promise(r => { setTimeout(r, 10); })
-        return value;
+        return await talkToBackgroundScript("BME_RUST_API_FRIENDLIST", steamId, RUST_API_KEY);
     } catch (error) {
         console.error(error);
         return "ERROR";
     }
 }
+
 export function getStreamerModeName(steamId) {
     const names = JSON.parse(localStorage.getItem("BME_SM_NAMES"))?.names;
     if (!names) return null;
@@ -109,6 +90,7 @@ export function getStreamerModeName(steamId) {
 
     return names[Number(v)];
 }
+
 export function checkIfAlright(bmId, elementId, pageId) {
     const urlId = location.href.split("/")[5];
     if (urlId !== bmId) return true; //Page changed
@@ -239,4 +221,30 @@ export function getIdentifierType(identifier) {
     const searchLink = typeElements[typeElements.length - offset]?.href;
     const id = searchLink ? searchLink.split("=")[1] : null;
     return { type, id }
+}
+
+export function talkToBackgroundScript(type, subject, apiKey) {
+    const requestId = Math.floor(Math.random() * 1000000);
+    type = `${type}_${requestId}`;
+
+    return new Promise((resolve, reject) => {
+        function handler(response) {
+            console.log(response);
+            if (response?.type !== `${type}_RESOLVED`) return;
+
+            clearTimeout(timer);
+            chrome.runtime.onMessage.removeListener(handler);
+
+            if (response.status === "ERROR") reject(new Error(response.message || "ERROR"));
+            else resolve(response.value);
+        }
+
+        const timer = setTimeout(() => {
+            chrome.runtime.onMessage.removeListener(handler);
+            reject(new Error(`Timeout waiting for ${resType}`));
+        }, 10000);
+
+        chrome.runtime.onMessage.addListener(handler);
+        chrome.runtime.sendMessage({ type, subject, apiKey });
+    });
 }

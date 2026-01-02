@@ -6,8 +6,9 @@ console.log("Service worker loaded!")
  */
 chrome.runtime.onMessage.addListener(async (req, sender) => {
     if (!req.type.startsWith("BME_")) return;
-    console.log(`${req.type.padEnd(30)} | ${`${req?.apiKey?.substring(0, 10)}`.padEnd(10)} | ${req.subject.length === 17 ? req.subject : req.subject.split(",").length}`);
+    if (req.type === "BME_JSON_DOWNLOAD") return downloadJsonFile(req.filename, req.data)
 
+    console.log(`${req.type.padEnd(30)} | ${`${req?.apiKey?.substring(0, 10)}`.padEnd(10)} | ${req.subject.length === 17 ? req.subject : req.subject.split(",").length}`);
     /**
      * returnObject:
      * type: original type +"_RESOLVED"
@@ -15,11 +16,11 @@ chrome.runtime.onMessage.addListener(async (req, sender) => {
      * value: the outcome of the request or the error object
      */
     const returnObject = { type: `${req.type}_RESOLVED` }
-    if (req.type === "BME_STEAM_FRIENDLIST") return sendFriendlistFromSteam(req.subject, req.apiKey, sender, returnObject);
-    if (req.type === "BME_RUST_API_FRIENDLIST") return sendFriendlistFromRustApi(req.subject, req.apiKey, sender, returnObject)
-    if (req.type === "BME_RUST_API_AVATARS") return sendAvatarsFromRustApi(req.subject, req.apiKey, sender, returnObject)
-    if (req.type === "BME_PREMIUM_STATUS") return sendPremiumStatus(req.subject, sender, returnObject)
-    if (req.type === "BME_PROXYCHECK") return sendProxyCheck(req.subject, req.apiKey, sender, returnObject)
+    if (req.type.startsWith("BME_STEAM_FRIENDLIST")) return sendFriendlistFromSteam(req.subject, req.apiKey, sender, returnObject);
+    if (req.type.startsWith("BME_RUST_API_FRIENDLIST")) return sendFriendlistFromRustApi(req.subject, req.apiKey, sender, returnObject)
+    if (req.type.startsWith("BME_RUST_API_AVATARS")) return sendAvatarsFromRustApi(req.subject, req.apiKey, sender, returnObject)
+    if (req.type.startsWith("BME_PREMIUM_STATUS")) return sendPremiumStatus(req.subject, sender, returnObject)
+    if (req.type.startsWith("BME_PROXYCHECK")) return sendProxyCheck(req.subject, req.apiKey, sender, returnObject)
     if (req.type.startsWith("BME_PLAYER_SUMMARIES")) return sendSteamPlayerSummaries(req.subject, req.apiKey, sender, returnObject);
     if (req.type.startsWith("BME_BAN_SUMMARIES")) return sendSteamPlayerBanSummaries(req.subject, req.apiKey, sender, returnObject);
     if (req.type.startsWith("BME_PUBLIC_BANS")) return sendPublicBans(req.subject, req.apiKey, sender, returnObject);
@@ -32,6 +33,16 @@ function getSubjectOrItemCount(string) {
 }
 
 
+function downloadJsonFile(name, content) {
+    const json = JSON.stringify(content, null, 4);
+    const dataUrl = `data:application/json;charset=utf-8,${encodeURIComponent(json)}`;
+
+    chrome.downloads.download({
+        url: dataUrl,
+        filename: name,
+        saveAs: true,
+    });
+}
 async function sendFriendlistFromSteam(steamId, apiKey, sender, returnObject) {
     try {
         const resp = await fetch(`https://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=${apiKey}&steamid=${steamId}&relationship=friend`);
@@ -102,8 +113,7 @@ async function sendProxyCheck(ips, apiKey, sender, returnObject) {
     try {
         const resp = await fetch(`http://proxycheck.io/v3/${ips}?key=${apiKey}`);
         if (resp?.status !== 200) throw new Error(`Requesting Proxycheck data failed | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
-        console.log(resp.status);
-        
+
         const data = await resp.json();
 
         returnObject.status = "OK";
@@ -198,5 +208,4 @@ async function sendPublicBans(steamId, apiKey, sender, returnObject) {
         returnObject.value = error;
         return chrome.tabs.sendMessage(sender.tab.id, returnObject);
     }
-
 }

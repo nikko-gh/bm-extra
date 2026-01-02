@@ -187,6 +187,11 @@ function getIdentifierSettings() {
         "Shows the players avatar when it's available next to his name",
         null, settingsBucket, "showAvatar", settings.showAvatar
     )
+    const swapBattleEyeGuid = getSettingsElement(
+        "toggle", "Swap BattlEye GUID",
+        "Swap BattlEye GUID to the player's streamer mode name",
+        ["SM Names"], settingsBucket, "swapBattleEyeGuid", settings.swapBattleEyeGuid
+    )
 
     const showExtraInfoSegment = document.createElement("div")
     showExtraInfoSegment.classList.add("bme-settings-segment");
@@ -254,8 +259,9 @@ function getIdentifierSettings() {
 
     const resetButton = getResetButton("bm-identifier")
     element.append(
-        showAvatarToggle, showIspAsnData, showExtraInfoSegment,
-        highlightVpn, vpnSegment, displayAvatars, avatarsSegment,
+        showAvatarToggle, swapBattleEyeGuid, showIspAsnData,
+        showExtraInfoSegment, highlightVpn, vpnSegment,
+        displayAvatars, avatarsSegment,
 
         resetButton,
     )
@@ -551,12 +557,6 @@ function getSidebarSettings() {
     return element;
 
 }
-function getSpotDisplay(spotValue, spots) {
-    for (const spot of spots)
-        if (spot.value === spotValue)
-            return spot.display;
-    return "N/A"
-}
 
 
 function getBanPageSettings() {
@@ -601,6 +601,7 @@ function getBanPageSettings() {
         "It will paste the default content of your clipboard if the ban note is empty.",
         null, settingsBucket, "presets-pasteEvidenceIfEmpty", settings.presets.pasteEvidenceIfEmpty
     )
+
     banPresetsSegment.append(banPresetSidebarSpot, setupBansAfterFirst, copyEvidence,);
 
     const bootstrap = document.getElementById("storeBootstrap");
@@ -615,6 +616,9 @@ function getBanPageSettings() {
         currentPresets.id = "bme-ban-presets-showcase";
         currentPresets.appendChild(getCurrentPresetsShowcase(settings));
         banPresetsSegment.append(currentPresets)
+
+        const banPresetsImportExport = getImportExport()
+        banPresetsSegment.append(banPresetsImportExport)
     }
 
     const resetButton = getResetButton("bm-bans")
@@ -953,7 +957,111 @@ function processBanPresetChange(i, action) {
     }
     return presets;
 }
+function getImportExport() {
+    const element = document.createElement("div");
+    element.classList.add("bme-ban-import-export");
 
+    const title = document.createElement("h3");
+    title.innerText = "Ban Presets Import / Export:";
+
+    const wrapper = document.createElement("div");
+
+    const importButton = document.createElement("button");
+    importButton.innerText = "Import";
+
+    const exportButton = document.createElement("button");
+    exportButton.innerText = "Export";
+
+    const statusText = document.createElement("p");
+    statusText.id = "bme-ie-status-text";
+
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "application/json";
+    fileInput.style.display = "none";
+
+    importButton.addEventListener("click", () => {
+        fileInput.click();
+    });
+    fileInput.addEventListener("change", fileInputChange);
+    exportButton.addEventListener("click", exportButtonPressed);
+
+    wrapper.append(importButton, exportButton);
+    element.append(title, wrapper, statusText, fileInput);
+
+    return element;
+}
+function fileInputChange(e) {
+    const status = document.getElementById("bme-ie-status-text");
+    try {
+        const file = e.target.files[0];
+        if (!file) throw new Error("No file was uploaded.");
+        if (file.type !== "application/json") throw new Error("File must be JSON.");
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            try {
+                const json = JSON.parse(reader.result);
+                banPresetImported(json);
+            } catch (error) {
+                const msg = document.getElementById("bme-ie-status-text");
+                msg.innerText = `Failed to parse file content to a JSON object.`;
+            }
+        };
+        reader.readAsText(file);
+    } catch (error) {
+        const msg = document.getElementById("bme-ie-status-text");
+        msg.innerText = error.message;
+    }
+}
+function banPresetImported(json) {
+    try {
+        if (!json.length) throw new Error("Not a valid ban preset format.");
+
+        const settings = JSON.parse(localStorage.getItem(("BME_BAN_PAGE_SETTINGS")));
+
+        const expected = new Set(["name", "color", "server", "banList", "reason", "duration"]);
+        for (const preset of json) {
+            const keys = Object.keys(preset);
+            if (keys.length !== expected.size) throw new Error("Not a valid ban preset format.");
+            if (!keys.every(key => expected.has(key))) throw new Error("Not a valid ban preset format.");
+
+            settings.presets.items.push(preset);
+        }
+        localStorage.setItem("BME_BAN_PAGE_SETTINGS", JSON.stringify(settings));
+
+        const currentPresets = document.getElementById("bme-ban-presets-showcase");
+        if (!currentPresets) throw new Error("BM-EXTRA: Failed to load currentPresets");
+
+        currentPresets.innerHTML = "";
+        currentPresets.appendChild(getCurrentPresetsShowcase(settings));
+    } catch (error) {
+        console.log(error);
+        const msg = document.getElementById("bme-ie-status-text");
+        msg.innerText = `Failed to parse file content to a JSON object.`;
+        return 1;
+    }
+}
+function exportButtonPressed() {
+    const banSettings = JSON.parse(localStorage.getItem("BME_BAN_PAGE_SETTINGS"));
+    const presets = banSettings.presets.items;
+
+    let message = null;
+    if (presets.length === 0) {
+        message = "You have no presets to export."
+    } else {
+        chrome.runtime.sendMessage({
+            type: "BME_JSON_DOWNLOAD",
+            filename: "banPresets.json",
+            data: presets
+        });
+        message = `${presets.length} ban presets were exported.`
+    }
+
+    if (!message) return;
+    const msg = document.getElementById("bme-ie-status-text");
+    msg.innerText = message;
+}
 
 
 function getApiKeysSettings() {
@@ -968,7 +1076,7 @@ function getApiKeysSettings() {
     titleRow.appendChild(title);
 
     const steamKeyElement = getApiKeyDiv("Steam API Key:", "BME_STEAM_API_KEY", "steam-api", {
-        detail: `Key cam be generated at <a href="https://steamcommunity.com/dev/apikey" target="_blank">Steam Web API</a>.`
+        detail: `Key can be generated at <a href="https://steamcommunity.com/dev/apikey" target="_blank">Steam Web API</a>.`
     });
     const battleMetricsKeyElements = getApiKeyDiv("BattleMetrics API Key:", "BME_BATTLEMETRICS_API_KEY", "bm-api", {
         detail: "OPTIONAL: Provided key will take priority, it isn't necessary."
@@ -989,11 +1097,6 @@ function getApiKeysSettings() {
         "number", "Maximum IPs",
         "The maximum number of IPs to request for one player",
         null, settingsBucket, "maxIps", settings.maxIps
-    )
-    const proxyPriority = getSettingsElement(
-        "toggle", "Proxychecker priority",
-        "Prioritize proxychecker data if ISP/ASN is mismatched from BM",
-        null, settingsBucket, "proxyPriority", settings.proxyPriority
     )
 
     const pcIpDurations = [
@@ -1025,16 +1128,14 @@ function getApiKeysSettings() {
     )
 
     proxyCheckSegment.append(
-        proxyPriority, maxIps, checkIpsNewerThan, ignoreKnownVpns, keepCache
+        maxIps, checkIpsNewerThan, ignoreKnownVpns, keepCache,
     );
-
-    const smUpdater = getSmUpdater();
 
     element.append(
         steamKeyElement, battleMetricsKeyElements, rustApiKeyElement,
-        proxyCheckApiKeyElement, proxyCheckSegment, smUpdater
+        proxyCheckApiKeyElement, proxyCheckSegment,
+        getSmUpdater(), ...getPrivacySettingsElements()
     );
-
 
     return element;
 }
@@ -1107,7 +1208,7 @@ function getSmUpdater() {
     const element = document.createElement("div");
     element.classList.add("bme-sm-settings-updater")
 
-    const title = document.createElement("h3");
+    const title = document.createElement("h2");
     title.innerText = "Stored Steamer Mode Names:";
     element.appendChild(title);
 
@@ -1208,6 +1309,59 @@ function invokeChange(type) {
     settingsPage.classList.add(`bme-sm-${type}`);
     setTimeout(() => { settingsPage.classList.remove(`bme-sm-${type}`); }, 900);
 }
+function getPrivacySettingsElements() {
+    const returnElements = [];
+    const settingsBucket = "BME_PRIVACY_SETTINGS"
+    const settings = JSON.parse(localStorage.getItem(settingsBucket));
+
+    const title = document.createElement("h1");
+    title.innerText = "Privacy Settings"
+
+    const privacySegment = document.createElement("div");
+    privacySegment.classList.add("bme-settings-segment");
+
+    const privacyEnabled = getSettingsElement(
+        "toggle", "Privacy Settings",
+        "Enables a Hotkey that redacts identifiers for a short period so you can take a screenshot of the page without leaking anything sensitive.",
+        null, settingsBucket, "enabled", settings.enabled, { segment: privacySegment }
+    )
+
+    const privacyHotkey = getSettingsElement(
+        "hotkey", "Hotkey:",
+        "Choose your Hotkey combination", null, settingsBucket, "hotkey", settings.hotkey,
+        {max: 5}
+    )
+    const redactIps = getSettingsElement(
+        "toggle", "Redact IP addresses",
+        "When you activate your hotkey, all the IP identifiers will be redacted.",
+        null, settingsBucket, "redactIps", settings.redactIps
+    )
+    const redactSteamId = getSettingsElement(
+        "toggle", "Redact SteamId",
+        "When you activate your hotkey, Steam ID identifier will be redacted.",
+        null, settingsBucket, "redactSteamId", settings.redactSteamId
+    )
+    const redactTimeOptions = [
+        { display: "500 ms", value: 500 },
+        { display: "1 second", value: 1000 },
+        { display: "2 seconds", value: 2000 },
+        { display: "3 seconds", value: 3000 },
+        { display: "5 seconds", value: 5000 },
+        { display: "10 seconds", value: 10000 },
+        { display: "30 seconds", value: 30000 },
+    ]
+    const redactTime = getSettingsElement(
+        "select", "Redact Time",
+        "Choose how long identifiers should be redacted after activating your hotkey.",
+        null, settingsBucket, "redactTime", settings.redactTime, { options: redactTimeOptions }
+    )
+
+
+    privacySegment.append(privacyHotkey, redactIps, redactSteamId, redactTime)
+
+    returnElements.push(title, privacyEnabled, privacySegment);
+    return returnElements;
+}
 
 
 function getSettingsElement(type, title, desc, req, bucket, key, value, meta) {
@@ -1242,10 +1396,15 @@ function getSettingsElement(type, title, desc, req, bucket, key, value, meta) {
 function getInput(type, bucket, key, value, meta) {
     if (type === "toggle" || type === "number" || type === "color")
         return getNormalInputElement(type, bucket, key, value, meta);
+
     if (type === "switch")
         return getSwitchInputElement(type, bucket, key, value, meta);
+
     if (type === "select")
         return getSelectInputElement(type, bucket, key, value, meta);
+
+    if (type === "hotkey")
+        return getHotkeyInputElement(type, bucket, key, value, meta);
 }
 function getNormalInputElement(type, bucket, key, value, meta) {
     const input = document.createElement("input");
@@ -1393,6 +1552,61 @@ function validateRequirement(requirement) {
 
     return false
 }
+function getHotkeyInputElement(type, bucket, key, value, meta) {
+    const input = document.createElement("input");
+    input.readOnly = true;
+    input.value = prettifyKey(value || "");
+    input.classList.add(`bme-settings-${type}-input`)
+
+    let newHotkeyTimeout = null;
+    let newHotkeySequence = "";
+    input.addEventListener("keydown", e => {
+        e.preventDefault();
+        if (e.repeat) return;
+
+        const pressed = e.key === "+" ? "plus" : e.key.toLowerCase();
+        if (meta?.max && newHotkeySequence.split("+").length >= meta.max)
+            newHotkeySequence = "";
+        
+        if (!newHotkeySequence) newHotkeySequence = pressed;
+        else newHotkeySequence += `+${pressed}`;
+
+        if (newHotkeyTimeout) clearTimeout(newHotkeyTimeout)
+        newHotkeyTimeout = setTimeout(() => {newHotkeySequence = ""; }, 350);
+
+        input.value = prettifyKey(newHotkeySequence);
+
+        if (meta?.min && newHotkeySequence.split("+").length >= meta.min) setSettingTo(bucket, key, newHotkeySequence);
+        else if (!meta?.min) setSettingTo(bucket, key, newHotkeySequence);
+    })  
+
+    return input;
+}
+function prettifyKey(str) {
+    return str
+        .split("+")
+        .map(key => getPrettyKey(key))
+        .join(" + ");
+}
+function getPrettyKey(key) {
+    if (key === " ") return "SPACE";
+    if (key === "control") return "CTRL";
+    if (key === "capslock") return "CAPS LOCK";
+    if (key === "altgraph") return "ALT GR";
+    if (key === "pageup") return "PGUP";
+    if (key === "pagedown") return "PGDN";
+    if (key === "delete") return "DEL";
+    if (key === "insert") return "INS";
+    if (key === "arrowup") return "UP";
+    if (key === "arrowdown") return "DOWN";
+    if (key === "arrowleft") return "LEFT";
+    if (key === "arrowright") return "RIGHT";
+    if (key === "plus") return "+";
+    if (key === "numlock") return "NUMLK";
+    if (key === "escape") return "ESC";
+    
+    return key.toUpperCase();
+}
 function getResetButton(type) {
     const wrap = document.createElement("div");
     wrap.id = "bme-reset-button-wrapper";
@@ -1430,8 +1644,6 @@ function getResetButton(type) {
     return wrap;
 }
 
-
-
 export function checkAndSetupSettingsIfMissing() {
     checkOverviewSettings();
     checkIdentifierSettings();
@@ -1439,8 +1651,8 @@ export function checkAndSetupSettingsIfMissing() {
     checkSidebarSettings();
     checkBanPageSettings();
     checkProxyCheckSettings();
+    checkPrivacySettings();
 }
-
 function checkOverviewSettings() {
     try {
         const settings = JSON.parse(localStorage.getItem("BME_OVERVIEW_SETTINGS"));
@@ -1481,6 +1693,7 @@ function checkIdentifierSettings() {
         if (typeof (settings.showAvatar) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.displayAvatars) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.zoomableAvatars) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.swapBattleEyeGuid) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.showIspAndAsnData) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.requestProxyCheck) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.pCheckMaxIpNumber) !== "number") throw new Error("Settings error");
@@ -1501,6 +1714,7 @@ function getDefaultIdentifierSettings() {
     settings.showAvatar = false;
     settings.displayAvatars = false;
     settings.zoomableAvatars = true;
+    settings.swapBattleEyeGuid = false;
     settings.showIspAndAsnData = true;
     settings.requestProxyCheck = false;
     settings.pCheckMaxIpNumber = 10;
@@ -1655,7 +1869,6 @@ function checkProxyCheckSettings() {
         const settings = JSON.parse(localStorage.getItem("BME_PROXY_CHECK_SETTINGS"));
         if (typeof (settings) !== "object") throw new Error("Settings error");
         if (typeof (settings.apiKey) !== "string") throw new Error("Settings error");
-        if (typeof (settings.proxyPriority) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.maxIps) !== "number") throw new Error("Settings error");
         if (typeof (settings.checkAfter) !== "number") throw new Error("Settings error");
         if (typeof (settings.keepCache) !== "boolean") throw new Error("Settings error");
@@ -1670,13 +1883,37 @@ function getDefaultProxyCheckSettings() {
     const settings = {};
 
     settings.apiKey = "";
-    settings.proxyPriority = false;
     settings.maxIps = 10;
     settings.checkAfter = 2592000000;
     settings.ignoreKnownVpns = true;
     settings.keepCache = true;
 
     settings.lastRateLimit = -1;
+
+    return settings;
+}
+function checkPrivacySettings() {
+    try {
+        const settings = JSON.parse(localStorage.getItem("BME_PRIVACY_SETTINGS"));
+        if (typeof (settings) !== "object") throw new Error("Settings error");
+        if (typeof (settings.enabled) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.hotkey) !== "string") throw new Error("Settings error");
+        if (typeof (settings.redactIps) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.redactSteamId) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.redactTime) !== "number") throw new Error("Settings error");
+    } catch (error) {
+        const defaultSettings = getPrivacySettings();
+        localStorage.setItem("BME_PRIVACY_SETTINGS", JSON.stringify(defaultSettings));
+    }
+}
+function getPrivacySettings() {
+    const settings = {};
+
+    settings.enabled = false;
+    settings.hotkey = "control+shift";
+    settings.redactIps = true;
+    settings.redactSteamId = true;
+    settings.redactTime = 5000;
 
     return settings;
 }

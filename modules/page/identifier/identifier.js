@@ -4,7 +4,6 @@ import { getProxyCheckIpInfo } from "../cache.js";
 export async function showExtraDataOnIps(bmId, bmProfile, requestProxyCheck) {
     bmProfile = await bmProfile;
 
-
     let ips = bmProfile.included
         .filter(item => item.attributes.type === "ip")
         .map(item => {
@@ -30,184 +29,152 @@ export async function showExtraDataOnIps(bmId, bmProfile, requestProxyCheck) {
         })
     }
 
+    const padEndValues = {};
+    padEndValues.identifier = Math.max(...ips.map(ip => ip?.ip?.length || 0), 15);
+    padEndValues.isp = Math.max(...ips.map(ip => ip?.isp?.length || ip?.proxyCheck?.net?.isp?.length || 0), 3);
+    padEndValues.asn = Math.max(...ips.map(ip => ip?.asn?.length || ip?.proxyCheck?.net?.asn?.length || 0), 3);
 
-    const longestIp = Math.max(...ips.filter(ip => ip.ip).map(ip => ip.ip.length), 15);
-    const longestIsp = Math.max(...ips.filter(ip => ip.isp).map(ip => ip.isp.length));
-    const longestAsn = Math.max(...ips.filter(ip => ip.asn).map(ip => ip.asn.length));
-
-    const identifierWrapper = (await getElementWhenAppears("css-11gv980", true));
+    const identifierWrapper = await getElementWhenAppears("css-11gv980", true);
     const identifierTable = identifierWrapper?.lastChild?.children;
     if (!identifierTable) console.error("BM-EXTRA: Failed to find identifier table.");
 
-
     for (const identifier of identifierTable) {
         const { type, id } = getIdentifierType(identifier);
-        if (type !== "IP") continue;
-        if (!id) continue;
+        if (type !== "IP" || !id) continue;
 
         const ipObject = ips.find(ip => ip.id == id);
         if (!ipObject) continue;
-        if (ipObject.isp === null) continue;
 
-        const ipElement = identifier?.firstChild?.firstChild?.lastChild;
-        const ipValue = `${ipElement.innerText}`.padEnd(longestIp);
-        const ispValue = `${ipObject.isp}`.padEnd(longestIsp);
-        const asnValue = `${ipObject.asn}`.padEnd(longestAsn);
-
-        const conTypeValue = getConType(ipObject.proxyCheck)
-        const conTypeString = conTypeValue && typeof (conTypeValue) === "object" ?
-            `<span class="${conTypeValue.color}">${conTypeValue.value}</span>` :
-            conTypeValue;
-
-        const text = `${ipValue}  |  ISP: ${ispValue}  |  ${asnValue}${conTypeString ? `  |  ${conTypeString}` : ``}`;
-        ipElement.innerHTML = text;
-
-        const pcData = ipObject.proxyCheck;
-        if (!pcData) continue;
-        const pcDataElement = getPcDataElement(ipObject.proxyCheck);
-        ipElement.classList.add("bme-pc-ip-main")
-        ipElement.after(pcDataElement)
-
-        ipElement.addEventListener("click", e => {
-            const t = e.target;                
-            if (pcDataElement.classList.contains("bme-pc-open"))
-                return pcDataElement.classList.remove("bme-pc-open");
-
-            pcDataElement.classList.add("bme-pc-open");
-        })
-
+        convertIdentifier(identifier, ipObject, padEndValues, requestProxyCheck)
     }
 }
+function convertIdentifier(identifier, ipObject, padEndValues, requestProxyCheck) {
+    const ipElement = identifier?.firstChild?.firstChild?.querySelector("span");
 
+    const ipAddress = ipElement?.innerText?.split(" | ")[0].trim();
+    const ipValue = `${ipAddress}`.padEnd(padEndValues.identifier);
+    const ispValue = `${ipObject.isp || ipObject.proxyCheck?.net?.isp || "N/A"}`.padEnd(padEndValues.isp);
+    const asnValue = `${ipObject.asn || ipObject.proxyCheck?.net?.asn || "N/A"}`.padEnd(padEndValues.asn);
+
+    const conTypeValue = getConType(ipObject.proxyCheck);
+    const conTypeString = conTypeValue && typeof (conTypeValue) === "object" ?
+        `<span class="${conTypeValue.color}">${conTypeValue.value}</span>` :
+        conTypeValue;
+
+    let text = `${ipValue}  |  ISP: ${ispValue}  |  ${asnValue}`;
+    if (requestProxyCheck) text += `  |  ${conTypeString || ""}`
+    ipElement.innerHTML = text;
+    if (!conTypeString && requestProxyCheck) {
+        const pcButton = getPcButton(identifier, ipObject, padEndValues, requestProxyCheck);
+        ipElement.after(pcButton);
+    }
+
+    if (!ipObject.proxyCheck) return;
+    const pcDataElement = getPcDataElement(ipObject.proxyCheck);
+    ipElement.classList.add("bme-pc-ip-main")
+    ipElement.after(pcDataElement)
+
+    ipElement.addEventListener("click", e => {
+        if (pcDataElement.classList.contains("bme-pc-open"))
+            return pcDataElement.classList.remove("bme-pc-open");
+
+        pcDataElement.classList.add("bme-pc-open");
+    })
+}
+function getPcButton(identifier, ipObject, padEndValues, requestProxyCheck) {
+    const button = document.createElement("button");
+    button.classList.add("bme-button")
+    button.innerText = "CHECK";
+
+    button.addEventListener("click", async (e) => {
+        if (e.target.classList.contains("bme-button-disabled")) return;
+        if (e.target.classList.contains("bme-button-redacted")) return;
+        if (e.target.classList.contains("bme-pressed")) return;
+        e.target.classList.add("bme-pressed")
+
+        const ipMap = await getProxyCheckIpInfo([ipObject], false);
+        ipObject.proxyCheck = ipMap.get(ipObject.ip) || null;
+        convertIdentifier(identifier, ipObject, padEndValues, requestProxyCheck)
+        e.target.remove();
+    })
+
+    return button;
+}
 function getPcDataElement(pc) {
     const element = document.createElement("div");
     element.classList.add("bme-ip-nest")
-    element.addEventListener("click", e => {
-        if (e.target.classList.contains("bme-pc-open"))
-            e.target.classList.remove("bme-pc-open");;
-    })
-    "compromised:"
+
     const table = document.createElement("div");
     table.classList.add("bme-pc-details-table")
 
-    const firstRow = getPcInfoFirstRow(pc);
-    const secondRow = getPcInfoSecondRow(pc);
-    const thirdRow = getPcInfoThirdRow(pc);
-    table.append(firstRow, secondRow, thirdRow);
-
-    element.append(table)
-
-    return element;
-}
-function getPcInfoFirstRow(pc) {
-    const firstRow = document.createElement("div");
-    firstRow.classList.add("bme-pc-details-row")
-    firstRow.style.setProperty("--width", "20ch");
-
-    const firstRowContent = [
-        { label: "vpn:", value: trueOrFalse(pc.det.vpn, true, false) },
-        { label: "proxy:", value: trueOrFalse(pc.det.proxy, true, false) },
-        { label: "scraper:", value: trueOrFalse(pc.det.scraper, true, false) },
-        { label: "tor:", value: trueOrFalse(pc.det.tor, true, false) },
-        { label: "anonymous:", value: trueOrFalse(pc.det.anon, true, false) },
-        { label: "compromised:", value: trueOrFalse(pc.det.compromised, true, false) },
+    const firstSectionContent = [
+        { maxWidth: "20ch", labelWidth: "13ch", valueWidth: "7ch" },
+        { label: "vpn:", ...trueOrFalse(pc.det.vpn, true, false) },
+        { label: "proxy:", ...trueOrFalse(pc.det.proxy, true, false) },
+        { label: "scraper:", ...trueOrFalse(pc.det.scraper, true, false) },
+        { label: "tor:", ...trueOrFalse(pc.det.tor, true, false) },
+        { label: "anonymous:", ...trueOrFalse(pc.det.anon, true, false) },
+        { label: "compromised:", ...trueOrFalse(pc.det.compromised, true, false) },
     ]
-
-    firstRowContent.forEach(item => {
-        const element = document.createElement("div");
-        element.classList.add("bme-pc-details-column")
-
-        const label = document.createElement("span");
-        label.style.setProperty("--width", "13ch")
-        label.innerText = item.label;
-
-        const value = document.createElement("span");
-        value.style.setProperty("--width", "7ch")
-        if (item.value.color) value.classList.add(item.value.color);
-        value.innerText = item.value.value;
-        element.append(label, value);
-
-        firstRow.append(element);
-    })
-
-    return firstRow;
-}
-function getPcInfoSecondRow(pc) {
-    const secondRow = document.createElement("div");
-    secondRow.classList.add("bme-pc-details-row")
-    secondRow.style.setProperty("--width", "35ch");
-    const secondRowContent = [
-        { label: "score:", value: getScore(pc.det.score) },
-        { label: "risk:", value: getScore(pc.det.risk, true) },
+    const secondSectionContent = [
+        { maxWidth: "35ch", labelWidth: "10ch", valueWidth: "25ch" },
+        { label: "score:", ...getScore(pc.det.score) },
+        { label: "risk:", ...getScore(pc.det.risk, true) },
         { label: "zone:", value: `${pc.loc.continent} | ${pc.loc.countryCode} | ${pc.loc.regionCode}` },
         { label: "county:", value: pc.loc.countryName },
         { label: "region:", value: pc.loc.regionName },
         { label: "city:", value: pc.loc.cityName },
     ]
-    secondRowContent.forEach(item => {
-        const element = document.createElement("div");
-        element.classList.add("bme-pc-details-column")
 
-        const label = document.createElement("span");
-        label.style.setProperty("--width", "10ch")
-        label.innerText = item.label;
-
-        const value = document.createElement("span");
-        value.style.setProperty("--width", "25ch")
-
-        if (item.value && typeof (item.value) === "object") {
-            if (item.value.color) value.classList.add(item.value.color);
-            value.innerText = item.value.value;
-
-        } else value.innerText = item.value;
-
-        element.append(label, value);
-
-        secondRow.append(element);
-    })
-
-    return secondRow;
-}
-function getPcInfoThirdRow(pc) {
-    const thirdRow = document.createElement("div");
-    thirdRow.classList.add("bme-pc-details-row")
-    thirdRow.style.setProperty("--width", "55ch");
-    const thirdRowContent = [
+    const host = pc.net.host?.substring(0, 40) || null;    
+    const thirdSectionContent = [
+        { maxWidth: "55ch", labelWidth: "10ch", valueWidth: "45ch" },
         { label: "ASN:", value: pc.net.asn },
         { label: "ISP:", value: pc.net.isp?.substring(0, 40) },
         { label: "Org:", value: pc.net.org?.substring(0, 40) },
-        { label: "Host:", value: pc.net.host?.substring(0, 40) || "null" },
-        { label: "Range:", value: pc.net.range },
-        { label: "Type:", value: getConType(pc) },
+        { label: "Host:", value: host || "null", className: "bme-ip-host", title: String(host) },
+        { label: "Range:", value: pc.net.range, className: "bme-ip-range", title: pc.net.range },
+        { label: "Type:", value: pc.net.type },
     ]
-    thirdRowContent.forEach(item => {
-        const element = document.createElement("div");
-        element.classList.add("bme-pc-details-column")
+    table.append(
+        getPcInfoSection(firstSectionContent),
+        getPcInfoSection(secondSectionContent),
+        getPcInfoSection(thirdSectionContent)
+    );
+
+    element.append(table)
+    return element;
+}
+function getPcInfoSection(rows) {
+    const element = document.createElement("div");
+    element.classList.add("bme-pc-details-row");
+    element.style.setProperty("--width", rows[0].maxWidth);
+
+    for (const row of rows) {
+        if (!row.label) continue;
+
+        const rowElement = document.createElement("div");
+        rowElement.classList.add("bme-pc-details-column")
 
         const label = document.createElement("span");
-        label.style.setProperty("--width", "10ch")
-        label.innerText = item.label;
+        label.style.setProperty("--width", rows[0].labelWidth)
+        label.innerText = row.label;
 
         const value = document.createElement("span");
-        value.style.setProperty("--width", "45ch")
+        value.style.setProperty("--width", rows[0].valueWidth)
+        value.innerText = row.value;
+        if (row.className) value.classList.add(row.className);
+        if (row.title) value.title = row.title;
 
-        if (typeof (item.value) === "object") {
-            if (item.value.color) value.classList.add(item.value.color);
-            value.innerText = item.value.value;
+        rowElement.append(label, value);
+        element.append(rowElement);
+    }
 
-        } else value.innerText = item.value;
-
-        element.append(label, value);
-
-        thirdRow.append(element);
-    })
-
-    return thirdRow;
+    return element;
 }
-
 function trueOrFalse(value, redColor, greenColor) {
-    const color = value === redColor ? "bme-red-text" : value === greenColor ? "bme-green-text" : null;
-    return { value, color }
+    const className = value === redColor ? "bme-red-text" : value === greenColor ? "bme-green-text" : null;
+    return { value, className }
 }
 function getScore(value, reverse = false) {
     let color = null;
@@ -215,7 +182,7 @@ function getScore(value, reverse = false) {
     else color = value > 75 ? "green" : value > 25 ? "yellow" : value >= 0 ? "red" : null;
 
     if (!color) return value
-    return { value, color: `bme-${color}-text` };
+    return { value, className: `bme-${color}-text` };
 }
 function getConType(pc) {
     if (pc === null) return null;
@@ -224,6 +191,7 @@ function getConType(pc) {
     if (type === "Hosting" || type === "Wireless") return { value: type, color: "bme-red-text" }
     return type || "N/A";
 }
+
 export async function highlightVpnIdentifiers(bmId, vpnSettings) {
     const identifierWrapper = (await getElementWhenAppears("css-11gv980", true));
     const identifierTable = identifierWrapper?.lastChild?.children;

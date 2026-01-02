@@ -2,13 +2,17 @@ import { setupCacheFor, cache } from "./cache.js";
 import { checkAndSetupSettingsIfMissing } from "../settings.js";
 import { advancedBans, closeAdminLog, displayInfoPanel, displayServerActivity, limitItem, removeSteamInformation, displayAlertLink } from "./overview/overview.js";
 import { highlightVpnIdentifiers, showExtraDataOnIps, displayAvatars } from "./identifier/identifier.js";
-import { displayAvatar, displaySettingsButton, selectLastServer, swapBattleEyeGuid } from "./display.js";
+import { displayAvatar, displaySettingsButton, redactIdentifiers, selectLastServer, swapBattleEyeGuid } from "./display.js";
 import { insertBanPresets, insertFriendComparator, insertFriendsSidebarElement, insertHistoricFriendsSidebarElement, insertPublicBansSidebarElement, insertSidebars, insertTeaminfoSidebarElement } from "../sidebar.js";
 
 let settingsChecked = false;
 export function router(url) {
     if (!settingsChecked) {
         checkAndSetupSettingsIfMissing();
+
+        const privacySettings = JSON.parse(localStorage.getItem("BME_PRIVACY_SETTINGS"));
+        if (privacySettings.enabled) detectHotkey(privacySettings);
+
         settingsChecked = true;
     }
     
@@ -76,8 +80,7 @@ async function onIdentifierPage(bmId) {
     if (settings.showIspAndAsnData) showExtraDataOnIps(bmId, playerCache.bmProfile, settings.requestProxyCheck)
     if (settings.highlightVpn) highlightVpnIdentifiers(bmId, { label: settings.removeVpnLabel, threshold: settings.vpnAbove, background: settings.vpnBgColor, opacity: settings.vpnOpacity })
     if (settings.displayAvatars) displayAvatars(bmId, playerCache.identifiers.avatars, settings.zoomableAvatars)
-
-    swapBattleEyeGuid(bmId, playerCache.bmProfile);
+    if (settings.swapBattleEyeGuid) swapBattleEyeGuid(bmId, playerCache.bmProfile);
 }
 async function onAddBanPage(bmId) {
     const settings = JSON.parse(localStorage.getItem("BME_BAN_PAGE_SETTINGS"))
@@ -98,4 +101,27 @@ async function sidebar(bmId, playerCache, settings) {
     if (settings.publicBans?.enabled) insertPublicBansSidebarElement(playerCache.publicBans);
 
     if (settings.presets?.enabled) insertBanPresets(settings, playerCache.bmProfile);
+}
+
+
+
+let currentHotkeyTimeout = null;
+let currentSequence = "";
+function detectHotkey(settings) {
+    document.addEventListener("keydown", e => {
+        if (e.repeat) return;
+
+        const key = e.key === "+" ? "plus" : e.key.toLowerCase();
+        if (!currentSequence) currentSequence = key;
+        else currentSequence += `+${key}`;
+
+        if (currentHotkeyTimeout) clearTimeout(currentHotkeyTimeout);
+        
+        currentHotkeyTimeout = setTimeout(() => {
+            currentSequence = "";
+        }, 350);        
+
+        if (settings.hotkey !== currentSequence) return;
+        redactIdentifiers(settings.redactSteamId, settings.redactIps, settings.redactTime);
+    })
 }
