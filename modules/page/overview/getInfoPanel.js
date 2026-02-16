@@ -1,4 +1,4 @@
-import { getTimeString } from "../../misc.js";
+import { getTimeSpan } from "../../misc.js";
 
 export function getInfoPanel(bmSteamData, bmData, rustPremium) {
     const element = document.createElement("div");
@@ -76,7 +76,7 @@ function getSteamInfoPanel(steam, rustPremium) {
 function getSteamAccountAgeElements(steam, settings) {
     const title = createHtmlElement("dt", "Account Age:");
 
-    const valueString = steam?.accountAge ? getTimeString(steam.accountAge) : "Unknown";
+    const valueString = steam?.accountAge ? getTimeSpan(steam.accountAge) : "Unknown";
 
     let currentClass = steam?.accountAge ? getAscendingClassString(settings, [Date.now() - steam.accountAge], settings[3]) : null
     const value = createHtmlElement("dd", valueString, currentClass ? [currentClass] : []);
@@ -200,7 +200,7 @@ function getHistoricTimestampElements(steam, settings) {
     const title = createHtmlElement("dt", "Last Recorded:");
     title.classList.add("bme-highlight");
     
-    const valueString = getTimeString(steam.gamesLastChecked)+" ago";
+    const valueString = getTimeSpan(steam.gamesLastChecked)+" ago";
 
     const since = Date.now() - steam.gamesLastChecked;
     let currentClass = getAscendingClassString(settings, [since], settings[3]);
@@ -243,7 +243,7 @@ function getBmInfoPanel(bm) {
 function getAccountAgeElements(bm, settings) {
     const title = createHtmlElement("dt", "Account Age:");
 
-    const valueString = bm.accountAge ? getTimeString(bm.accountAge) : "Unknown";
+    const valueString = bm.accountAge ? getTimeSpan(bm.accountAge) : "Unknown";
 
     let currentClass = bm.accountAge ? getAscendingClassString(settings, [Date.now() - bm.accountAge], settings[3]) : [];
     const value = createHtmlElement("dd", valueString, currentClass ? [currentClass] : []);
@@ -383,7 +383,7 @@ function getAscendingClassString(settings, values, invertColors = false) {
 function createHtmlElement(node, innerText, classList = []) {
     const element = document.createElement(node);
     if (classList.length > 0) element.classList.add(...classList)
-    element.innerText = innerText;
+    element.innerHTML = innerText;
     return element;
 }
 

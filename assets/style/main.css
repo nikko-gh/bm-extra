@@ -58,7 +58,7 @@
 
 .bme-section-body {
     display: flex;
-    gap: 30px;
+    justify-content: space-between;
 
     height: 260px;
     transition: 250ms;

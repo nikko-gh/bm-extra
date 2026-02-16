@@ -1,4 +1,4 @@
-import { shouldAbort, getElementWhenAppears, getLastServer, getStreamerModeName, getSteamIdObject, setNativeValue, getIdentifierType } from "../misc.js";
+import { shouldAbort, getElementWhenAppears, getLastServer, getStreamerModeName, getSteamIdObject, setNativeValue, getIdentifierType, getTimeSpan } from "../misc.js";
 import { displaySettings } from "../settings.js";
 
 export async function displaySettingsButton(bmId) {
@@ -37,7 +37,7 @@ export async function displayAvatar(bmId, bmProfile, bmSteamData) {
     if (location.href.split("/").length === 6) await getElementWhenAppears("RCONPlayerPage");
 
     const title = mainElement?.querySelector("div")?.firstChild;
-    
+
     if (!title) return;
 
     const avatarElement = document.createElement("img");
@@ -93,7 +93,7 @@ export async function selectLastServer(bmId, bmProfile) {
     for (const element of formHeader) {
         if (element.children.length !== 1) continue;
         const child = element.children[0];
-        if (!child || child.nodeName !== "SELECT") continue;        
+        if (!child || child.nodeName !== "SELECT") continue;
 
         servers = child;
         break;
@@ -104,15 +104,16 @@ export async function selectLastServer(bmId, bmProfile) {
     setNativeValue(servers, target, true);
 }
 
-let currentRedactedElements = [] //key, originalText
+let currentRedactedElements = [] //key, originalValue
 let showIdentifiersTimeout = null;
 export async function redactIdentifiers(redactSteamId, redactIps, redactTime) {
     const tables = Array.from(document.getElementsByClassName("css-11gv980"));
     tables.forEach(table => redactIdentifierTable(table, redactSteamId, redactIps));
-    
+
     if (showIdentifiersTimeout) clearTimeout(showIdentifiersTimeout);
     showIdentifiersTimeout = setTimeout(() => {
-        showIdentifiers();
+        revertItems(currentRedactedElements, true);
+        currentRedactedElements = [];
     }, redactTime);
 }
 function redactIdentifierTable(table, redactSteamId, redactIps) {
@@ -135,7 +136,7 @@ function redactIdentifierTable(table, redactSteamId, redactIps) {
             if (host) redactIdentifier(identifier, host, "Host");
             continue; //Check next
         }
-        
+
         if ((type === "Steam ID" || type === "BattlEye GUID") && redactSteamId) {
             redactIdentifier(identifier, span, type);
             continue; //Check next
@@ -156,10 +157,38 @@ function redactIdentifier(identifier, span, type) {
     const button = identifier.querySelector(".bme-button");
     if (button) button.classList.add("bme-button-redacted")
 }
-function showIdentifiers() {
-    for (const item of currentRedactedElements) item.element.innerHTML = item.originalValue;
-    currentRedactedElements = [];
 
-    const buttons = Array.from(document.querySelectorAll(".bme-button-redacted"));
-    for (const button of buttons) button.classList.remove("bme-button-redacted")
+let currentShowDaysElements = []; //key, originalValue
+let showDaysTimeout = null;
+export function convertTimestampsToDay(duration) {
+    const spans = Array.from(document.querySelectorAll(".bme-time"));
+    for (const span of spans) {
+        const originalValue = span.textContent;
+
+        const timestamp = span.dataset.raw;
+        const isDuration = span.dataset.duration == "true" ? true : false
+
+        const newSpan = new DOMParser().parseFromString(getTimeSpan(timestamp, isDuration, true), "text/html").body.firstElementChild;
+        const newText = newSpan.textContent;
+
+        if (newText === originalValue) continue; //No need to change
+
+        currentShowDaysElements.push({ key: span, originalValue })
+        span.textContent = newText;
+    }
+
+    if (showDaysTimeout) clearTimeout(showDaysTimeout);
+    showDaysTimeout = setTimeout(() => {
+        revertItems(currentShowDaysElements);
+        currentShowDaysElements = [];
+    }, duration);
+}
+
+function revertItems(arr, buttons) {
+    for (const item of arr) item.key.textContent = item.originalValue;
+
+    if (buttons) {
+        const buttons = Array.from(document.querySelectorAll(".bme-button-redacted"));
+        for (const button of buttons) button.classList.remove("bme-button-redacted")
+    }
 }

@@ -2,7 +2,7 @@ import { setupCacheFor, cache } from "./cache.js";
 import { checkAndSetupSettingsIfMissing } from "../settings.js";
 import { advancedBans, closeAdminLog, displayInfoPanel, displayServerActivity, limitItem, removeSteamInformation, displayAlertLink } from "./overview/overview.js";
 import { highlightVpnIdentifiers, showExtraDataOnIps, displayAvatars } from "./identifier/identifier.js";
-import { displayAvatar, displaySettingsButton, redactIdentifiers, selectLastServer, swapBattleEyeGuid } from "./display.js";
+import { convertTimestampsToDay, displayAvatar, displaySettingsButton, redactIdentifiers, selectLastServer, swapBattleEyeGuid } from "./display.js";
 import { insertBanPresets, insertFriendComparator, insertFriendsSidebarElement, insertHistoricFriendsSidebarElement, insertPublicBansSidebarElement, insertSidebars, insertTeaminfoSidebarElement } from "../sidebar.js";
 import { removeSidebars } from "../misc.js";
 
@@ -11,13 +11,13 @@ export function router(url) {
     if (!settingsChecked) {
         checkAndSetupSettingsIfMissing();
 
-        const privacySettings = JSON.parse(localStorage.getItem("BME_PRIVACY_SETTINGS"));
-        if (privacySettings.enabled) detectHotkey(privacySettings);
+        const privacySettings = JSON.parse(localStorage.getItem("BME_KEYBINDS_SETTINGS"));
+        detectHotkey(privacySettings);
 
         settingsChecked = true;
     }
-    
-    const path = url.pathname.split("/").filter(Boolean);    
+
+    const path = url.pathname.split("/").filter(Boolean);
     //rcon/players...
     if (path[0] === "rcon" && path[1] === "players" && path.length > 2) {
         const bmId = path[2];
@@ -28,12 +28,12 @@ export function router(url) {
         if (path[3] === undefined) return onOverviewPage(bmId);
         if (path[3] === "identifiers") return onIdentifierPage(bmId);
     }
-    
+
     //rcon/bans/add...
     if (path[0] === "rcon" && path[1] === "bans" && path[2] === "add") {
         const bmId = url.searchParams.get("player");
         if (!bmId || isNaN(Number(bmId))) return;
-     
+
         setupCacheFor(bmId, "BAN_PAGE");
 
         return onAddBanPage(bmId);
@@ -80,7 +80,7 @@ async function onAddBanPage(bmId) {
     const settings = JSON.parse(localStorage.getItem("BME_BAN_PAGE_SETTINGS"))
 
     const playerCache = cache[bmId];
-    
+
     sidebar(bmId, playerCache, settings);
 
     if (settings.selectLastServer) selectLastServer(bmId, playerCache.bmProfile);
@@ -99,21 +99,38 @@ async function sidebar(bmId, playerCache, settings) {
 let currentHotkeyTimeout = null;
 let currentSequence = "";
 function detectHotkey(settings) {
+    const binds = [];
+    for (const key in settings) {
+        if (!settings[key].enabled) return;
+
+        binds.push({ type: key, hotkey: settings[key].hotkey });
+    }
+
+    if (binds.length === 0) return; //No keybinds active
+
     document.addEventListener("keydown", e => {
         if (e.repeat) return;
         if (!e.key) return;
-        
+
         const key = e.key === "+" ? "plus" : e.key.toLowerCase();
         if (!currentSequence) currentSequence = key;
         else currentSequence += `+${key}`;
 
         if (currentHotkeyTimeout) clearTimeout(currentHotkeyTimeout);
-        
+
         currentHotkeyTimeout = setTimeout(() => {
             currentSequence = "";
-        }, 350);        
+        }, 350);
 
-        if (settings.hotkey !== currentSequence) return;
-        redactIdentifiers(settings.redactSteamId, settings.redactIps, settings.redactTime);
+        for (const bind of binds) {
+            if (bind.hotkey !== currentSequence) continue;
+
+            keyBindActivated(bind.type, settings[bind.type]);
+        }
     })
+}
+
+function keyBindActivated(type, settings) {
+    if (type === "privacy") redactIdentifiers(settings.redactSteamId, settings.redactIps, settings.redactTime);
+    if (type === "showDays") convertTimestampsToDay(settings.duration)
 }

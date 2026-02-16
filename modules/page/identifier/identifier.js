@@ -1,4 +1,4 @@
-import { getElementWhenAppears, getIdentifierType, getTimeString } from "../../misc.js";
+import { getElementWhenAppears, getIdentifierType, getTimeSpan } from "../../misc.js";
 import { getProxyCheckIpInfo } from "../cache.js";
 
 export async function showExtraDataOnIps(bmId, bmProfile, requestProxyCheck) {
@@ -288,8 +288,8 @@ function getAvatarElement(item, zoomable) {
         </td>
         <td data-title="Last Seen">
             <time>${`${iso.substring(8, 10)}/${iso.substring(5, 7)}/${iso.substring(0, 4)}`}</time><br />
-            <time class="css-18s4qom">${iso.substring(12, 17)}</time>
-            <time class="css-18s4qom">${getTimeString(lastSeen)} ago</time>
+            <time class="css-18s4qom">${iso.substring(11, 16)}</time>
+            <time class="css-18s4qom">${getTimeSpan(lastSeen)} ago</time>
         </td>
     `;
 

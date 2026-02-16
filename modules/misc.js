@@ -46,7 +46,7 @@ const ONE_HOUR = 60 * ONE_MINUTE;
 const ONE_DAY = 24 * ONE_HOUR;
 const ONE_MONTH = 30 * ONE_DAY;
 const ONE_YEAR = 12 * ONE_MONTH;
-export function getTimeString(timestamp, isDuration = false) {
+export function getTimeSpan(timestamp, isDuration = false, daysOnly = false) {
     let since = null;
 
     if (isDuration) {
@@ -56,13 +56,25 @@ export function getTimeString(timestamp, isDuration = false) {
         since = now - timestamp;
     }
 
-    if (since > ONE_YEAR) return plural((since / ONE_YEAR).toFixed(1), "year");
-    if (since > ONE_MONTH) return plural((since / ONE_MONTH).toFixed(1), "month");
-    if (since > ONE_DAY) return plural(Math.floor(since / ONE_DAY), "day");
-    if (since > ONE_HOUR) return plural(Math.floor(since / ONE_HOUR), "hour");
-    if (since > ONE_MINUTE) return plural(Math.floor(since / ONE_MINUTE), "minute");
-    if (since > ONE_SECOND) return plural(Math.floor(since / ONE_SECOND), "second");
-    return `${since} ms`;
+    let str = "";
+
+    if (daysOnly){
+        let days = Number((since / ONE_DAY).toFixed(1));
+        if (days > 100) days = Math.floor(days);
+
+        str = plural(days, "day")
+    } 
+        
+
+    if (!str && since > ONE_YEAR) str =  plural((since / ONE_YEAR).toFixed(1), "year");
+    if (!str && since > ONE_MONTH) str =  plural((since / ONE_MONTH).toFixed(1), "month");
+    if (!str && since > ONE_DAY) str =  plural(Math.floor(since / ONE_DAY), "day");
+    if (!str && since > ONE_HOUR) str =  plural(Math.floor(since / ONE_HOUR), "hour");
+    if (!str && since > ONE_MINUTE) str =  plural(Math.floor(since / ONE_MINUTE), "minute");
+    if (!str && since > ONE_SECOND) str =  plural(Math.floor(since / ONE_SECOND), "second");
+    if (!str) str =  `${since} ms`;
+    
+    return `<span class="bme-time" data-raw="${timestamp}" data-duration="${isDuration}">${str}</span>`;
 }
 export function getBmInfoTimeString(timestamp) {
     if (timestamp > (3 * ONE_DAY)) return `${Math.floor(timestamp / ONE_DAY)} days`;
@@ -72,7 +84,7 @@ export function getBmInfoTimeString(timestamp) {
     return `${timestamp} ms`;
 }
 function plural(value, unit) {
-    if (Math.floor(value) === 1) return `${value} ${unit}`;
+    if (Math.floor(value) <= 1) return `${value} ${unit}`;
     return `${value} ${unit}s`;
 }
 
