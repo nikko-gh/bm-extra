@@ -190,28 +190,54 @@ export async function getMyServers(onlyIds) {
         else return myServers.servers;
     }
 
-    const resp = await fetch(`https://api.battlemetrics.com/servers?version=^0.1.0&filter[rcon]=true&page[size]=100&access_token=${token}`)
-    if (resp?.status !== 200) {
+    
+    const data = await requestMyServers('https://api.battlemetrics.com/servers?filter[rcon]=true&page[size]=100', token)
+    if (!data) {
         console.error(`Failed to request your servers | Status: ${resp?.status}`);
         return null;
     }
 
-    const data = await resp.json();
     myServers = {
         timestamp: Date.now(),
-        servers: data.data.map(server => {
-            return {
-                id: server.id,
-                name: server?.attributes?.name,
-                orgId: server?.relationships?.organization?.data?.id
-            }
-        })
+        servers: data
     }
 
     localStorage.setItem("BME_MY_SERVER_CACHE", JSON.stringify(myServers))
     if (onlyIds) return myServers.servers.map(server => server.id);
     else return myServers.servers;
 }
+
+
+async function requestMyServers(url, token, count = 0) {
+    if (count > 2) return null;
+    try {
+        const resp = await fetch(`${url}&access_token=${token}`);
+        const data = await resp.json();
+
+        const servers = data.data.map(server => {
+            return {
+                id: server.id,
+                name: server?.attributes?.name,
+                orgId: server?.relationships?.organization?.data?.id
+            }
+        })
+
+        if (data.links.next) {
+            await new Promise(r => {setTimeout(r, 1000)});
+            const nextPage = requestMyServers(data.links.next, token);
+            if (!nextPage) return servers;
+
+            servers.push(...nextPage);
+        }
+
+        return servers;
+    } catch (error) {
+        console.error(`Failed to request your servers. | ${error.message}`);
+        await new Promise(r => {setTimeout(r, 1000)});
+        return await requestMyServers(url, token, count+1);
+    }
+}
+
 export function getAuthToken() {
     const authElement = document.getElementById("oauthToken");
     if (!authElement) {

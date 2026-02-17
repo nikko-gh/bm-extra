@@ -1,4 +1,4 @@
-import { getElementWhenAppears, getIdentifierType, getTimeString } from "../../misc.js";
+import { getElementWhenAppears, getIdentifierType, getTimeSpan } from "../../misc.js";
 import { getProxyCheckIpInfo } from "../cache/cache.js";
 
 export async function showExtraDataOnIps(bmId, bmProfile, requestProxyCheck) {
