@@ -46,7 +46,7 @@ const ONE_HOUR = 60 * ONE_MINUTE;
 const ONE_DAY = 24 * ONE_HOUR;
 const ONE_MONTH = 30 * ONE_DAY;
 const ONE_YEAR = 12 * ONE_MONTH;
-export function getTimeString(timestamp, isDuration = false) {
+export function getTimeSpan(timestamp, isDuration = false, daysOnly = false) {
     let since = null;
 
     if (isDuration) {
@@ -56,13 +56,25 @@ export function getTimeString(timestamp, isDuration = false) {
         since = now - timestamp;
     }
 
-    if (since > ONE_YEAR) return plural((since / ONE_YEAR).toFixed(1), "year");
-    if (since > ONE_MONTH) return plural((since / ONE_MONTH).toFixed(1), "month");
-    if (since > ONE_DAY) return plural(Math.floor(since / ONE_DAY), "day");
-    if (since > ONE_HOUR) return plural(Math.floor(since / ONE_HOUR), "hour");
-    if (since > ONE_MINUTE) return plural(Math.floor(since / ONE_MINUTE), "minute");
-    if (since > ONE_SECOND) return plural(Math.floor(since / ONE_SECOND), "second");
-    return `${since} ms`;
+    let str = "";
+
+    if (daysOnly){
+        let days = Number((since / ONE_DAY).toFixed(1));
+        if (days > 100) days = Math.floor(days);
+
+        str = plural(days, "day")
+    } 
+        
+
+    if (!str && since > ONE_YEAR) str =  plural((since / ONE_YEAR).toFixed(1), "year");
+    if (!str && since > ONE_MONTH) str =  plural((since / ONE_MONTH).toFixed(1), "month");
+    if (!str && since > ONE_DAY) str =  plural(Math.floor(since / ONE_DAY), "day");
+    if (!str && since > ONE_HOUR) str =  plural(Math.floor(since / ONE_HOUR), "hour");
+    if (!str && since > ONE_MINUTE) str =  plural(Math.floor(since / ONE_MINUTE), "minute");
+    if (!str && since > ONE_SECOND) str =  plural(Math.floor(since / ONE_SECOND), "second");
+    if (!str) str =  `${since} ms`;
+    
+    return `<span class="bme-time" data-raw="${timestamp}" data-duration="${isDuration}">${str}</span>`;
 }
 export function getBmInfoTimeString(timestamp) {
     if (timestamp > (3 * ONE_DAY)) return `${Math.floor(timestamp / ONE_DAY)} days`;
@@ -72,7 +84,7 @@ export function getBmInfoTimeString(timestamp) {
     return `${timestamp} ms`;
 }
 function plural(value, unit) {
-    if (Math.floor(value) === 1) return `${value} ${unit}`;
+    if (Math.floor(value) <= 1) return `${value} ${unit}`;
     return `${value} ${unit}s`;
 }
 
@@ -178,28 +190,54 @@ export async function getMyServers(onlyIds) {
         else return myServers.servers;
     }
 
-    const resp = await fetch(`https://api.battlemetrics.com/servers?version=^0.1.0&filter[rcon]=true&page[size]=100&access_token=${token}`)
-    if (resp?.status !== 200) {
+    
+    const data = await requestMyServers('https://api.battlemetrics.com/servers?filter[rcon]=true&page[size]=100', token)
+    if (!data) {
         console.error(`Failed to request your servers | Status: ${resp?.status}`);
         return null;
     }
 
-    const data = await resp.json();
     myServers = {
         timestamp: Date.now(),
-        servers: data.data.map(server => {
-            return {
-                id: server.id,
-                name: server?.attributes?.name,
-                orgId: server?.relationships?.organization?.data?.id
-            }
-        })
+        servers: data
     }
 
     localStorage.setItem("BME_MY_SERVER_CACHE", JSON.stringify(myServers))
     if (onlyIds) return myServers.servers.map(server => server.id);
     else return myServers.servers;
 }
+
+
+async function requestMyServers(url, token, count = 0) {
+    if (count > 2) return null;
+    try {
+        const resp = await fetch(`${url}&access_token=${token}`);
+        const data = await resp.json();
+
+        const servers = data.data.map(server => {
+            return {
+                id: server.id,
+                name: server?.attributes?.name,
+                orgId: server?.relationships?.organization?.data?.id
+            }
+        })
+
+        if (data.links.next) {
+            await new Promise(r => {setTimeout(r, 1000)});
+            const nextPage = requestMyServers(data.links.next, token);
+            if (!nextPage) return servers;
+
+            servers.push(...nextPage);
+        }
+
+        return servers;
+    } catch (error) {
+        console.error(`Failed to request your servers. | ${error.message}`);
+        await new Promise(r => {setTimeout(r, 1000)});
+        return await requestMyServers(url, token, count+1);
+    }
+}
+
 export function getAuthToken() {
     const authElement = document.getElementById("oauthToken");
     if (!authElement) {

@@ -24,13 +24,9 @@ chrome.runtime.onMessage.addListener(async (req, sender) => {
     if (req.type.startsWith("BME_PLAYER_SUMMARIES")) return sendSteamPlayerSummaries(req.subject, req.apiKey, sender, returnObject);
     if (req.type.startsWith("BME_BAN_SUMMARIES")) return sendSteamPlayerBanSummaries(req.subject, req.apiKey, sender, returnObject);
     if (req.type.startsWith("BME_PUBLIC_BANS")) return sendPublicBans(req.subject, req.apiKey, sender, returnObject);
+    if (req.type.startsWith("BME_ATLAS_TEAMINFO")) return sendAtlasTeaminfo(req.subject, req.apiKey, sender, returnObject);
+
 })
-function getSubjectOrItemCount(string) {
-    if (string.startsWith("7656") && string.length === 17)
-        return string;
-    else
-        return `Items: ${string.split(",").length}`;
-}
 
 
 function downloadJsonFile(name, content) {
@@ -201,6 +197,43 @@ async function sendPublicBans(steamId, apiKey, sender, returnObject) {
         const data = await resp.json();
         returnObject.status = "OK";
         returnObject.value = data.data.bans;
+        return chrome.tabs.sendMessage(sender.tab.id, returnObject);
+    } catch (error) {
+        console.error(error);
+        returnObject.status = "ERROR";
+        returnObject.value = error;
+        return chrome.tabs.sendMessage(sender.tab.id, returnObject);
+    }
+}
+async function sendAtlasTeaminfo(values, apiKey, sender, returnObject) {
+    try {        
+        const steamId = values.split("-")[0];
+        const serverId = values.split("-")[1];
+
+        const resp = await fetch(`https://api.battlemetrics.com/servers/${serverId}/command`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                "Accept-Version": "^0.1.0"
+            },
+            body: JSON.stringify({
+                data: {
+                    attributes: {
+                        command: "c46e957a-54d8-497c-81ec-c2dcef2cd7e2",
+                        options: {
+                            player: steamId,
+                        }
+                    },
+                    type: "rconCommand"
+                }
+            })
+        })
+        if (resp?.status !== 200) throw new Error(`Requesting Atlas teaminfo failed | steamId: ${steamId} | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
+
+        const data = await resp.json();
+        returnObject.status = "OK";
+        returnObject.value = data;
         return chrome.tabs.sendMessage(sender.tab.id, returnObject);
     } catch (error) {
         console.error(error);

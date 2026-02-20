@@ -1,5 +1,5 @@
 import { getInfoPanel } from "./getInfoPanel.js";
-import { shouldAbort, getElementWhenAppears, getTimeString, getSteamIdObject } from "../../misc.js";
+import { shouldAbort, getElementWhenAppears, getTimeSpan, getSteamIdObject } from "../../misc.js";
 
 export async function displayServerActivity(bmId, bmProfile) {
     bmProfile = await bmProfile;
@@ -47,7 +47,7 @@ function getCurrentServersElement(servers) {
         element.appendChild(firstLine);
 
         const secondLine = document.createElement("p");
-        secondLine.innerText = `${server.online ? "Joined" : "Last seen: "}: ${getTimeString(server.lastSeen)} ago`
+        secondLine.innerHTML = `${server.online ? "Joined" : "Last seen: "}: ${getTimeSpan(server.lastSeen)} ago`
         element.appendChild(secondLine)
 
         const thirdLine = document.createElement("div");
@@ -264,7 +264,7 @@ export async function advancedBans(bmId, banDataP) {
     }
 }
 function convertBanSpan(ban, span) {
-    const banReason = ban.attributes.reason.split(" | ")[0];
+    const banReason = ban.attributes.reason.split(" - ")[0];
     const timestamp = new Date(ban.attributes.timestamp).getTime();
 
     const expiration = ban.attributes.expires === null ? 0 : new Date(ban.attributes.expires).getTime();
@@ -276,7 +276,7 @@ function convertBanSpan(ban, span) {
     const lengthString = active ? `<b>${lengthText}</b>` : `${lengthText}`;
 
     const stringArray = [
-        `${getTimeString(timestamp)} ago`,
+        `${getTimeSpan(timestamp)} ago`,
         `<b>${banReason}</b>`,
         `${active === true ? "<b>Active</b>" : "Expired"}`,
         lengthString

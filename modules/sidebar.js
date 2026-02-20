@@ -1,4 +1,4 @@
-import { getElementWhenAppears, getLastServer, getSteamFriendlistFromRustApi, getSteamFriendlistFromSteam, getTimeString, removeSidebars, setNativeValue } from "./misc.js";
+import { getElementWhenAppears, getLastServer, getSteamFriendlistFromRustApi, getSteamFriendlistFromSteam, getTimeSpan, removeSidebars, setNativeValue } from "./misc.js";
 
 export async function insertSidebars() {
     const mainElement = await getElementWhenAppears("main", true);
@@ -533,8 +533,8 @@ function getBanElement(ban) {
 
 
     const timestamp = document.createElement("p");
-    const duration = ban.duration === "Perm" ? "Permanent" : ban.duration === "Unknown" ? "Unknown" : getTimeString(ban.duration * 1000, true);
-    timestamp.innerHTML = `<span class="bme-bold">Details:</span> ${getTimeString(ban.timestamp * 1000)} ago | ${duration}`;
+    const duration = ban.duration === "Perm" ? "Permanent" : ban.duration === "Unknown" ? "Unknown" : getTimeSpan(ban.duration * 1000, true);
+    timestamp.innerHTML = `<span class="bme-bold">Details:</span> ${getTimeSpan(ban.timestamp * 1000)} ago | ${duration}`;
     innerDiv.appendChild(timestamp);
 
     return element

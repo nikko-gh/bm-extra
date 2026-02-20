@@ -59,7 +59,7 @@ function getSettingsMenu() {
     const div = document.createElement("div")
     div.id = "bme-settings-menu";
 
-    const menuPoints = ["Overview", "Identifier", "BM Information", "Sidebar", "Bans",/*"Multi Org", "Evasion Checker",*/ "API Keys"];
+    const menuPoints = ["Overview", "Identifier", "BM Information", "Sidebar", "Bans", "Keybinds",/*"Multi Org", "Evasion Checker",*/ "API Keys"];
     for (let i = 0; i < menuPoints.length; i++) {
         const point = menuPoints[i];
 
@@ -96,7 +96,8 @@ function getSettingsBody(index) {
     if (index === 2) return getBmInfoSettings();
     if (index === 3) return getSidebarSettings();
     if (index === 4) return getBanPageSettings();
-    if (index === 5) return getApiKeysSettings();
+    if (index === 5) return getHotKeySettings();
+    if (index === 6) return getApiKeysSettings();
 }
 
 
@@ -1064,6 +1065,96 @@ function exportButtonPressed() {
 }
 
 
+function getHotKeySettings(params) {
+    const element = document.createElement("div");
+    const title = document.createElement("h1");
+    title.innerText = "Keybinds Settings";
+    element.appendChild(title);
+
+    const settingsBucket = "BME_KEYBINDS_SETTINGS";
+    const settings = JSON.parse(localStorage.getItem(settingsBucket));
+
+    const privacySegment = document.createElement("div");
+    privacySegment.classList.add("bme-settings-segment");
+
+    const privacyEnabled = getSettingsElement(
+        "toggle", "Privacy Settings",
+        "Enables a keybind which redacts identifiers for a short period so you can take a screenshot of the page without leaking anything sensitive.",
+        null, settingsBucket, "privacy-enabled", settings.privacy.enabled, { segment: privacySegment }
+    )
+
+    const privacyHotkey = getSettingsElement(
+        "hotkey", "Keybind:",
+        "Choose your keybind, this will trigger the redaction of the current page",
+        null, settingsBucket, "privacy-hotkey", settings.privacy.hotkey,
+        { max: 5 }
+    )
+    const redactIps = getSettingsElement(
+        "toggle", "Redact IP addresses",
+        "When you activate your keybind, all the IP identifiers will be redacted.",
+        null, settingsBucket, "privacy-redactIps", settings.privacy.redactIps
+    )
+    const redactSteamId = getSettingsElement(
+        "toggle", "Redact SteamId",
+        "When you activate your keybind, Steam ID and BattlEye GUID identifier will be redacted.",
+        null, settingsBucket, "privacy-redactSteamId", settings.privacy.redactSteamId
+    )
+    const redactTimeOptions = [
+        { display: "500 ms", value: 500 },
+        { display: "1 second", value: 1000 },
+        { display: "2 seconds", value: 2000 },
+        { display: "3 seconds", value: 3000 },
+        { display: "5 seconds", value: 5000 },
+        { display: "10 seconds", value: 10000 },
+        { display: "30 seconds", value: 30000 },
+    ]
+    const redactTime = getSettingsElement(
+        "select", "Redact Time",
+        "Choose how long identifiers should be redacted after activating your keybind.",
+        null, settingsBucket, "privacy-redactTime", settings.privacy.redactTime, { options: redactTimeOptions }
+    )
+    privacySegment.append(privacyHotkey, redactIps, redactSteamId, redactTime)
+
+    const showDaysSegment = document.createElement("div");
+    showDaysSegment.classList.add("bme-settings-segment");
+
+    const showDaysEnabled = getSettingsElement(
+        "toggle", "Show Days",
+        "Enables a Hotkey which changes all the durations to be converted into days by default.",
+        null, settingsBucket, "showDays-enabled", settings.showDays.enabled, { segment: showDaysSegment }
+    )
+
+    const showDaysHotkey = getSettingsElement(
+        "hotkey", "Keybind:",
+        "Choose your keybind, this will covert all the time durations into days",
+        null, settingsBucket, "showDays-hotkey", settings.showDays.hotkey
+    )
+    const showDaysDurationOptions = [
+        { display: "500 ms", value: 500 },
+        { display: "1 second", value: 1000 },
+        { display: "2 seconds", value: 2000 },
+        { display: "3 seconds", value: 3000 },
+        { display: "5 seconds", value: 5000 },
+        { display: "10 seconds", value: 10000 },
+        { display: "30 seconds", value: 30000 },
+    ]
+    const showDaysDuration = getSettingsElement(
+        "select", "Duration:",
+        "Choose the duration of the time conversion",
+        null, settingsBucket, "showDays-duration", settings.showDays.duration, { options: showDaysDurationOptions }
+    )
+    showDaysSegment.append(showDaysHotkey, showDaysDuration);
+
+    const resetButton = getResetButton("bm-keybinds")
+    element.append(
+        privacyEnabled, privacySegment,
+        showDaysEnabled, showDaysSegment,
+        resetButton
+    )
+
+    return element;
+}
+
 function getApiKeysSettings() {
     const element = document.createElement("div");
 
@@ -1085,7 +1176,7 @@ function getApiKeysSettings() {
 
     const proxyCheckSegment = document.createElement("div")
     proxyCheckSegment.classList.add("bme-settings-segment");
-    const proxyCheckApiKeyElement = getApiKeyDiv("Proxycheck API KEY:", "BME_PROXY_CHECK_SETTINGS", "proxy-check", {
+    const proxyCheckApiKeyElement = getApiKeyDiv("Proxycheck API Key:", "BME_PROXY_CHECK_SETTINGS", "proxy-check", {
         segment: proxyCheckSegment,
         detail: `Key cam be generated at <a href="https://proxycheck.io/" target="_blank">proxycheck.io</a>.`
     });
@@ -1119,7 +1210,7 @@ function getApiKeysSettings() {
         "Do not request known VPNs from proxycheck.io",
         null, settingsBucket, "ignoreKnownVpns", settings.ignoreKnownVpns
     )
-    
+
     const currentCacheSize = getPcCacheSize();
     const keepCache = getSettingsElement(
         "toggle", "Keep Cache",
@@ -1134,7 +1225,7 @@ function getApiKeysSettings() {
     element.append(
         steamKeyElement, battleMetricsKeyElements, rustApiKeyElement,
         proxyCheckApiKeyElement, proxyCheckSegment,
-        getSmUpdater(), ...getPrivacySettingsElements()
+        getSmUpdater()
     );
 
     return element;
@@ -1308,60 +1399,6 @@ function invokeChange(type) {
     const settingsPage = document.getElementById("bme-sm-input-wrapper");
     settingsPage.classList.add(`bme-sm-${type}`);
     setTimeout(() => { settingsPage.classList.remove(`bme-sm-${type}`); }, 900);
-}
-function getPrivacySettingsElements() {
-    const returnElements = [];
-    const settingsBucket = "BME_PRIVACY_SETTINGS"
-    const settings = JSON.parse(localStorage.getItem(settingsBucket));
-
-    const title = document.createElement("h1");
-    title.innerText = "Privacy Settings"
-
-    const privacySegment = document.createElement("div");
-    privacySegment.classList.add("bme-settings-segment");
-
-    const privacyEnabled = getSettingsElement(
-        "toggle", "Privacy Settings",
-        "Enables a Hotkey that redacts identifiers for a short period so you can take a screenshot of the page without leaking anything sensitive.",
-        null, settingsBucket, "enabled", settings.enabled, { segment: privacySegment }
-    )
-
-    const privacyHotkey = getSettingsElement(
-        "hotkey", "Hotkey:",
-        "Choose your Hotkey combination, this will trigger the redaction of the current page", null, settingsBucket, "hotkey", settings.hotkey,
-        {max: 5}
-    )
-    const redactIps = getSettingsElement(
-        "toggle", "Redact IP addresses",
-        "When you activate your hotkey, all the IP identifiers will be redacted.",
-        null, settingsBucket, "redactIps", settings.redactIps
-    )
-    const redactSteamId = getSettingsElement(
-        "toggle", "Redact SteamId",
-        "When you activate your hotkey, Steam ID and BattlEye GUID identifier will be redacted.",
-        null, settingsBucket, "redactSteamId", settings.redactSteamId
-    )
-
-    const redactTimeOptions = [
-        { display: "500 ms", value: 500 },
-        { display: "1 second", value: 1000 },
-        { display: "2 seconds", value: 2000 },
-        { display: "3 seconds", value: 3000 },
-        { display: "5 seconds", value: 5000 },
-        { display: "10 seconds", value: 10000 },
-        { display: "30 seconds", value: 30000 },
-    ]
-    const redactTime = getSettingsElement(
-        "select", "Redact Time",
-        "Choose how long identifiers should be redacted after activating your hotkey.",
-        null, settingsBucket, "redactTime", settings.redactTime, { options: redactTimeOptions }
-    )
-
-
-    privacySegment.append(privacyHotkey, redactIps, redactSteamId, redactTime)
-
-    returnElements.push(title, privacyEnabled, privacySegment);
-    return returnElements;
 }
 
 
@@ -1568,18 +1605,18 @@ function getHotkeyInputElement(type, bucket, key, value, meta) {
         const pressed = e.key === "+" ? "plus" : e.key.toLowerCase();
         if (meta?.max && newHotkeySequence.split("+").length >= meta.max)
             newHotkeySequence = "";
-        
+
         if (!newHotkeySequence) newHotkeySequence = pressed;
         else newHotkeySequence += `+${pressed}`;
 
         if (newHotkeyTimeout) clearTimeout(newHotkeyTimeout)
-        newHotkeyTimeout = setTimeout(() => {newHotkeySequence = ""; }, 350);
+        newHotkeyTimeout = setTimeout(() => { newHotkeySequence = ""; }, 350);
 
         input.value = prettifyKey(newHotkeySequence);
 
         if (meta?.min && newHotkeySequence.split("+").length >= meta.min) setSettingTo(bucket, key, newHotkeySequence);
         else if (!meta?.min) setSettingTo(bucket, key, newHotkeySequence);
-    })  
+    })
 
     return input;
 }
@@ -1605,7 +1642,7 @@ function getPrettyKey(key) {
     if (key === "plus") return "+";
     if (key === "numlock") return "NUMLK";
     if (key === "escape") return "ESC";
-    
+
     return key.toUpperCase();
 }
 function getResetButton(type) {
@@ -1637,6 +1674,7 @@ function getResetButton(type) {
         if (type === "bm-identifier") localStorage.setItem("BME_IDENTIFIER_SETTINGS", JSON.stringify(getDefaultIdentifierSettings()));
         if (type === "bm-sidebar") localStorage.setItem("BME_SIDEBAR_SETTINGS", JSON.stringify(getDefaultSidebarSettings()));
         if (type === "bm-bans") localStorage.setItem("BME_BAN_PAGE_SETTINGS", JSON.stringify(getDefaultBanPageSettings()));
+        if (type === "bm-keybinds") localStorage.setItem("BME_BAN_PAGE_SETTINGS", JSON.stringify(getDefaultKeybindsSettings()));
 
         location.reload();
     })
@@ -1652,7 +1690,7 @@ export function checkAndSetupSettingsIfMissing() {
     checkSidebarSettings();
     checkBanPageSettings();
     checkProxyCheckSettings();
-    checkPrivacySettings();
+    checkKeybindsSettings();
 }
 function checkOverviewSettings() {
     try {
@@ -1830,7 +1868,6 @@ function getDefaultSidebarSettings() {
     settings.friendComparator.spot = "right-slot-1";
     settings.friendComparator.color = "#ffffff"
 
-
     settings.publicBans = {}
     settings.publicBans.enabled = false;
     settings.publicBans.spot = "left-slot-2";
@@ -1893,28 +1930,40 @@ function getDefaultProxyCheckSettings() {
 
     return settings;
 }
-function checkPrivacySettings() {
+function checkKeybindsSettings() {
     try {
-        const settings = JSON.parse(localStorage.getItem("BME_PRIVACY_SETTINGS"));
+        const settings = JSON.parse(localStorage.getItem("BME_KEYBINDS_SETTINGS"));
         if (!settings || typeof (settings) !== "object") throw new Error("Settings error");
-        if (typeof (settings.enabled) !== "boolean") throw new Error("Settings error");
-        if (typeof (settings.hotkey) !== "string") throw new Error("Settings error");
-        if (typeof (settings.redactIps) !== "boolean") throw new Error("Settings error");
-        if (typeof (settings.redactSteamId) !== "boolean") throw new Error("Settings error");
-        if (typeof (settings.redactTime) !== "number") throw new Error("Settings error");
+        if (typeof (settings.privacy) !== "object") throw new Error("Settings error");
+        if (typeof (settings.privacy.enabled) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.privacy.hotkey) !== "string") throw new Error("Settings error");
+        if (typeof (settings.privacy.redactIps) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.privacy.redactSteamId) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.privacy.redactTime) !== "number") throw new Error("Settings error");
+
+        if (typeof (settings.showDays) !== "object") throw new Error("Settings error");
+        if (typeof (settings.showDays.enabled) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.showDays.hotkey) !== "string") throw new Error("Settings error");
+        if (typeof (settings.showDays.duration) !== "number") throw new Error("Settings error");
     } catch (error) {
-        const defaultSettings = getPrivacySettings();
-        localStorage.setItem("BME_PRIVACY_SETTINGS", JSON.stringify(defaultSettings));
+        const defaultSettings = getDefaultKeybindsSettings();
+        localStorage.setItem("BME_KEYBINDS_SETTINGS", JSON.stringify(defaultSettings));
     }
 }
-function getPrivacySettings() {
+function getDefaultKeybindsSettings() {
     const settings = {};
 
-    settings.enabled = false;
-    settings.hotkey = "control+shift";
-    settings.redactIps = true;
-    settings.redactSteamId = true;
-    settings.redactTime = 5000;
+    settings.privacy = {};
+    settings.privacy.enabled = false;
+    settings.privacy.hotkey = "control+shift";
+    settings.privacy.redactIps = true;
+    settings.privacy.redactSteamId = true;
+    settings.privacy.redactTime = 5000;
+
+    settings.showDays = {};
+    settings.showDays.enabled = false;
+    settings.showDays.hotkey = "control";
+    settings.showDays.duration = 10000;
 
     return settings;
 }

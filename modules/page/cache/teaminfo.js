@@ -1,4 +1,25 @@
+import { talkToBackgroundScript } from "../../misc.js";
+
 export const organizations = [];
+
+class Atlas {
+    id = "41737";
+
+    static {
+        organizations.push(new this());
+    }
+
+    async getTeamInfo(steamId, serverId, token) {
+        const data = await talkToBackgroundScript("BME_ATLAS_TEAMINFO", `${steamId}-${serverId}`, token);
+        const result = data?.data?.attributes?.result[0]?.children[1]?.children[0]?.children[0]?.reference.result;
+        if (!result) {
+            console.error(`Failed to request teaminfo | Status: ${resp.status} | Result: ${result}`);
+            return "error";
+        }
+
+        return result;
+    }
+}
 
 class BestRust {
     id = "18611";
@@ -8,6 +29,7 @@ class BestRust {
     }
 
     async getTeamInfo(steamId, serverId, token) {
+        const payload = getBrPayload(triggers, steamId);
         const resp = await fetch(`https://api.battlemetrics.com/servers/${serverId}/command`, {
             method: "POST",
             headers: {
@@ -16,17 +38,7 @@ class BestRust {
                 "Accept-Version": "^0.1.0"
             },
             body: JSON.stringify({
-                data: {
-                    type: "rconCommand",
-                    attributes: {
-                        command: "edb0be86-6f5e-4e4b-a655-5fcecd4af11f",
-                        options: {
-                            command: "teaminfo",
-                            steamid: steamId,
-                            format: " "
-                        }
-                    }
-                }
+                data: payload,
             })
         })
 
@@ -44,6 +56,34 @@ class BestRust {
         }
 
         return result;
+
+        function getBrPayload(triggers, steamId) {
+            if (triggers.includes("edb0be86-6f5e-4e4b-a655-5fcecd4af11f")) {
+                return {
+                    type: "rconCommand",
+                    attributes: {
+                        command: "edb0be86-6f5e-4e4b-a655-5fcecd4af11f",
+                        options: {
+                            command: "teaminfo",
+                            steamid: steamId,
+                            format: " "
+                        }
+                    }
+                }
+            } else if (triggers.includes("4cc932cc-8a86-440f-95aa-d8d99a8ac6ec")) {
+                return {
+                    type: "rconCommand",
+                    attributes: {
+                        command: "4cc932cc-8a86-440f-95aa-d8d99a8ac6ec",
+                        options: {
+                            command: "teaminfo",
+                            steamid: steamId,
+                        }
+                    }
+                }
+
+            }
+        }
     }
 }
 
