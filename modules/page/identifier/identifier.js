@@ -1,5 +1,7 @@
 import { getElementWhenAppears, getIdentifierType, getTimeSpan } from "../../misc.js";
 import { getProxyCheckIpInfo } from "../cache/cache.js";
+import { autoStart } from "./evasion-checker/actions.js";
+import { getEvasionCheckerPanel } from "./evasion-checker/panel.js";
 
 export async function showExtraDataOnIps(bmId, bmProfile, requestProxyCheck) {
     bmProfile = await bmProfile;
@@ -294,4 +296,16 @@ function getAvatarElement(item, zoomable) {
     `;
 
     return tr;
+}
+
+export async function displayEvasionCheckerPanel(settings) {
+    const panel = getEvasionCheckerPanel();
+    const identifierWrapper = await getElementWhenAppears("css-11gv980", true);
+
+    if (settings.panelPlacement === "above") 
+        identifierWrapper.insertAdjacentElement("beforebegin", panel)
+    else
+        identifierWrapper.insertAdjacentElement("afterend", panel)
+    
+    if (settings.core.autoStart) autoStart(settings);
 }

@@ -180,9 +180,7 @@ export async function getLastServer(bmProfile, onlyMyServer) {
     return lastServer
 }
 export async function getMyServers(onlyIds) {
-    const externalAuthToken = localStorage.getItem("BME_BATTLEMETRICS_API_KEY");
-    const internalAuthToken = !externalAuthToken ? getAuthToken() : null;
-    const token = externalAuthToken ? externalAuthToken : internalAuthToken;
+    const token = getAuthToken();
 
     let myServers = JSON.parse(localStorage.getItem("BME_MY_SERVER_CACHE"));
     if (myServers && myServers.timestamp > Date.now() - 24 * 60 * 60 * 1000) {
@@ -238,7 +236,18 @@ async function requestMyServers(url, token, count = 0) {
     }
 }
 
-export function getAuthToken() {
+let _lastResp = null;
+export function getAuthToken(type) {
+    if (type === "internal") return getInternalAuthToken();
+
+    if (_lastResp) return _lastResp;
+    const internal = getInternalAuthToken();
+    const external = getExternalAuthToken();
+
+    _lastResp = external || internal;
+    return external || internal;
+}
+function getInternalAuthToken() {
     const authElement = document.getElementById("oauthToken");
     if (!authElement) {
         console.error("BM-EXTRA: Auth element wasn't found.")
@@ -251,6 +260,9 @@ export function getAuthToken() {
     }
 
     return authToken;
+}
+function getExternalAuthToken() {
+    return localStorage.getItem("BME_BATTLEMETRICS_API_KEY") || null;
 }
 
 export function setNativeValue(select, value, highlight) {
@@ -293,7 +305,7 @@ export function getIdentifierType(identifier) {
     return { type, id }
 }
 
-export function talkToBackgroundScript(type, subject, apiKey) {
+export function talkToBackgroundScript(type, subject, apiKey, rejectTime = 10000) {
     const requestId = Math.floor(Math.random() * 1000000);
     type = `${type}_${requestId}`;
 
@@ -311,7 +323,7 @@ export function talkToBackgroundScript(type, subject, apiKey) {
         const timer = setTimeout(() => {
             chrome.runtime.onMessage.removeListener(handler);
             reject(new Error(`TIMEOUT`));
-        }, 10000);
+        }, rejectTime);
 
         chrome.runtime.onMessage.addListener(handler);
         chrome.runtime.sendMessage({ type, subject, apiKey });

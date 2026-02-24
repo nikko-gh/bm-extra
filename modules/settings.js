@@ -59,7 +59,7 @@ function getSettingsMenu() {
     const div = document.createElement("div")
     div.id = "bme-settings-menu";
 
-    const menuPoints = ["Overview", "Identifier", "BM Information", "Sidebar", "Bans", "Keybinds",/*"Multi Org", "Evasion Checker",*/ "API Keys"];
+    const menuPoints = ["Overview", "Identifier", "BM Information", "Sidebar", "Bans", "Keybinds", "Evasion Checker",/*"Multi Org"*/"API Keys"];
     for (let i = 0; i < menuPoints.length; i++) {
         const point = menuPoints[i];
 
@@ -97,7 +97,8 @@ function getSettingsBody(index) {
     if (index === 3) return getSidebarSettings();
     if (index === 4) return getBanPageSettings();
     if (index === 5) return getHotKeySettings();
-    if (index === 6) return getApiKeysSettings();
+    if (index === 6) return getBanPageSettings();
+    if (index === 7) return getApiKeysSettings();
 }
 
 
@@ -199,13 +200,13 @@ function getIdentifierSettings() {
 
     const showIspAsnData = getSettingsElement(
         "toggle", "Show extra IP info",
-        "Shows the name of the ISP and it's ASN on the IP addresses.",
+        "Shows the name of the ISP and ASN of the IP addresses.",
         null, settingsBucket, "showIspAndAsnData", settings.showIspAndAsnData, { segment: showExtraInfoSegment }
     )
 
     const showMore = getSettingsElement(
         "toggle", "Show Proxycheck Info",
-        "Shows extra information beyond what you would normally see from proxycheck.io",
+        "Shows extra information related to the IP Address fromm proxycheck.io",
         ["PROXYCHECK"], settingsBucket, "requestProxyCheck", settings.requestProxyCheck
     )
     showExtraInfoSegment.append(showMore);
@@ -1691,6 +1692,7 @@ export function checkAndSetupSettingsIfMissing() {
     checkBanPageSettings();
     checkProxyCheckSettings();
     checkKeybindsSettings();
+    checkEvasionCheckerSettings();
 }
 function checkOverviewSettings() {
     try {
@@ -1964,6 +1966,94 @@ function getDefaultKeybindsSettings() {
     settings.showDays.enabled = false;
     settings.showDays.hotkey = "control";
     settings.showDays.duration = 10000;
+
+    return settings;
+}
+function checkEvasionCheckerSettings() {
+    try {
+        const settings = JSON.parse(localStorage.getItem("BME_KEYBINDS_SETTINGS"));
+        if (typeof (settings.enabled) !== "boolean") throw new Error("Settings error");
+
+        if (!settings || typeof (settings) !== "object") throw new Error("Settings error");
+        if (typeof (settings.panelPlacement) !== "string") throw new Error("Settings error");
+
+        if (typeof (settings.color) !== "object") throw new Error("Settings error");
+        if (typeof (settings.color.unchecked) !== "string") throw new Error("Settings error");
+        if (typeof (settings.color.checking) !== "string") throw new Error("Settings error");
+        if (typeof (settings.color.clean) !== "string") throw new Error("Settings error");
+        if (typeof (settings.color.failed) !== "string") throw new Error("Settings error");
+        if (typeof (settings.color.gameBanned) !== "string") throw new Error("Settings error");
+        if (typeof (settings.color.gameBannedOld) !== "string") throw new Error("Settings error");
+        if (typeof (settings.color.gameBannedMatch) !== "string") throw new Error("Settings error");
+        if (typeof (settings.color.gameBannedOldMatch) !== "string") throw new Error("Settings error");
+        if (typeof (settings.color.serverBanned) !== "string") throw new Error("Settings error");
+        if (typeof (settings.color.serverBannedOld) !== "string") throw new Error("Settings error");
+        if (typeof (settings.color.serverBannedMatch) !== "string") throw new Error("Settings error");
+        if (typeof (settings.color.serverBannedOldMatch) !== "string") throw new Error("Settings error");
+
+        if (typeof (settings.core) !== "object") throw new Error("Settings error");
+        if (typeof (settings.core.autoStart) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.core.autoStartLimit) !== "number") throw new Error("Settings error");
+        if (typeof (settings.core.serverBanPriority) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.core.oldServerBan) !== "number") throw new Error("Settings error");
+        if (typeof (settings.core.oldGameBan) !== "number") throw new Error("Settings error");
+        if (typeof (settings.core.nameMatchCaseSensitive) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.core.requestFriendsFromSteam) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.core.requestFriendsFromRustApi) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.core.matchMinAssociate) !== "number") throw new Error("Settings error");
+        if (typeof (settings.core.matchMinNamePercentage) !== "number") throw new Error("Settings error");
+        if (typeof (settings.core.matchMaxDifference) !== "number") throw new Error("Settings error");
+
+    } catch (error) {
+        const defaultSettings = getDefaultEvasionCheckerSettings();
+        localStorage.setItem("BME_EVASION_CHECKER_SETTINGS", JSON.stringify(defaultSettings));
+    }
+}
+function getDefaultEvasionCheckerSettings() {
+    const settings = {};
+    settings.enabled = true;
+
+    settings.panelPlacement = "under";
+
+    settings.core = {};
+    settings.core.autoStart = true;
+    settings.core.autoStartLimit = 45;
+    settings.core.serverBanPriority = false;
+    settings.core.oldServerBan = 365;
+    settings.core.oldGameBan = 180;
+    settings.core.matchMinAssociate = 1;
+    settings.core.matchMinNamePercentage = 70;
+    settings.core.nameMatchCaseSensitive = true;
+    settings.core.matchMaxDifference = 86400000,
+    settings.core.requestFriendsFromSteam = false;
+    settings.core.requestFriendsFromRustApi = true;
+
+    settings.core.reasons = [
+        { key: "assoc", display: "A"},
+        { key: "cheat", display: "H"},
+        { key: "hack", display: "H"},
+        { key: "evasi", display: "E"},
+        { key: "evadi", display: "E"},
+        { key: "susp", display: "S"},
+        { key: "verif", display: "S"},
+        { key: "rule", display: "R"},
+        { key: "default", display: "O"},
+    ];
+
+    settings.color = {};
+    settings.color.unchecked = "#e8bd00";
+    settings.color.checking = "#957700";
+    settings.color.clean = "#76ff4c";
+    settings.color.inconclusive = "#5f5f5f";
+    settings.color.failed = "#101010";
+    settings.color.gameBanned = "#d60000";
+    settings.color.gameBannedOld = "#770707";
+    settings.color.gameBannedMatch = "#00a8ae";
+    settings.color.gameBannedOldMatch = "#00777b";
+    settings.color.serverBanned = "#ff4646";
+    settings.color.serverBannedOld = "#b92f2f";
+    settings.color.serverBannedMatch = "#00a8ae";
+    settings.color.serverBannedOldMatch = "#00777b";
 
     return settings;
 }

@@ -16,7 +16,8 @@
             "css": [
                 "./assets/style/main.css",
                 "./assets/style/settings.css",
-                "./assets/style/sidebar.css"
+                "./assets/style/sidebar.css",
+                "./assets/style/evasion-checker.css"
             ]
         }
     ],

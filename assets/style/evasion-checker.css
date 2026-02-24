@@ -1,0 +1,178 @@
+td>div>div>ol>li {
+    height: 24px;
+    /* Overwriting default site CSS */
+}
+
+.bme-ec-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+
+    width: 100%;
+    padding: 10px;
+    margin: 20px 0;
+
+    background: #151515;
+}
+
+.bme-ec-header {
+    display: flex;
+    gap: 20px;
+
+    align-items: center;
+}
+
+.bme-ec-header>p {
+    flex-grow: 1;
+    text-align: right;
+
+    color: #9c9c9c;
+    font-size: 18px;
+}
+
+.bme-ec-panel p,
+.bme-ec-panel h2,
+.bme-ec-panel h3 {
+    margin: 0 !important;
+    /* Overwriting default site CSS */
+}
+
+.bme-ec-panel>div {
+    width: 100%;
+}
+
+.bme-ec-setting-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.bme-ec-setting-panel>div {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 5px;
+}
+
+.bme-ec-button {
+    font-weight: 500;
+    font-size: 16px;
+    width: 130px;
+    padding: 2px 2px;
+    outline: none;
+    border: none;
+    background: #0c5da5;
+
+    transition: 75ms;
+}
+
+.bme-ec-button:active {
+    background: #0c5ea6cc;
+}
+
+.bme-ec-used,
+.bme-ec-inactive,
+.bme-ec-inactive:active {
+    background: #6e6e6e !important;
+}
+
+.bme-ec-inactive {
+    cursor: auto;
+}
+
+.bme-ec-used:active {
+    background: #6e6e6ecc;
+}
+
+.bme-ec-setting-item {
+    display: flex;
+    gap: 10px;
+
+    align-items: center;
+}
+
+.bme-ec-setting-item>p {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+#bme-ec-org-changer {
+    background-color: #141414;
+    padding: 2px 12px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#bme-ec-org-changer select {
+    background-color: #2a2a2a;
+    color: #ffffff;
+    padding: 4px 20px;
+}
+
+#bme-ec-players-container {
+    display: flex;
+    flex-direction: column;
+    margin-top: 5px;
+}
+
+#bme-ec-players-container:empty {
+    justify-content: center;
+    align-items: center;
+    min-height: 80px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+#bme-ec-players-container:empty::before {
+    content: "No players loaded";
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+
+
+.bme-ec-player {
+    width: 100%;
+    height: 24px;
+
+    display: flex;
+    gap: 10px;
+
+    background: var(--bg);
+    border: var(--border) 2px solid;
+
+    margin-top: 2px;
+    transition: all 400ms ease 0s;
+}
+
+.bme-ec-player>a {
+    width: 160px;
+    color: white;
+    font-weight: 600;
+
+    text-overflow: hidden;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bme-ec-player-details {
+    display: none;
+    /*reserved for future update*/
+}
+
+.bme-ec-ban-line,
+.bme-ec-stat-line {
+    font-family: monospace, Menlo, Monaco, Consolas, "Courier New", monospace;
+    font-weight: 600;
+    color: whitesmoke;
+}
+
+.bme-ec-stat-line {
+    flex-grow: 1;
+}
+.bme-colored-span{
+    color: var(--color);
+    filter: brightness(1.8);
+}
