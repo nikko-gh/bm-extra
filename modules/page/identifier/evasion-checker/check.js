@@ -1,6 +1,7 @@
 import { getAuthToken, getSteamFriendlistFromRustApi, getSteamFriendlistFromSteam, talkToBackgroundScript } from "../../../misc.js";
 import { colorPlayer } from "./actions.js";
 import { getEcSettings } from "./panel.js";
+import { showcaseDetails } from "./showcase.js";
 
 let main = null;
 
@@ -23,12 +24,14 @@ export async function checkPlayer(playerElement, settings, check) {
         setupPlayerElement(playerElement, outcome, player, settings);
 
         colorPlayer(playerElement, outcome.color)
-        if (player.sessions) playerElement.dataset.sessions = true;
         playerElement.classList.remove("bme-ec-unchecked")
+        playerElement.classList.add("bme-ec-active")
+        playerElement.children[0].addEventListener("click", () => { showcaseDetails(main, player, outcome, settings) })
 
         const links = getLinks(player.account.bmId);
         links.forEach(item => {
             const clone = playerElement.cloneNode(true);
+            clone.children[0].addEventListener("click", () => { showcaseDetails(main, player, outcome, settings) })
             item.replaceWith(clone)
         })
     } catch (error) {
@@ -207,14 +210,14 @@ function setupPlayerElement(playerElement, outcome, player, settings) {
 
     const banLine = document.getElementById(`bme-ec-player-ban-line-${playerElement.dataset.id}`);
     setupBanLine(banLine, outcome)
-
 }
 function setupStatLine(statLine, outcome, player, settings) {
     let stats = [];
     stats.push(getNameStat(outcome, settings));
     stats.push(getAssociateStat(outcome, settings));
     if (outcome.difference) stats.push(`D: ${outcome.difference}`.padEnd(7));
-    stats.push(`F: ${getDaysSince(player.account.firstSeen)}d`.padEnd(8));
+    stats.push(`F: ${getStatLineStr(`${getDaysSince(player.account.firstSeen)}d`, 5)}`);
+    
     const lastSeen = player.account.servers[0]?.lastSeen || null;
     if (lastSeen) stats.push(`L: ${getDaysSince(lastSeen)}d`.padEnd(8))
 
@@ -310,9 +313,15 @@ async function getAccountData(bmId, token) {
         .sort((a, b) => b.lastSeen - a.lastSeen);
 
     let steamId = data.included.filter(item => item.attributes?.type === "steamID")[0] || null;
-    if (steamId) steamId = {
-        identifier: steamId.attributes.identifier,
-        rustBans: getRustBans(steamId.attributes?.metadata?.rustBans),
+    let avatar = "https://avatars.fastly.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg";
+    if (steamId) {
+        if (steamId.attributes?.metadata?.profile?.avatarfull)
+            avatar = steamId.attributes?.metadata?.profile?.avatarfull;
+
+        steamId = {
+            identifier: steamId.attributes.identifier,
+            rustBans: getRustBans(steamId.attributes?.metadata?.rustBans),
+        }
     }
     function getRustBans(rustBans) {
         if (!rustBans) return null;
@@ -360,6 +369,7 @@ async function getAccountData(bmId, token) {
     player.name = names[0].identifier;
     player.bmId = data.data.id;
     player.steamId = steamId;
+    player.avatarUrl = avatar;
     player.firstSeen = new Date(data.data.attributes.createdAt).getTime();
 
     player.identifiers = {};

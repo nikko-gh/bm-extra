@@ -204,8 +204,6 @@ export async function getMyServers(onlyIds) {
     if (onlyIds) return myServers.servers.map(server => server.id);
     else return myServers.servers;
 }
-
-
 async function requestMyServers(url, token, count = 0) {
     if (count > 2) return null;
     try {

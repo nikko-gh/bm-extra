@@ -2049,11 +2049,11 @@ function getDefaultEvasionCheckerSettings() {
     settings.color.gameBanned = "#d60000";
     settings.color.gameBannedOld = "#770707";
     settings.color.gameBannedMatch = "#00a8ae";
-    settings.color.gameBannedOldMatch = "#00777b";
+    settings.color.gameBannedOldMatch = "#008c91";
     settings.color.serverBanned = "#ff4646";
     settings.color.serverBannedOld = "#b92f2f";
     settings.color.serverBannedMatch = "#00a8ae";
-    settings.color.serverBannedOldMatch = "#00777b";
+    settings.color.serverBannedOldMatch = "#008c91";
 
     return settings;
 }

@@ -307,5 +307,10 @@ export async function displayEvasionCheckerPanel(settings) {
     else
         identifierWrapper.insertAdjacentElement("afterend", panel)
     
+    for (let i = 0; i < 50; i++) { //Wait till shared identifiers load
+        if (identifierWrapper.innerText.includes("Identifier shared with")) break;
+        await new Promise(r => { setTimeout(r, 150 * (i / 10)) })
+    }
+
     if (settings.core.autoStart) autoStart(settings);
 }
