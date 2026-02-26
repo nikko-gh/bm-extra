@@ -101,7 +101,7 @@ let currentSequence = "";
 function detectHotkey(settings) {
     const binds = [];
     for (const key in settings) {
-        if (!settings[key].enabled) return;
+        if (!settings[key].enabled) continue;
 
         binds.push({ type: key, hotkey: settings[key].hotkey });
     }
