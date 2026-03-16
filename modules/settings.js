@@ -97,7 +97,7 @@ function getSettingsBody(index) {
     if (index === 3) return getSidebarSettings();
     if (index === 4) return getBanPageSettings();
     if (index === 5) return getHotKeySettings();
-    if (index === 6) return getBanPageSettings();
+    if (index === 6) return getEvasionCheckerSettings();
     if (index === 7) return getApiKeysSettings();
 }
 
@@ -1156,6 +1156,190 @@ function getHotKeySettings(params) {
     return element;
 }
 
+
+function getEvasionCheckerSettings() {
+    const element = document.createElement("div");
+
+    const titleRow = document.createElement("div");
+    titleRow.classList.add("bme-flex", "bme-title-row")
+    element.appendChild(titleRow);
+
+    const title = document.createElement("h1");
+    title.innerText = "Evasion Checker";
+    titleRow.appendChild(title);
+
+    element.append(titleRow)
+
+    const bucket = "BME_EVASION_CHECKER_SETTINGS";
+    const settings = JSON.parse(localStorage.getItem(bucket));
+
+    const specialSegment = document.createElement("div");
+
+    const enabled = getSettingsElement(
+        "toggle", "Enabled",
+        "Enable evasion checker part of the extension.",
+        null, bucket, "enabled", settings.enabled, { segment: specialSegment }
+    )
+
+    const panelPlacementOptions = [
+        { value: "under", display: "Under" },
+        { value: "above", display: "Above" },
+    ]
+    const placement = getSettingsElement(
+        "switch", "Placement",
+        "Determines the Evasion Checker Panel placement on the Identifier page",
+        null, bucket, "panelPlacement", settings.panelPlacement, { options: panelPlacementOptions }
+    )
+
+    const autoStart = getSettingsElement(
+        "toggle", "Auto Start",
+        "Should the evasion check process start automatically if the conditions met.",
+        null, bucket, "core-autoStart", settings.core.autoStart
+    )
+    const autoStartLimit = getSettingsElement(
+        "number", "Auto Start Limit",
+        "What should be the maximum number of accounts where the process should start automatically. -1 for unlimited.",
+        null, bucket, "core-autoStartLimit", settings.core.autoStartLimit
+    )
+    const serverBanPriority = getSettingsElement(
+        "toggle", "Server Ban Priority",
+        "Should a server ban highlighted before an EAC game ban?",
+        null, bucket, "core-serverBanPriority", settings.core.serverBanPriority
+    )
+    const oldServerBan = getSettingsElement(
+        "number", "Old Server Ban",
+        "After how many days should a server ban appear as old. -1 for never.", 
+        null, bucket, "core-oldServerBan", settings.core.oldServerBan
+    )
+
+    const oldGameBan = getSettingsElement(
+        "number", "Old Game Ban",
+        "After how many days should a game ban appear as old. -1 for never."
+    )
+
+    const matchMinAssociate = getSettingsElement(
+        "number", "Min Associates",
+        "The minimum number of associates in order to declare it as a match.",
+        null, bucket, "core-matchMinAssociate", settings.core.matchMinAssociate
+    )
+    const matchMinName = getSettingsElement(
+        "number", "Min Name Match",
+        "The minimum number of percentage on name matches to declare it as a match.",
+    )
+
+    const caseSensitive = getSettingsElement(
+        "toggle", "Case Sensitive Name match",
+        "Should name comparisons treat uppercase and lowercase as different?",
+        null, bucket, "core-nameMatchCaseSensitive", settings.core.nameMatchCaseSensitive
+    )
+
+    const matchMaxDifference = getSettingsElement(
+        "number", "Max Difference", 
+        "Reserved for future update, doesn't do anything at the moment.",
+        null, bucket, "core-matchMaxDifference", settings.core.matchMaxDifference
+    )
+    const friendsFromSteam = getSettingsElement(
+        "toggle", "Friends from Steam",
+        "Should friends be request from Steam API, can be problematic if you request too much.",
+        ["STEAM API KEY"], bucket, "core-requestFriendsFromSteam", settings.core.requestFriendsFromSteam
+    )
+    const friendsFromRustApi = getSettingsElement(
+        "toggle", "Friends from Rust Api",
+        "Should friends be requested from Rust Api.",
+        ["RUST API - HF"], bucket, "core-requestFriendsFromRustApi", settings.core.requestFriendsFromRustApi,
+    )
+
+    //IGNOREDNAMES
+    //REMOVEDNAMES
+
+    //SERVER BAN REASONS
+
+
+
+    const unchecked = getSettingsElement(
+        "color", "Unchecked:",
+        "Color of an unchecked row.",
+        null, bucket, "color-unchecked", settings.color.unchecked,
+    )
+    const checking = getSettingsElement(
+        "color", "Checking:",
+        "Color of row when it's being checked",
+        null, bucket, "color-checking", settings.color.checking,
+    )
+    const clean = getSettingsElement(
+        "color", "Clean:",
+        "Color of a clean row.",
+        null, bucket, "color-clean", settings.color.clean,
+    )
+    const inconclusive = getSettingsElement(
+        "color", "Inconclusive",
+        "Color of an inconclusive row.",
+        null, bucket, "color-inconclusive", settings.color.inconclusive,
+    )
+    const failed = getSettingsElement(
+        "color", "Failed:",
+        "Color of a failed row.",
+        null, bucket, "color-failed", settings.color.failed,
+    )
+    const gameBan = getSettingsElement(
+        "color", "Game ban:",
+        "Color of a game banned row.",
+        null, bucket, "color-gameBanned", settings.color.gameBanned,
+    )
+    const oldGameBanColor = getSettingsElement(
+        "color", "Old Game ban:",
+        "Color of a game banned row.",
+        null, bucket, "color-gameBanned", settings.color.gameBanned,
+    )
+
+    const gameBannedMatch = getSettingsElement(
+        "color", "Game banned match:",
+        "Color of a game banned matched row.",
+        null, bucket, "color-gameBannedMatch", settings.color.gameBannedMatch,
+    )
+    const gameBannedOldMatch = getSettingsElement(
+        "color", "Old game banned match:",
+        "Color of an old game banned matched row.",
+        null, bucket, "color-gameBannedOldMatch", settings.color.gameBannedOldMatch,
+    )
+    const serverBanned = getSettingsElement(
+        "color", "Server ban:",
+        "Color of a server banned row.",
+        null, bucket, "color-serverBanned", settings.color.serverBanned,
+    )
+    const serverBannedOld = getSettingsElement(
+        "color", "Old server ban:",
+        "Color of an old server banned row.",
+        null, bucket, "color-serverBannedOld", settings.color.serverBannedOld,
+    )
+    const serverBannedMatch = getSettingsElement(
+        "color", "Server banned match:",
+        "Color of a server banned match.",
+        null, bucket, "color-serverBannedMatch", settings.color.serverBannedMatch,
+    )
+    const serverBannedOldMatch = getSettingsElement(
+        "color", "Old server banned match:",
+        "Color of an old server banned match.",
+        null, bucket, "color-serverBannedOldMatch", settings.color.serverBannedOldMatch,
+    )
+
+    specialSegment.append(
+        placement, autoStart, autoStartLimit, serverBanPriority, oldServerBan,
+        oldGameBan, matchMinAssociate, matchMinName, caseSensitive, matchMaxDifference,
+        friendsFromSteam, friendsFromRustApi,
+
+        unchecked, checking, clean, inconclusive, failed, gameBan, oldGameBanColor,
+        gameBannedMatch, gameBannedOldMatch, serverBanned, serverBannedOld, serverBannedMatch,
+        serverBannedOldMatch
+    )
+
+    const resetButton = getResetButton("bm-evasion");
+    element.append(enabled, specialSegment, resetButton)
+
+    return element
+}
+
+
 function getApiKeysSettings() {
     const element = document.createElement("div");
 
@@ -1676,6 +1860,7 @@ function getResetButton(type) {
         if (type === "bm-sidebar") localStorage.setItem("BME_SIDEBAR_SETTINGS", JSON.stringify(getDefaultSidebarSettings()));
         if (type === "bm-bans") localStorage.setItem("BME_BAN_PAGE_SETTINGS", JSON.stringify(getDefaultBanPageSettings()));
         if (type === "bm-keybinds") localStorage.setItem("BME_BAN_PAGE_SETTINGS", JSON.stringify(getDefaultKeybindsSettings()));
+        if (type === "bm-evasion") localStorage.setItem("BME_EVASION_CHECKER_SETTINGS", JSON.stringify(getDefaultEvasionCheckerSettings()));
 
         location.reload();
     })
@@ -1971,7 +2156,7 @@ function getDefaultKeybindsSettings() {
 }
 function checkEvasionCheckerSettings() {
     try {
-        const settings = JSON.parse(localStorage.getItem("BME_KEYBINDS_SETTINGS"));
+        const settings = JSON.parse(localStorage.getItem("BME_EVASION_CHECKER_SETTINGS"));
         if (typeof (settings.enabled) !== "boolean") throw new Error("Settings error");
 
         if (!settings || typeof (settings) !== "object") throw new Error("Settings error");
@@ -1982,6 +2167,7 @@ function checkEvasionCheckerSettings() {
         if (typeof (settings.color.checking) !== "string") throw new Error("Settings error");
         if (typeof (settings.color.clean) !== "string") throw new Error("Settings error");
         if (typeof (settings.color.failed) !== "string") throw new Error("Settings error");
+        if (typeof (settings.color.inconclusive) !== "string") throw new Error("Settings error");
         if (typeof (settings.color.gameBanned) !== "string") throw new Error("Settings error");
         if (typeof (settings.color.gameBannedOld) !== "string") throw new Error("Settings error");
         if (typeof (settings.color.gameBannedMatch) !== "string") throw new Error("Settings error");
@@ -1998,12 +2184,14 @@ function checkEvasionCheckerSettings() {
         if (typeof (settings.core.oldServerBan) !== "number") throw new Error("Settings error");
         if (typeof (settings.core.oldGameBan) !== "number") throw new Error("Settings error");
         if (typeof (settings.core.nameMatchCaseSensitive) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.core.matchMinNamePercentage) !== "number") throw new Error("Settings error");
+        if (typeof (settings.core.matchMinAssociate) !== "number") throw new Error("Settings error");
+        if (typeof (settings.core.matchMaxDifference) !== "number") throw new Error("Settings error");
         if (typeof (settings.core.requestFriendsFromSteam) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.core.requestFriendsFromRustApi) !== "boolean") throw new Error("Settings error");
-        if (typeof (settings.core.matchMinAssociate) !== "number") throw new Error("Settings error");
-        if (typeof (settings.core.matchMinNamePercentage) !== "number") throw new Error("Settings error");
-        if (typeof (settings.core.matchMaxDifference) !== "number") throw new Error("Settings error");
-
+        if (typeof (settings.core.ignoreNames) !== "object") throw new Error("Settings error");
+        if (typeof (settings.core.ignoreNameParts) !== "object") throw new Error("Settings error");
+        if (typeof (settings.core.reasons) !== "object") throw new Error("Settings error");
     } catch (error) {
         const defaultSettings = getDefaultEvasionCheckerSettings();
         localStorage.setItem("BME_EVASION_CHECKER_SETTINGS", JSON.stringify(defaultSettings));
@@ -2012,7 +2200,6 @@ function checkEvasionCheckerSettings() {
 function getDefaultEvasionCheckerSettings() {
     const settings = {};
     settings.enabled = true;
-
     settings.panelPlacement = "under";
 
     settings.core = {};
@@ -2021,23 +2208,45 @@ function getDefaultEvasionCheckerSettings() {
     settings.core.serverBanPriority = false;
     settings.core.oldServerBan = 365;
     settings.core.oldGameBan = 180;
-    settings.core.matchMinAssociate = 1;
+    settings.core.nameMatchCaseSensitive = false;
     settings.core.matchMinNamePercentage = 70;
-    settings.core.nameMatchCaseSensitive = true;
+    settings.core.matchMinAssociate = 1;
     settings.core.matchMaxDifference = 86400000,
-    settings.core.requestFriendsFromSteam = false;
+        settings.core.requestFriendsFromSteam = false;
     settings.core.requestFriendsFromRustApi = true;
+    settings.core.ignoreNames = [
+        ".",
+        "123",
+        "321",
+        ":)"
+    ];
+    settings.core.ignoreNameParts = [
+        "survivor (",
+        "survivor",
+        "kiosk",
+
+        "banditcamp.com",
+        "banditcamp",
+        "rustchance.com",
+        "rustchance",
+        "rustypot.com",
+        "rustypot",
+        "rustclash.com",
+        "rustclash",
+        "cobaltlab",
+        "keydrop",
+    ];
 
     settings.core.reasons = [
-        { key: "assoc", display: "A"},
-        { key: "cheat", display: "H"},
-        { key: "hack", display: "H"},
-        { key: "evasi", display: "E"},
-        { key: "evadi", display: "E"},
-        { key: "susp", display: "S"},
-        { key: "verif", display: "S"},
-        { key: "rule", display: "R"},
-        { key: "default", display: "O"},
+        { key: "assoc", display: "A" },
+        { key: "cheat", display: "H" },
+        { key: "hack", display: "H" },
+        { key: "evasi", display: "E" },
+        { key: "evadi", display: "E" },
+        { key: "susp", display: "S" },
+        { key: "verif", display: "S" },
+        { key: "rule", display: "R" },
+        { key: "default", display: "O" },
     ];
 
     settings.color = {};

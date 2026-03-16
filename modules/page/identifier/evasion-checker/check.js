@@ -1,7 +1,7 @@
 import { getAuthToken, getSteamFriendlistFromRustApi, getSteamFriendlistFromSteam, talkToBackgroundScript } from "../../../misc.js";
 import { colorPlayer } from "./actions.js";
 import { getEcSettings } from "./panel.js";
-import { showcaseDetails } from "./showcase.js";
+import { getShowCaseTimeString, showcaseDetails } from "./showcase.js";
 
 let main = null;
 
@@ -106,20 +106,33 @@ function getMaxNameMatch(main, player, settings) {
 
     if (!settings.nameMatchCaseSensitive) {
         mainNames = mainNames.map(item => item.toLowerCase());
-        playerNames = mainNames.map(item => item.toLowerCase());
+        playerNames = playerNames.map(item => item.toLowerCase());
     }
+
+    settings.ignoreNames.forEach(ignore => {
+        mainNames = mainNames.map(name => name !== ignore ? name : null).filter(name => name);
+        playerNames = playerNames.map(name => name !== ignore ? name : null).filter(name => name);
+    })
+
+    settings.ignoreNameParts.forEach(ignore => {
+        mainNames = mainNames.map(name => name.replaceAll(ignore, ""));
+        playerNames = playerNames.map(name => name.replaceAll(ignore, ""));
+    })
 
     mainNames.forEach(mainName => {
         playerNames.forEach(playerName => {
-            const distance = levenshtein(mainName, playerName);
-            const length = Math.max(mainName.length, playerName.length);
-
-            const percentage = Math.round((1 - distance / length) * 100);
-            //console.log([distance, length, percentage, mainName, playerName].map(item=> `${item}`.padEnd(3)).join(" | "));         
+            const percentage = getPercentage(mainName, playerName);
             if (max < percentage) max = percentage;
         })
     })
     return max;
+}
+export function getPercentage(str1, str2) {
+    const distance = levenshtein(str1, str2);
+    const length = Math.max(str1.length, str2.length);
+
+    const percentage = Math.round((1 - distance / length) * 100);
+    return percentage;
 }
 function levenshtein(longer, shorter) {
     if (longer.length < shorter.length) {
@@ -160,7 +173,6 @@ function countCommonAssociates(main, player) {
 
     let matchCount = 0;
     mainAssociates.forEach(mainAssociate => {
-        let match = false;
         playerAssociates.forEach(playerAssociate => {
             if (mainAssociate === playerAssociate) matchCount++;
         })
@@ -169,10 +181,10 @@ function countCommonAssociates(main, player) {
 }
 function getAssociatesFromPlayer(associatesObj) {
     const associates = [];
-    for (const key in associatesObj) {
+    for (const key in associatesObj) {        
         const associate = associatesObj[key];
-        associate.forEach(steamId => {
-            if (associate.includes(steamId)) return;
+        associate.forEach(steamId => {            
+            if (associates.includes(steamId)) return;
 
             associates.push(steamId);
         })
@@ -219,7 +231,7 @@ function setupStatLine(statLine, outcome, player, settings) {
     stats.push(`F: ${getStatLineStr(`${getDaysSince(player.account.firstSeen)}d`, 5)}`);
     
     const lastSeen = player.account.servers[0]?.lastSeen || null;
-    if (lastSeen) stats.push(`L: ${getDaysSince(lastSeen)}d`.padEnd(8))
+    if (lastSeen) stats.push(`L: ${getShowCaseTimeString(lastSeen, true)}`.padEnd(8))
 
     statLine.innerHTML = stats.join(" | ")
 }
@@ -239,7 +251,7 @@ function getAssociateStat(outcome, settings) {
 
     let str = `A: `;
     if (numberOfAssociates < limit) str += getStatLineStr(`${numberOfAssociates}`, 2);
-    else str += `<span class="bme-colored-span" style="--color: ${settings.color[outcome.color]}">${getStatLineStr(`${numberOfAssociates}%`, 2)}</span>`
+    else str += `<span class="bme-colored-span" style="--color: ${settings.color[outcome.color]}">${getStatLineStr(`${numberOfAssociates}`, 2)}</span>`
 
     return str;
 }
