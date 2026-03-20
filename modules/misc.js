@@ -193,7 +193,7 @@ export async function getMyServers(onlyIds) {
     
     const data = await requestMyServers('https://api.battlemetrics.com/servers?filter[rcon]=true&page[size]=100', token)
     if (!data) {
-        console.error(`Failed to request your servers | Status: ${resp?.status}`);
+        console.error(`Failed to request your servers | Returned type: ${typeof(data)}`);
         return null;
     }
 
@@ -224,7 +224,7 @@ async function requestMyServers(url, token, count = 0) {
 
         if (data.links.next) {
             await new Promise(r => {setTimeout(r, 1000)});
-            const nextPage = requestMyServers(data.links.next, token);
+            const nextPage = await requestMyServers(data.links.next, token);
             if (!nextPage) return servers;
 
             servers.push(...nextPage);
