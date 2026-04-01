@@ -1,4 +1,4 @@
-import { getAuthToken, getLastServer, getSteamFriendlistFromRustApi, getSteamFriendlistFromSteam, rustApiKeyPermissionBits, talkToBackgroundScript } from "../../misc.js";
+import { getAuthToken, getCurrentFriends, getHistoricFriends, getLastServer, talkToBackgroundScript } from "../../misc.js";
 import { updatePlayerProfileElements } from "../../sidebar.js";
 import { organizations } from "./teaminfo.js";
 
@@ -48,11 +48,10 @@ function setupPlayerCache(bmId, authToken) {
         cache[bmId].rustPremium = getRustPremiumStatus(cache[bmId].bmProfile);
 
     if (validate("steamFriends", settings, bmId))
-        cache[bmId].steamFriends = getSteamFriends(cache[bmId].bmProfile, "steam");
+        cache[bmId].steamFriends = getSteamFriends(cache[bmId].bmProfile, "current");
 
-    if (!cache[bmId].historicFriends) cache[bmId].historicFriends = {}
     if (validate("historicFriends", settings, bmId))
-        cache[bmId].historicFriends.rustApi = getSteamFriends(cache[bmId].bmProfile, "rust-api");
+        cache[bmId].historicFriends = getSteamFriends(cache[bmId].bmProfile, "historic");
 
     if (!cache[bmId].identifiers) cache[bmId].identifiers = {}
     if (validate("steamAvatars", settings, bmId))
@@ -78,7 +77,7 @@ function setupPlayerCache(bmId, authToken) {
     if (validate("serverPop", settings, bmId))
         cache[bmId].serverPop = getCurrentServersPopulation(cache[bmId].bmProfile, authToken)
 
-    loadPlayerData(cache[bmId].steamFriends, cache[bmId].historicFriends.rustApi, cache[bmId].team);
+    loadPlayerData(cache[bmId].steamFriends, cache[bmId].historicFriends, cache[bmId].team);
 
 }
 function setupBanCache(bmId, authToken) {
@@ -122,7 +121,7 @@ function validate(section, { overview, identifier, sidebar, banPage }, bmId) {
             sidebar?.historicFriends.enabled;
         if (needed) return true;
     } else if (section === "historicFriends") {
-        if (cache[bmId]?.historicFriends.rustApi !== undefined) return false;//Already Cached
+        if (cache[bmId]?.historicFriends !== undefined) return false;//Already Cached
 
         const needed = sidebar?.historicFriends.enabled
         if (needed) return true;
@@ -271,8 +270,8 @@ async function getSteamFriends(bmProfile, type) {
         return null;
     }
 
-    if (type === "steam") return getSteamFriendlistFromSteam(steamId);
-    if (type === "rust-api") return getSteamFriendlistFromRustApi(steamId);
+    if (type === "current") return getCurrentFriends(steamId);
+    if (type === "historic") return getHistoricFriends(steamId);
     return undefined;
 }
 async function loadPlayerData(friends, historicFriends, team) {
@@ -385,7 +384,7 @@ async function getSteamAvatars(bmProfile) {
     const avatarHits = "N/A";
 
     if (!avatarHash) return [];
-    const avatars = await getAvatarsFromRustApi(steamId);
+    const avatars = await getHistoricAvatars(steamId);
 
     if (typeof (avatars[0]) === "string" && avatarHash) {
         return [{ avatar: avatarHash, avatarHits, lastSeen }]
@@ -403,13 +402,15 @@ async function getSteamAvatars(bmProfile) {
     avatars.sort((a, b) => b.lastSeen - a.lastSeen);
     return avatars;
 }
-async function getAvatarsFromRustApi(steamId) {
+async function getHistoricAvatars(steamId) {
     try {
-        const rustApiKey = localStorage.getItem("BME_RUST_API_KEY");
-        if (!rustApiKey) return "NO_API_KEY";
-        if (rustApiKey[rustApiKeyPermissionBits.historicAvatars] !== "1") return "NO_PERMISSION";
+        const piDetails = localStorage.getItem("BME_PLAYER_INSIGHT_API");
+        const PLAYER_INSIGHT_KEY = piDetails?.apiKey || null;
+        if (!PLAYER_INSIGHT_KEY) return "NO_API_KEY";
+        if (PLAYER_INSIGHT_KEY.length !== 64) return "INVALID_API_KEY";
+        if (!piDetails?.perms.includes("steamAvatars")) return "NO_PERMISSION";
 
-        return await talkToBackgroundScript("BME_RUST_API_AVATARS", steamId, rustApiKey)
+        return await talkToBackgroundScript("BME_HISTORIC_AVATARS", steamId, PLAYER_INSIGHT_KEY)
     } catch (error) {
         console.error(error);
         return "ERROR";
@@ -479,16 +480,6 @@ async function getCurrentTeam(bmProfile, authToken) {
     }
 }
 
-async function getAtlasTeaminfo(steamId, serverId, token) {
-    const data = await talkToBackgroundScript("BME_ATLAS_TEAMINFO", `${steamId}-${serverId}`, token);
-    const result = data?.data?.attributes?.result[0]?.children[1]?.children[0]?.children[0]?.reference.result;
-    if (!result) {
-        console.error(`Failed to request teaminfo | Status: ${resp.status} | Result: ${result}`);
-        return "error";
-    }
-
-    return result;
-}
 async function getPublicBans(bmProfile) {
     bmProfile = await bmProfile;
     const steamId = getSteamIdFromBmProfile(bmProfile)
@@ -497,10 +488,13 @@ async function getPublicBans(bmProfile) {
 }
 async function requestPublicBansFor(steamId) {
     try {
-        const rustApiKey = localStorage.getItem("BME_RUST_API_KEY");
-        if (!rustApiKey) return "NO_API_KEY";
+        const piDetails = localStorage.getItem("BME_PLAYER_INSIGHT_API");
+        const PLAYER_INSIGHT_KEY = piDetails?.apiKey || null;
+        if (!PLAYER_INSIGHT_KEY) return "NO_API_KEY";
+        if (PLAYER_INSIGHT_KEY.length !== 64) return "INVALID_API_KEY";
+        if (!piDetails?.perms.includes("steamBans")) return "NO_PERMISSION";
 
-        return await talkToBackgroundScript("BME_PUBLIC_BANS", steamId, rustApiKey)
+        return await talkToBackgroundScript("BME_PUBLIC_BANS", steamId, PLAYER_INSIGHT_KEY)
     } catch (error) {
         console.error(error);
         return "ERROR";

@@ -9,6 +9,7 @@ chrome.runtime.onMessage.addListener(async (req, sender) => {
     if (req.type === "BME_JSON_DOWNLOAD") return downloadJsonFile(req.filename, req.data)
 
     console.log(`${req.type.padEnd(30)} | ${`${req?.apiKey?.substring(0, 10)}`.padEnd(10)} | ${req.subject.length === 17 ? req.subject : req.subject.split(",").length}`);
+
     /**
      * returnObject:
      * type: original type +"_RESOLVED"
@@ -16,9 +17,10 @@ chrome.runtime.onMessage.addListener(async (req, sender) => {
      * value: the outcome of the request or the error object
      */
     const returnObject = { type: `${req.type}_RESOLVED` }
-    if (req.type.startsWith("BME_STEAM_FRIENDLIST")) return sendFriendlistFromSteam(req.subject, req.apiKey, sender, returnObject);
-    if (req.type.startsWith("BME_RUST_API_FRIENDLIST")) return sendFriendlistFromRustApi(req.subject, req.apiKey, sender, returnObject)
-    if (req.type.startsWith("BME_RUST_API_AVATARS")) return sendAvatarsFromRustApi(req.subject, req.apiKey, sender, returnObject)
+    if (req.type.startsWith("BME_CURRENT_FRIENDS")) return sendCurrentFriends(req.subject, req.apiKey, sender, returnObject);
+    if (req.type.startsWith("BME_HISTORIC_FRIENDS")) return sendHistoricFriends(req.subject, req.apiKey, sender, returnObject)
+    if (req.type.startsWith("BME_HISTORIC_AVATARS")) return sendHistoricAvatars(req.subject, req.apiKey, sender, returnObject)
+    if (req.type.startsWith("BME_PLAYER_INSIGHT_PERMS")) return sendPlayerInsightPermissions(req.subject, req.apiKey, sender, returnObject)
     if (req.type.startsWith("BME_PREMIUM_STATUS")) return sendPremiumStatus(req.subject, sender, returnObject)
     if (req.type.startsWith("BME_PROXYCHECK")) return sendProxyCheck(req.subject, req.apiKey, sender, returnObject)
     if (req.type.startsWith("BME_PLAYER_SUMMARIES")) return sendSteamPlayerSummaries(req.subject, req.apiKey, sender, returnObject);
@@ -27,7 +29,6 @@ chrome.runtime.onMessage.addListener(async (req, sender) => {
     if (req.type.startsWith("BME_ATLAS_TEAMINFO")) return sendAtlasTeaminfo(req.subject, req.apiKey, sender, returnObject);
 
 })
-
 
 function downloadJsonFile(name, content) {
     const json = JSON.stringify(content, null, 4);
@@ -39,10 +40,10 @@ function downloadJsonFile(name, content) {
         saveAs: true,
     });
 }
-async function sendFriendlistFromSteam(steamId, apiKey, sender, returnObject) {
+async function sendCurrentFriends(steamId, apiKey, sender, returnObject) {
     try {
         const resp = await fetch(`https://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=${apiKey}&steamid=${steamId}&relationship=friend`);
-        if (resp?.status !== 200 && resp.status !== 401) throw new Error(`Requesting Steam Friends Failed | steamId: ${steamId} | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
+        if (resp?.status !== 200 && resp.status !== 401) throw new Error(`Requesting steam friends failed | steamId: ${steamId} | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
 
         const data = await resp.json();
         returnObject.status = "OK";
@@ -64,10 +65,10 @@ async function sendFriendlistFromSteam(steamId, apiKey, sender, returnObject) {
         return chrome.tabs.sendMessage(sender.tab.id, returnObject);
     }
 }
-async function sendFriendlistFromRustApi(steamId, apiKey, sender, returnObject) {
+async function sendHistoricFriends(steamId, apiKey, sender, returnObject) {
     try {
-        const resp = await fetch(`https://rust-api.flqyd.dev/steamFriends/${steamId}?accessToken=${apiKey}`);
-        if (resp?.status !== 200) throw new Error(`Requesting Rust Api Friends Failed | steamId: ${steamId} | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
+        const resp = await fetch(`https://player-insight.flqyd.dev/api/steam/friends/${steamId}?token=${apiKey}`);
+        if (resp?.status !== 200) throw new Error(`Requesting historic friends failed | steamId: ${steamId} | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status || 600}`)
 
         const data = await resp.json();
         returnObject.status = "OK";
@@ -79,7 +80,6 @@ async function sendFriendlistFromRustApi(steamId, apiKey, sender, returnObject) 
         returnObject.value = error;
         return chrome.tabs.sendMessage(sender.tab.id, returnObject);
     }
-
 }
 async function sendPremiumStatus(steamId, sender, returnObject) {
     try {
@@ -122,14 +122,30 @@ async function sendProxyCheck(ips, apiKey, sender, returnObject) {
         return chrome.tabs.sendMessage(sender.tab.id, returnObject);
     }
 }
-async function sendAvatarsFromRustApi(steamId, apiKey, sender, returnObject) {
+async function sendHistoricAvatars(steamId, apiKey, sender, returnObject) {
     try {
-        const resp = await fetch(`https://rust-api.flqyd.dev/getAvatars/${steamId}?accessToken=${apiKey}`);
+        const resp = await fetch(`https://player-insight.flqyd.dev/api/steam/avatars/${steamId}?token=${apiKey}`);
         if (resp?.status !== 200) throw new Error(`Requesting Avatars Failed | steamId: ${steamId} | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
 
         const data = await resp.json();
         returnObject.status = "OK";
-        returnObject.value = data.data.avatars;
+        returnObject.value = data;
+        return chrome.tabs.sendMessage(sender.tab.id, returnObject);
+    } catch (error) {
+        console.error(error);
+        returnObject.status = "ERROR";
+        returnObject.value = error;
+        return chrome.tabs.sendMessage(sender.tab.id, returnObject);
+    }
+}
+async function sendPlayerInsightPermissions(steamId, apiKey, sender, returnObject) {
+    try {
+        const resp = await fetch(`https://player-insight.flqyd.dev/api/permissions?token=${apiKey}`);
+        if (resp?.status !== 200) throw new Error(`Failed to request permissions | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
+
+        const data = await resp.json();
+        returnObject.status = "OK";
+        returnObject.value = data?.data?.perms;
         return chrome.tabs.sendMessage(sender.tab.id, returnObject);
     } catch (error) {
         console.error(error);
@@ -191,7 +207,7 @@ async function sendSteamPlayerBanSummaries(steamIds, API_KEY, sender, returnObje
 }
 async function sendPublicBans(steamId, apiKey, sender, returnObject) {
     try {
-        const resp = await fetch(`https://rust-api.flqyd.dev/bans/${steamId}?accessToken=${apiKey}`);
+        const resp = await fetch(`https://player-insight.flqyd.dev/api/steam/bans/${steamId}?token=${apiKey}`);
         if (resp?.status !== 200) throw new Error(`Requesting Public Bans Failed | steamId: ${steamId} | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
 
         const data = await resp.json();
@@ -206,7 +222,7 @@ async function sendPublicBans(steamId, apiKey, sender, returnObject) {
     }
 }
 async function sendAtlasTeaminfo(values, apiKey, sender, returnObject) {
-    try {        
+    try {
         const steamId = values.split("-")[0];
         const serverId = values.split("-")[1];
 

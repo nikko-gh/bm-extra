@@ -88,26 +88,27 @@ function plural(value, unit) {
     return `${value} ${unit}s`;
 }
 
-export async function getSteamFriendlistFromSteam(steamId) {
+export async function getCurrentFriends(steamId) {
     try {
         const STEAM_API_KEY = localStorage.getItem("BME_STEAM_API_KEY");
         if (!STEAM_API_KEY) return "NO_API_KEY";
 
-        return await talkToBackgroundScript("BME_STEAM_FRIENDLIST", steamId, STEAM_API_KEY)
+        return await talkToBackgroundScript("BME_CURRENT_FRIENDS", steamId, STEAM_API_KEY)
     } catch (error) {
         console.error(error);
         if (error.message === "TIMEOUT") return error.message;
         return "ERROR";
     }
 }
-export async function getSteamFriendlistFromRustApi(steamId) {
+export async function getHistoricFriends(steamId) {
     try {
-        const RUST_API_KEY = localStorage.getItem("BME_RUST_API_KEY");
-        if (!RUST_API_KEY) return "NO_API_KEY";
-        if (RUST_API_KEY.length !== 64) return "INVALID_API_KEY";
-        if (RUST_API_KEY[rustApiKeyPermissionBits.historicFriends] !== "1") return "MISSING_PERMISSION"
+        const piDetails = localStorage.getItem("BME_PLAYER_INSIGHT_API");
+        const PLAYER_INSIGHT_KEY = piDetails?.apiKey || null;
+        if (!PLAYER_INSIGHT_KEY) return "NO_API_KEY";
+        if (PLAYER_INSIGHT_KEY.length !== 64) return "INVALID_API_KEY";
+        if (!piDetails?.perms.includes("steamFriends")) return "NO_PERMISSION";
 
-        return await talkToBackgroundScript("BME_RUST_API_FRIENDLIST", steamId, RUST_API_KEY);
+        return await talkToBackgroundScript("BME_HISTORIC_FRIENDS", steamId, PLAYER_INSIGHT_KEY);
     } catch (error) {
         console.error(error);
         if (error.message === "TIMEOUT") return "TIMEOUT";
@@ -296,7 +297,7 @@ export function getIdentifierType(identifier) {
 export function talkToBackgroundScript(type, subject, apiKey) {
     const requestId = Math.floor(Math.random() * 1000000);
     type = `${type}_${requestId}`;
-
+        
     return new Promise((resolve, reject) => {
         function handler(response) {
             if (response?.type !== `${type}_RESOLVED`) return;

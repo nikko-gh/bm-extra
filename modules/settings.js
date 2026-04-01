@@ -1,29 +1,51 @@
-import { getMyServers, rustApiKeyPermissionBits, setNativeValue } from "./misc.js";
+import { getMyServers, setNativeValue, talkToBackgroundScript } from "./misc.js";
 import { getPcCacheSize } from "./page/cache/cache.js";
 
 const ONE_DAY = 24 * 60 * 60 * 1000;
-const allSidebarSlots = [
-    { value: "right-slot-1", display: "RIGHT 1" },
-    { value: "right-slot-2", display: "RIGHT 2" },
-    { value: "right-slot-3", display: "RIGHT 3" },
-    { value: "right-slot-4", display: "RIGHT 4" },
-    { value: "left-slot-1", display: "LEFT 1" },
-    { value: "left-slot-2", display: "LEFT 2" },
-    { value: "left-slot-3", display: "LEFT 3" },
-    { value: "left-slot-4", display: "LEFT 4" },
-]
-const banSidebarSlots = [
-    { value: "right-slot-1", display: "RIGHT 1" },
-    { value: "right-slot-2", display: "RIGHT 2" },
-    { value: "left-slot-1", display: "LEFT 1" },
-    { value: "left-slot-2", display: "LEFT 2" },
-]
+
+
 let myServers = null;
 loadMyServers();
 async function loadMyServers() {
     if (!myServers) myServers = await getMyServers();
 }
 
+let _playerInsight = null;
+loadPiPerms()
+async function loadPiPerms() {
+    const str = localStorage.getItem("BME_PLAYER_INSIGHT_API");
+    if (!str) return;
+
+    let obj = JSON.parse(str);
+    if (obj.timestamp < Date.now() - ONE_DAY || obj.perms.length === 0){
+        try {
+            obj = {
+                apiKey: obj.apiKey,
+                perms: await talkToBackgroundScript("BME_PLAYER_INSIGHT_PERMS", "N/A", obj.apiKey),
+            }
+        } catch (error) {
+            obj = {apiKey: obj.apiKey, perms: []}
+        }
+        obj.timestamp = Date.now();
+
+        _playerInsight = obj;
+        localStorage.setItem("BME_PLAYER_INSIGHT_API", JSON.stringify(obj));
+    }
+    _playerInsight = obj;
+}
+function validatePlayerInsightPermission(perm) {
+    if (_playerInsight === null) return false;
+
+    const perms = _playerInsight.perms;
+    if (perms.length === 0) return false;
+
+    if (perm === "HF" && perms.includes("steamFriends")) return true;
+    if (perm === "HA" && perms.includes("steamAvatars")) return true;
+    if (perm === "PB" && perms.includes("steamBans")) return true;
+    if (perm === "SL" && perms.includes("steamLinks")) return true;
+    if (perm === "DU" && perms.includes("discordUser")) return true;
+    return false;
+}
 
 export async function displaySettings() {
     if (document.getElementById("bme-settings-background")) return;
@@ -180,18 +202,18 @@ function getIdentifierSettings() {
     title.innerText = "Identifier Settings";
     element.appendChild(title);
 
-    const settingsBucket = "BME_IDENTIFIER_SETTINGS";
-    const settings = JSON.parse(localStorage.getItem(settingsBucket));
+    const bucket = "BME_IDENTIFIER_SETTINGS";
+    const settings = JSON.parse(localStorage.getItem(bucket));
 
     const showAvatarToggle = getSettingsElement(
         "toggle", "Show avatar on page",
         "Shows the players avatar when it's available next to his name",
-        null, settingsBucket, "showAvatar", settings.showAvatar
+        null, bucket, "showAvatar", settings.showAvatar
     )
     const swapBattleEyeGuid = getSettingsElement(
         "toggle", "Swap BattlEye GUID",
         "Swap BattlEye GUID to the player's streamer mode name",
-        ["SM Names"], settingsBucket, "swapBattleEyeGuid", settings.swapBattleEyeGuid
+        ["SM Names"], bucket, "swapBattleEyeGuid", settings.swapBattleEyeGuid
     )
 
     const showExtraInfoSegment = document.createElement("div")
@@ -200,13 +222,13 @@ function getIdentifierSettings() {
     const showIspAsnData = getSettingsElement(
         "toggle", "Show extra IP info",
         "Shows the name of the ISP and it's ASN on the IP addresses.",
-        null, settingsBucket, "showIspAndAsnData", settings.showIspAndAsnData, { segment: showExtraInfoSegment }
+        null, bucket, "showIspAndAsnData", settings.showIspAndAsnData, { segment: showExtraInfoSegment }
     )
 
     const showMore = getSettingsElement(
         "toggle", "Show Proxycheck Info",
         "Shows extra information beyond what you would normally see from proxycheck.io",
-        ["PROXYCHECK"], settingsBucket, "requestProxyCheck", settings.requestProxyCheck
+        ["PROXYCHECK"], bucket, "requestProxyCheck", settings.requestProxyCheck
     )
     showExtraInfoSegment.append(showMore);
 
@@ -215,29 +237,29 @@ function getIdentifierSettings() {
     const highlightVpn = getSettingsElement(
         "toggle", "Highlight VPNs",
         "Highlights VPNs to make it easier to differentiate.",
-        null, settingsBucket, "highlightVpn",
+        null, bucket, "highlightVpn",
         settings.highlightVpn, { segment: vpnSegment }
     )
 
     const removeVpnLabel = getSettingsElement(
         "toggle", "Remove VPN label",
         "Removes the VPN labels from the identifiers.",
-        null, settingsBucket, "removeVpnLabel", settings.removeVpnLabel
+        null, bucket, "removeVpnLabel", settings.removeVpnLabel
     )
     const vpnAbove = getSettingsElement(
         "number", "VPN connection requirement:",
         "The number of connections needed to classify the identifier as a VPN by default.",
-        null, settingsBucket, "vpnAbove", settings.vpnAbove
+        null, bucket, "vpnAbove", settings.vpnAbove
     )
     const vpnBgColor = getSettingsElement(
         "color", "VPN Background color:",
         "Choose the background color of the VPN identifier element.",
-        null, settingsBucket, "vpnBgColor", settings.vpnBgColor
+        null, bucket, "vpnBgColor", settings.vpnBgColor
     )
     const vpnOpacity = getSettingsElement(
         "number", "VPN Opacity:",
         "Choose the Level of Opacity that should be applied to the VPNs.<br />0 - transparent | 1 - fully visible",
-        null, settingsBucket, "vpnOpacity", settings.vpnOpacity, { min: 0, max: 1 }
+        null, bucket, "vpnOpacity", settings.vpnOpacity, { min: 0, max: 1 }
     )
     vpnSegment.append(removeVpnLabel, vpnAbove, vpnBgColor, vpnOpacity)
 
@@ -247,22 +269,44 @@ function getIdentifierSettings() {
     const displayAvatars = getSettingsElement(
         "toggle", "Display Avatars",
         `Display the avatars as identifiers that the player used in the past. It will only work if the identifiers are sorted by "Type".`,
-        ["RUST API - HA"], settingsBucket, "displayAvatars",
+        ["Player Insight - HA"], bucket, "displayAvatars",
         settings.displayAvatars, { segment: avatarsSegment }
     )
 
     const zoomableAvatars = getSettingsElement(
         "toggle", "Zoomable Avatars",
         "Make the Avatars grow to their full sizes so you can get a better view of them when hovered over.",
-        null, settingsBucket, "zoomableAvatars", settings.zoomableAvatars
+        null, bucket, "zoomableAvatars", settings.zoomableAvatars
     )
     avatarsSegment.append(zoomableAvatars)
+
+    const linkSegment = document.createElement("div")
+    linkSegment.classList.add("bme-settings-segment");
+    
+    const showLinks = getSettingsElement(
+        "toggle", "Show Links",
+        `Display linked discord accounts`,
+        ["Player Insight - SL"], bucket, "showLinks",
+        settings.displayAvatars, { segment: linkSegment }
+    )
+    const loadDiscordData = getSettingsElement(
+        "toggle", "Load Discord Data",
+        `Load and display the discord Account information.`,
+        ["Player Insight - DU"], bucket, "loadDiscordData",
+        settings.displayAvatars
+    )
+
+    linkSegment.append(loadDiscordData)
+
+
+
 
     const resetButton = getResetButton("bm-identifier")
     element.append(
         showAvatarToggle, swapBattleEyeGuid, showIspAsnData,
         showExtraInfoSegment, highlightVpn, vpnSegment,
         displayAvatars, avatarsSegment,
+        showLinks, linkSegment,
 
         resetButton,
     )
@@ -433,6 +477,17 @@ function getSidebarSettings() {
     title.innerText = "Sidebar Settings";
     element.appendChild(title);
 
+    const allSidebarSlots = [
+        { value: "right-slot-1", display: "RIGHT 1" },
+        { value: "right-slot-2", display: "RIGHT 2" },
+        { value: "right-slot-3", display: "RIGHT 3" },
+        { value: "right-slot-4", display: "RIGHT 4" },
+        { value: "left-slot-1", display: "LEFT 1" },
+        { value: "left-slot-2", display: "LEFT 2" },
+        { value: "left-slot-3", display: "LEFT 3" },
+        { value: "left-slot-4", display: "LEFT 4" },
+    ]
+
     const settingsBucket = "BME_SIDEBAR_SETTINGS";
     const settings = JSON.parse(localStorage.getItem(settingsBucket));
 
@@ -508,7 +563,7 @@ function getSidebarSettings() {
     const historicFriendsEnabled = getSettingsElement(
         "toggle", "Show Historic Friends",
         "Show Historic Friends on the sidebar",
-        ["RUST API - HF"], settingsBucket, "historicFriends-enabled",
+        ["Player Insight - HF"], settingsBucket, "historicFriends-enabled",
         settings.historicFriends.enabled, { segment: historicFriendsSegment }
     )
 
@@ -535,7 +590,7 @@ function getSidebarSettings() {
     const publicBansEnabled = getSettingsElement(
         "toggle", "Show Public bans",
         "Shows the Public Bans on the sidebar",
-        ["RUST API - PB"], settingsBucket, "publicBans-enabled",
+        ["Player Insight - PB"], settingsBucket, "publicBans-enabled",
         settings.publicBans.enabled, { segment: publicBansSegment }
     )
 
@@ -585,6 +640,12 @@ function getBanPageSettings() {
         settings.presets.enabled, { segment: banPresetsSegment }
     )
 
+    const banSidebarSlots = [
+        { value: "right-slot-1", display: "RIGHT 1" },
+        { value: "right-slot-2", display: "RIGHT 2" },
+        { value: "left-slot-1", display: "LEFT 1" },
+        { value: "left-slot-2", display: "LEFT 2" },
+    ]    
     const banPresetSidebarSpot = getSettingsElement(
         "switch", "Position:",
         "Choose which sidebar spot should the ban presets be present",
@@ -1172,7 +1233,12 @@ function getApiKeysSettings() {
     const battleMetricsKeyElements = getApiKeyDiv("BattleMetrics API Key:", "BME_BATTLEMETRICS_API_KEY", "bm-api", {
         detail: "OPTIONAL: Provided key will take priority, it isn't necessary."
     });
-    const rustApiKeyElement = getApiKeyDiv("Rust API Key:", "BME_RUST_API_KEY", "rust-api");
+    const piPermsSegment = document.createElement("div");
+    piPermsSegment.classList.add("bme-settings-segment");
+    const playerInsightApiKeyElement = getApiKeyDiv("Player Insight API Key:", "BME_PLAYER_INSIGHT_API", "pi-api", {
+        segment: piPermsSegment,
+    });
+    generatePlayerInsightSegment(piPermsSegment);
 
     const proxyCheckSegment = document.createElement("div")
     proxyCheckSegment.classList.add("bme-settings-segment");
@@ -1180,6 +1246,7 @@ function getApiKeysSettings() {
         segment: proxyCheckSegment,
         detail: `Key cam be generated at <a href="https://proxycheck.io/" target="_blank">proxycheck.io</a>.`
     });
+
 
     const settingsBucket = "BME_PROXY_CHECK_SETTINGS";
     const settings = JSON.parse(localStorage.getItem(settingsBucket));
@@ -1223,12 +1290,25 @@ function getApiKeysSettings() {
     );
 
     element.append(
-        steamKeyElement, battleMetricsKeyElements, rustApiKeyElement,
-        proxyCheckApiKeyElement, proxyCheckSegment,
+        steamKeyElement, battleMetricsKeyElements, playerInsightApiKeyElement,
+        piPermsSegment, proxyCheckApiKeyElement, proxyCheckSegment,
         getSmUpdater()
     );
 
     return element;
+}
+function generatePlayerInsightSegment(segment) {
+    const perms = JSON.parse(localStorage.getItem("BME_PLAYER_INSIGHT_API"))?.perms || [];    
+    const p = document.createElement("p")
+
+    p.innerHTML += `<span class="bme-settings-text-${perms.includes("steamFriends") ? "green" : "red"}">Historic Friends</span> | `;
+    p.innerHTML += `<span class="bme-settings-text-${perms.includes("steamAvatars") ? "green" : "red"}">Historic Avatars</span> | `;
+    p.innerHTML += `<span class="bme-settings-text-${perms.includes("steamBans") ? "green" : "red"}">Public Bans</span> | `;
+    p.innerHTML += `<span class="bme-settings-text-${perms.includes("steamLinks") ? "green" : "red"}">Steam Links</span> | `;
+    p.innerHTML += `<span class="bme-settings-text-${perms.includes("discordUser") ? "green" : "red"}">Discord Data</span>`;
+
+    segment.innerHTML = "";
+    segment.append(p);
 }
 function getApiKeyDiv(titleText, storageName, id, meta) {
     const container = document.createElement("div");
@@ -1236,7 +1316,9 @@ function getApiKeyDiv(titleText, storageName, id, meta) {
     const currentKey =
         storageName === "BME_PROXY_CHECK_SETTINGS" ?
             JSON.parse(localStorage.getItem(storageName))?.apiKey :
-            localStorage.getItem(storageName);
+            storageName === "BME_PLAYER_INSIGHT_API" ?
+                JSON.parse(localStorage.getItem(storageName))?.apiKey :
+                localStorage.getItem(storageName);
 
     if (meta?.segment && !currentKey) meta.segment.classList.add("bme-inactive-segment");
 
@@ -1262,21 +1344,39 @@ function getApiKeyDiv(titleText, storageName, id, meta) {
     updateButton.innerText = "Update"
     wrapper.appendChild(updateButton);
 
-    updateButton.addEventListener("click", e => {
+    updateButton.addEventListener("click", async e => {
         const input = document.getElementById(`${id}-key-input`);
-        const newKey = input.value;
+        let newKey = input.value;
         input.value = "";
+
+        let success = true;
 
         if (storageName === "BME_PROXY_CHECK_SETTINGS") {
             const currentSettings = JSON.parse(localStorage.getItem(storageName));
             currentSettings.apiKey = newKey;
             localStorage.setItem(storageName, JSON.stringify(currentSettings));
+        } else if (storageName === "BME_PLAYER_INSIGHT_API") {
+            try {
+                if (!newKey) throw new Error("NO_KEY");
+                
+                const perms = await talkToBackgroundScript("BME_PLAYER_INSIGHT_PERMS", "N/A", newKey);
+                const piDetails = { apiKey: newKey, perms, timestamp: Date.now() }
+                
+                _playerInsight = piDetails; //UPDATE INTERNALLY SAVED PERMS
+                localStorage.setItem(storageName, JSON.stringify(piDetails));
+                changeButton("green", e.target)
+            } catch (error) {
+                localStorage.removeItem(storageName)
+                changeButton("red", e.target)
+                newKey = "";
+                success = false;
+            }
+            generatePlayerInsightSegment(meta.segment)
         } else {
             localStorage.setItem(storageName, newKey);
         }
-
         const detailItem = document.getElementById(`${id}-key-detail`);
-        detailItem.innerText = getKeyDetailContent(newKey);
+        if (success || !newKey) detailItem.innerText = getKeyDetailContent(newKey);
 
         if (!meta?.segment) return;
         if (newKey) meta.segment.classList.remove("bme-inactive-segment");
@@ -1291,6 +1391,14 @@ function getApiKeyDiv(titleText, storageName, id, meta) {
     }
 
     return container;
+}
+function changeButton(color, btn, time = 400) {
+    btn.classList.add("bm-btn");
+
+    btn.classList.add(`bme-btn-${color}`);
+    setTimeout(() => {
+        btn.classList.remove(`bme-btn-${color}`);
+    }, time);
 }
 function getKeyDetailContent(key) {
     return key ? `Your key starts with: ${key.substring(0, 10)}` : "You have no key saved yet.";
@@ -1577,15 +1685,9 @@ function validateRequirement(requirement) {
     } else if (requirement === "PROXYCHECK") {
         const settings = JSON.parse(localStorage.getItem("BME_PROXY_CHECK_SETTINGS"));
         if (settings.apiKey) return true;
-    } else if (requirement.startsWith("RUST API - ")) {
-        const key = localStorage.getItem("BME_RUST_API_KEY");
-        if (!key) return false;
-        if (key.length !== 64) return false;
-
+    } else if (requirement.startsWith("Player Insight - ")) {
         const type = requirement.split(" - ")[1];
-        if (type === "HF" && key[rustApiKeyPermissionBits.historicFriends] == 1) return true;
-        if (type === "HA" && key[rustApiKeyPermissionBits.historicAvatars] == 1) return true;
-        if (type === "PB" && key[rustApiKeyPermissionBits.publicBans] == 1) return true;
+        return validatePlayerInsightPermission(type)
     }
 
     return false
@@ -1742,6 +1844,9 @@ function checkIdentifierSettings() {
         if (typeof (settings.vpnAbove) !== "number") throw new Error("Settings error");
         if (typeof (settings.vpnBgColor) !== "string") throw new Error("Settings error");
         if (typeof (settings.vpnOpacity) !== "number") throw new Error("Settings error");
+        if (typeof (settings.showLinks) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.loadDiscordData) !== "boolean") throw new Error("Settings error");
+        
 
     } catch (error) {
         const defaultSettings = getDefaultIdentifierSettings();
@@ -1763,6 +1868,8 @@ function getDefaultIdentifierSettings() {
     settings.vpnAbove = -1;
     settings.vpnBgColor = "#150f0f";
     settings.vpnOpacity = 0.6;
+    settings.showLinks = false;
+    settings.loadDiscordData = false;
     return settings;
 }
 function checkBmInfoSettings() {

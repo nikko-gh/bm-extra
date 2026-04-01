@@ -1,4 +1,4 @@
-import { getElementWhenAppears, getLastServer, getSteamFriendlistFromRustApi, getSteamFriendlistFromSteam, getTimeSpan, removeSidebars, setNativeValue } from "./misc.js";
+import { getCurrentFriends, getElementWhenAppears, getHistoricFriends, getLastServer, getTimeSpan, removeSidebars, setNativeValue } from "./misc.js";
 
 export async function insertSidebars() {
     const mainElement = await getElementWhenAppears("main", true);
@@ -54,35 +54,38 @@ export async function insertFriendsSidebarElement(steamFriends, connectedPlayers
 }
 export async function insertHistoricFriendsSidebarElement(historicFriends, steamFriends, connectedPlayersData, connectedPlayersBanData, server, settings) {
     steamFriends = await steamFriends;
+    historicFriends = await historicFriends;
     server = await server;
+
 
     if (typeof (steamFriends) === "string") steamFriends = [];
     steamFriends = steamFriends.map(item => item.steamId);
 
     const onlineIds = server?.map(item => item.steamId) || [];
 
-    const rustApiFriends = (await historicFriends.rustApi)
-        .filter(friend => !steamFriends.includes(friend.steamId))
-        .map(item => {
-            const steamData = getPlayerSteamData(item.steamId, connectedPlayersData);
-            const banData = getPlayerSteamData(item.steamId, connectedPlayersBanData);
-            const online = onlineIds.includes(item.steamId);
+    if (typeof (historicFriends) !== "string")
+        historicFriends = historicFriends
+            .filter(friend => !steamFriends.includes(friend.steamId))
+            .map(item => {
+                const steamData = getPlayerSteamData(item.steamId, connectedPlayersData);
+                const banData = getPlayerSteamData(item.steamId, connectedPlayersBanData);
+                const online = onlineIds.includes(item.steamId);
 
-            return { ...item, steamData, banData, online }
-        });
-    rustApiFriends.sort((a, b) => {
-        if (a.online !== b.online) return a.online ? -1 : 1;
+                return { ...item, steamData, banData, online }
+            })
+            .sort((a, b) => {
+                if (a.online !== b.online) return a.online ? -1 : 1;
 
-        const value1 = b.since === 0 ? b.firstSeen : b.since;
-        const value2 = a.since === 0 ? a.firstSeen : a.since;
-        return value1 - value2;
-    });
+                const value1 = b.since === 0 ? b.firstSeen : b.since;
+                const value2 = a.since === 0 ? a.firstSeen : a.since;
+                return value1 - value2;
+            });
 
     const spot = settings.historicFriends.spot;
     const sidebarSlot = document.getElementById(`bme-sidebar-${spot}`);
     if (!sidebarSlot) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
 
-    const steamFriendsContainer = getHistoricSteamFriendsContainer(rustApiFriends, settings);
+    const steamFriendsContainer = getHistoricSteamFriendsContainer(historicFriends, settings);
     if (!sidebarSlot.hasChildNodes()) sidebarSlot.append(steamFriendsContainer);
 
 }
@@ -171,8 +174,8 @@ export async function insertFriendComparator() {
         if (isNaN(Number(value))) feedbackColor = "red";
         if (!value.startsWith("7656")) feedbackColor = "red";
         if (feedbackColor === "green") {
-            const steamFriends = await getSteamFriendlistFromSteam(value);
-            const historicFriends = await getSteamFriendlistFromRustApi(value);
+            const steamFriends = await getCurrentFriends(value);
+            const historicFriends = await getHistoricFriends(value);
 
             const friends = [];
             if (typeof (steamFriends) !== "string") steamFriends.forEach(item => friends.push(item.steamId));
@@ -496,7 +499,7 @@ function getPublicBansBody(publicBans) {
         const text = document.createElement("p");
         if (publicBans === "ERROR") text.innerText = "Failed to request bans";
         if (publicBans === "AUTH_ERROR") text.innerText = "Missing authorization";
-        if (publicBans === "NO_API_KEY") text.innerText = "Missing Rust API Key";
+        if (publicBans === "NO_API_KEY") text.innerText = "Missing API Key";
         if (publicBans.length === 0) text.innerText = "No bans were recorded";
         body.append(text);
         return body

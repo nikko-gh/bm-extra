@@ -39,7 +39,7 @@
     "host_permissions": [
         "*://api.battlemetrics.com/*",
         "*://api.steampowered.com/*",
-        "*://rust-api.flqyd.dev/*",
+        "*://player-insight.flqyd.dev/*",
         "*://rust-api.facepunch.com/*",
         "*://proxycheck.io/*"
     ],
