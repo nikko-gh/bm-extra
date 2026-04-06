@@ -10,8 +10,7 @@ chrome.runtime.onMessage.addListener(async (req, sender) => {
     if (!req.type.startsWith("BME_")) return;
     if (req.type === "BME_JSON_DOWNLOAD") return downloadJsonFile(req.filename, req.data)
 
-    console.log(`${req.type.padEnd(30)} | ${`${req?.apiKey?.substring(0, 10)}`.padEnd(10)} | ${req.subject.length === 17 ? req.subject : req.subject.split(",").length}`);
-
+    toLog(req.type, req?.apiKey, req.subject)
     /**
      * returnObject:
      * type: original type +"_RESOLVED"
@@ -23,6 +22,9 @@ chrome.runtime.onMessage.addListener(async (req, sender) => {
     if (req.type.startsWith("BME_HISTORIC_FRIENDS")) return sendHistoricFriends(req.subject, req.apiKey, sender, returnObject)
     if (req.type.startsWith("BME_HISTORIC_AVATARS")) return sendHistoricAvatars(req.subject, req.apiKey, sender, returnObject)
     if (req.type.startsWith("BME_PLAYER_INSIGHT_PERMS")) return sendPlayerInsightPermissions(req.subject, req.apiKey, sender, returnObject)
+    if (req.type.startsWith("BME_BM_ACCOUNT")) return sendBmAccount(req.subject, req.apiKey, sender, returnObject);
+    if (req.type.startsWith("BME_BM_BANS")) return sendBmBans(req.subject, req.apiKey, sender, returnObject);
+    if (req.type.startsWith("BME_STEAM_FRIENDLIST")) return sendFriendlistFromSteam(req.subject, req.apiKey, sender, returnObject);
     if (req.type.startsWith("BME_PREMIUM_STATUS")) return sendPremiumStatus(req.subject, sender, returnObject)
     if (req.type.startsWith("BME_PROXYCHECK")) return sendProxyCheck(req.subject, req.apiKey, sender, returnObject)
     if (req.type.startsWith("BME_PLAYER_SUMMARIES")) return sendSteamPlayerSummaries(req.subject, req.apiKey, sender, returnObject);
@@ -31,8 +33,20 @@ chrome.runtime.onMessage.addListener(async (req, sender) => {
     if (req.type.startsWith("BME_STEAM_LINKS")) return sendSteamLinks(req.subject, req.apiKey, sender, returnObject);
     if (req.type.startsWith("BME_DISCORD_DATA")) return sendDiscordData(req.subject, req.apiKey, sender, returnObject);
     if (req.type.startsWith("BME_ATLAS_TEAMINFO")) return sendAtlasTeaminfo(req.subject, req.apiKey, sender, returnObject);
-
 })
+
+function toLog(type, key, subject) {
+    type = type.substring(0, 30).padEnd(30);
+    key = `${key?.substring(0, 10) || null}`.padEnd(10);
+    subject = subject.includes("-") ?
+        `${subject.split("-").join(" | ")}` :
+        subject.includes(",") ?
+            subject.split(",").length :
+            subject;
+
+    console.log(`${type} | ${key} | ${subject}`);
+}
+
 
 function downloadJsonFile(name, content) {
     const json = JSON.stringify(content, null, 4);
@@ -299,4 +313,78 @@ async function sendAtlasTeaminfo(values, apiKey, sender, returnObject) {
         returnObject.value = error;
         return chrome.tabs.sendMessage(sender.tab.id, returnObject);
     }
+}
+
+
+
+async function sendBmAccount(bmId, token, sender, returnObject) {
+    try {
+        const data = await getPlayerData(bmId, token);
+
+        returnObject.status = "OK";
+        returnObject.value = data;
+        return chrome.tabs.sendMessage(sender.tab.id, returnObject);
+    } catch (error) {
+        console.error(error);
+        returnObject.status = "ERROR";
+        returnObject.value = error;
+        return chrome.tabs.sendMessage(sender.tab.id, returnObject);
+    }
+}
+async function getPlayerData(bmId, token, count = 0) {
+    if (count > 2) return;
+    try {
+        const resp = await fetch(`https://api.battlemetrics.com/players/${bmId}?version=^0.1.0&include=identifier,server,playerFlag&access_token=${token}`)
+
+        if (resp?.status === 429) await new Promise(r => { setTimeout(r, 30000); })
+        if (resp?.status !== 200) throw new Error(`Fetch failed for ${bmId} | Status: ${resp?.status}`);
+        await bmRateLimitLock(Number(resp.headers.get("x-rate-limit-remaining")));
+
+        const data = await resp.json();
+        return data
+    } catch (error) {
+        console.error(`Failed to request BattleMetrics Account: ${error.message}`);
+        await new Promise(r => { setTimeout(r, 1000) });
+        return getPlayerData(bmId, token, count+1);
+    }
+}
+
+async function sendBmBans(bmId, token, sender, returnObject) {
+    try {
+        const data = await getBmBansData(bmId, token);
+
+        returnObject.status = "OK";
+        returnObject.value = data;
+        return chrome.tabs.sendMessage(sender.tab.id, returnObject);
+    } catch (error) {
+        console.error(error);
+        returnObject.status = "ERROR";
+        returnObject.value = error;
+        return chrome.tabs.sendMessage(sender.tab.id, returnObject);
+    }
+}
+async function getBmBansData(bmId, token, count = 0) {
+    try {
+        const resp = await fetch(`https://api.battlemetrics.com/bans?version=^0.1.0&sort=-timestamp&filter[player]=${bmId}&filter[expired]=false&access_token=${token}`)
+        if (resp?.status === 429) await new Promise(r => { setTimeout(r, 30000); })
+        if (resp?.status !== 200) throw new Error(`Fetch failed for ${bmId} | Status: ${resp?.status}`);
+        await bmRateLimitLock(Number(resp.headers.get("x-rate-limit-remaining")));
+        
+        const data = await resp.json();
+        return data
+    } catch (error) {
+        console.error(`Failed to request BattleMetrics Bans: ${error.message}`);
+        await new Promise(r => { setTimeout(r, 1000) });
+        return getPlayerData(bmId, token, count + 1);
+    }
+}
+
+
+async function bmRateLimitLock(current) {    
+    if (current < 175) await new Promise(r => { setTimeout(r, 1000) })
+    if (current < 125) await new Promise(r => { setTimeout(r, 4000) })
+    if (current < 100) await new Promise(r => { setTimeout(r, 5000) })
+    if (current < 75) await new Promise(r => { setTimeout(r, 10000) })
+    if (current < 25) await new Promise(r => { setTimeout(r, 30000) })
+    return;
 }

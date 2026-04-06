@@ -1,6 +1,8 @@
 import { getElementWhenAppears, getIdentifierType, getTimeSpan } from "../../misc.js";
-import { cache, getProxyCheckIpInfo } from "../cache/cache.js";
 import { fillDiscordUserElement } from "./discordUserElement.js";
+import { cache, getProxyCheckIpInfo } from "../cache/cache.js";
+import { autoStart } from "./evasion-checker/actions.js";
+import { getEvasionCheckerPanel } from "./evasion-checker/panel.js";
 
 export async function showExtraDataOnIps(bmId, bmProfile, requestProxyCheck) {
     bmProfile = await bmProfile;
@@ -420,4 +422,21 @@ export function displayDiscordData() {
         })
 
     }
+}
+
+export async function displayEvasionCheckerPanel(settings) {
+    const panel = getEvasionCheckerPanel();
+    const identifierWrapper = await getElementWhenAppears("css-11gv980", true);
+
+    if (settings.panelPlacement === "above") 
+        identifierWrapper.insertAdjacentElement("beforebegin", panel)
+    else
+        identifierWrapper.insertAdjacentElement("afterend", panel)
+    
+    for (let i = 0; i < 50; i++) { //Wait till shared identifiers load
+        if (identifierWrapper.innerText.includes("Identifier shared with")) break;
+        await new Promise(r => { setTimeout(r, 150 * (i / 10)) })
+    }
+
+    if (settings.core.autoStart) autoStart(settings);
 }

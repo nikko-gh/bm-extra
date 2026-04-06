@@ -29,6 +29,14 @@ class BestRust {
     }
 
     async getTeamInfo(steamId, serverId, token) {
+        const roles = JSON.parse(document.getElementById("storeBootstrap").innerText)?.state?.account?.rconRoles;
+        const brRoles = roles.filter(role => role.org_id === this.id);
+
+        const triggers = [];
+        brRoles.forEach(role => {
+            for (const trigger in role.permissions.triggers || {}) triggers.push(trigger)
+        })
+
         const payload = getBrPayload(triggers, steamId);
         const resp = await fetch(`https://api.battlemetrics.com/servers/${serverId}/command`, {
             method: "POST",
