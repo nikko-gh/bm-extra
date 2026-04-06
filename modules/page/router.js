@@ -1,7 +1,7 @@
 import { setupCacheFor, cache } from "../page/cache/cache.js";
 import { checkAndSetupSettingsIfMissing } from "../settings.js";
 import { advancedBans, closeAdminLog, displayInfoPanel, displayServerActivity, limitItem, removeSteamInformation, displayAlertLink } from "./overview/overview.js";
-import { highlightVpnIdentifiers, showExtraDataOnIps, displayAvatars } from "./identifier/identifier.js";
+import { highlightVpnIdentifiers, showExtraDataOnIps, displayAvatars, displaySteamLinks } from "./identifier/identifier.js";
 import { convertTimestampsToDay, displayAvatar, displaySettingsButton, redactIdentifiers, selectLastServer, swapBattleEyeGuid } from "./display.js";
 import { insertBanPresets, insertFriendComparator, insertFriendsSidebarElement, insertHistoricFriendsSidebarElement, insertPublicBansSidebarElement, insertSidebars, insertTeaminfoSidebarElement } from "../sidebar.js";
 import { removeSidebars } from "../misc.js";
@@ -75,7 +75,9 @@ async function onIdentifierPage(bmId) {
     if (settings.highlightVpn) highlightVpnIdentifiers(bmId, { label: settings.removeVpnLabel, threshold: settings.vpnAbove, background: settings.vpnBgColor, opacity: settings.vpnOpacity })
     if (settings.displayAvatars) displayAvatars(bmId, playerCache.identifiers.avatars, settings.zoomableAvatars)
     if (settings.swapBattleEyeGuid) swapBattleEyeGuid(bmId, playerCache.bmProfile);
+    if (settings.showLinks) displaySteamLinks(bmId, playerCache.steamLinks, settings.loadDiscordData)
 }
+
 async function onAddBanPage(bmId) {
     const settings = JSON.parse(localStorage.getItem("BME_BAN_PAGE_SETTINGS"))
 

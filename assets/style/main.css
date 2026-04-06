@@ -1,9 +1,11 @@
 #bme-server-panel {
     padding-left: 30px;
 }
-.main{
+
+.main {
     min-height: 100dvh;
 }
+
 #bme-server-panel p {
     line-height: 1;
     font-size: 20px;
@@ -154,9 +156,6 @@
 
 
 .bme-avatar-container {
-    display: flex;
-    gap: 20px;
-    align-items: center;
     overflow: visible !important;
 }
 
@@ -343,6 +342,188 @@
     opacity: 1 !important;
     transform: none !important;
 }
+
+
+.bme-discord-wrapper {
+    width: 100%;
+    height: var(--main-height);
+    padding-left: 20px;
+    
+    overflow: var(--main-overflow);
+    transition: 350ms ease-in-out;
+    
+    font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+.bme-discord-wrapper h4,
+.bme-discord-wrapper p {
+    margin: 0px;
+}
+
+.bme-discord-avatar-container {
+    padding-left: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.bme-discord-avatar-container>img {
+    width: 100px;
+    height: 100px;
+    transition: 125ms;
+    transform-origin: top left;
+    position: relative;
+    border-color: #0d0d0d;
+}
+
+.bme-discord-avatar-container>img:hover {
+    transform: scale(4);
+    z-index: 1000;
+
+    background: #0c0c0c;
+    border: #cfcfcf 1px solid;
+}
+
+.bme-discord-name-container {
+    padding-left: 20px;
+}
+
+.bme-dc-guild-header {
+    display: flex;
+    gap: 10px;
+    transition: 75ms ease-out;
+    cursor: pointer;
+}
+
+.bm-dc-open,
+.bme-dc-guild-body,
+.bme-dc-guild-header:hover {
+    background: #00000040;
+}
+
+.bme-dc-guild-header:active {
+    background: #00000060;
+}
+
+.bme-dc-guild-header>div {
+    height: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+
+}
+
+.bme-dc-guild-header>img {
+    width: 60px;
+    height: 60px;
+}
+
+.bme-dc-guild-header p,
+.bme-dc-guild-header h4 {
+    margin: 0;
+}
+
+.bme-dc-guild-header h4 {
+    font-weight: 600;
+}
+
+.bme-dc-guild-container {
+    padding-left: 20px;
+
+    padding-bottom: 5px;
+}
+
+.bme-dc-guild-body {
+    padding-left: 5px;
+    height: var(--height);
+    overflow: var(--overflow);
+    transition: 350ms;
+
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.bme-dc-guild-body>div {
+    padding-left: 20px;
+}
+
+.bme-dc-messages-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.bme-dc-messages-container:empty::before {
+    content: "No messages recorded.";
+    background: #00000060;
+}
+
+.bme-dc-messages-container>div {
+    background: #00000060;
+}
+
+.bme-dc-roles-container:empty::before {
+    content: "No roles recorded.";
+    background: #00000060;
+}
+
+/* Identifier table overwrite */
+.css-8uhtka {
+    gap: 10px;
+    align-items: center;
+    display: flex;
+}
+
+.bme-clickable {
+    cursor: pointer;
+    transition: 250px;
+}
+
+.bme-clickable:hover {
+    opacity: 0.9;
+}
+
+.bme-clickable:active {
+    opacity: 0.75;
+}
+
+
+
+.bme-dc-padding-left {
+    padding-left: 20px;
+}
+
+.bme-dc-message-element {
+    padding: 0px 10;
+    display: flex;
+    gap: 10px;
+}
+
+.bme-dc-message-element>img {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.bme-dc-message-element>div>p:first-child {
+    font-size: 16px;
+    font-weight: 600;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.bme-dc-message-element>div span {
+    font-size: 12px;
+    color: #858585;
+}
+
+
 
 
 

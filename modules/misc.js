@@ -102,7 +102,7 @@ export async function getCurrentFriends(steamId) {
 }
 export async function getHistoricFriends(steamId) {
     try {
-        const piDetails = localStorage.getItem("BME_PLAYER_INSIGHT_API");
+        const piDetails = JSON.parse(localStorage.getItem("BME_PLAYER_INSIGHT_API"));
         const PLAYER_INSIGHT_KEY = piDetails?.apiKey || null;
         if (!PLAYER_INSIGHT_KEY) return "NO_API_KEY";
         if (PLAYER_INSIGHT_KEY.length !== 64) return "INVALID_API_KEY";

@@ -1,10 +1,13 @@
 import { getAuthToken, getCurrentFriends, getHistoricFriends, getLastServer, talkToBackgroundScript } from "../../misc.js";
 import { updatePlayerProfileElements } from "../../sidebar.js";
+import { displayDiscordData } from "../identifier/identifier.js";
 import { organizations } from "./teaminfo.js";
 
 export const cache = {};
 cache.connectedPlayersData = [];
 cache.connectedPlayersBanData = [];
+cache.discordUserData = [];
+
 const connectedPlayersData = new Proxy(cache.connectedPlayersData, {
     set(target, prop, value) {
         target[prop] = value;
@@ -23,6 +26,13 @@ async function invokePlayerProfileUpdates() {
     updatePlayerProfileElements(cache)
 }
 
+const discordUserData = new Proxy(cache.discordUserData, {
+    set(target, prop, value) {
+        target[prop] = value;
+        if (prop === "length") displayDiscordData();
+        return true;
+    }
+});
 
 export function setupCacheFor(bmId, cacheType) {
     if (!cache[bmId]) cache[bmId] = {};
@@ -62,8 +72,6 @@ function setupPlayerCache(bmId, authToken) {
 
     if (validate("publicBans", settings, bmId))
         cache[bmId].publicBans = getPublicBans(cache[bmId].bmProfile);
-    //cache.historicFriends.steamidCom
-    //cache.historicFriends.steamidUk
 
     if (validate("bmActivity", settings, bmId))
         cache[bmId].bmActivity = getBmActivity(bmId, authToken);
@@ -77,8 +85,11 @@ function setupPlayerCache(bmId, authToken) {
     if (validate("serverPop", settings, bmId))
         cache[bmId].serverPop = getCurrentServersPopulation(cache[bmId].bmProfile, authToken)
 
-    loadPlayerData(cache[bmId].steamFriends, cache[bmId].historicFriends, cache[bmId].team);
+    if (validate("steamLinks", settings, bmId))
+        cache[bmId].steamLinks = getSteamLinks(cache[bmId].bmProfile)
 
+    if (validate("discordData", settings, bmId)) getDiscordData(cache[bmId].steamLinks)
+    loadPlayerData(cache[bmId].steamFriends, cache[bmId].historicFriends, cache[bmId].team);
 }
 function setupBanCache(bmId, authToken) {
     const settings = {}
@@ -164,6 +175,14 @@ function validate(section, { overview, identifier, sidebar, banPage }, bmId) {
         const needed =
             (sidebar?.friends.showOnline && sidebar?.friends.enabled) ||
             (sidebar?.friends.showOnline && sidebar?.historicFriends.enabled);
+        if (needed) return true;
+    } else if (section === "steamLinks") {
+        if (cache[bmId]?.steamLinks !== undefined) return false;//Already Cached
+
+        const needed = identifier?.showLinks
+        if (needed) return true;
+    } else if (section === "discordData") {
+        const needed = identifier?.loadDiscordData
         if (needed) return true;
     }
 
@@ -386,7 +405,7 @@ async function getSteamAvatars(bmProfile) {
     if (!avatarHash) return [];
     const avatars = await getHistoricAvatars(steamId);
 
-    if (typeof (avatars[0]) === "string" && avatarHash) {
+    if (typeof (avatars) === "string" && avatarHash) {
         return [{ avatar: avatarHash, avatarHits, lastSeen }]
     }
 
@@ -404,7 +423,7 @@ async function getSteamAvatars(bmProfile) {
 }
 async function getHistoricAvatars(steamId) {
     try {
-        const piDetails = localStorage.getItem("BME_PLAYER_INSIGHT_API");
+        const piDetails = JSON.parse(localStorage.getItem("BME_PLAYER_INSIGHT_API"));
         const PLAYER_INSIGHT_KEY = piDetails?.apiKey || null;
         if (!PLAYER_INSIGHT_KEY) return "NO_API_KEY";
         if (PLAYER_INSIGHT_KEY.length !== 64) return "INVALID_API_KEY";
@@ -488,7 +507,7 @@ async function getPublicBans(bmProfile) {
 }
 async function requestPublicBansFor(steamId) {
     try {
-        const piDetails = localStorage.getItem("BME_PLAYER_INSIGHT_API");
+        const piDetails = JSON.parse(localStorage.getItem("BME_PLAYER_INSIGHT_API"));
         const PLAYER_INSIGHT_KEY = piDetails?.apiKey || null;
         if (!PLAYER_INSIGHT_KEY) return "NO_API_KEY";
         if (PLAYER_INSIGHT_KEY.length !== 64) return "INVALID_API_KEY";
@@ -501,6 +520,63 @@ async function requestPublicBansFor(steamId) {
     }
 
 }
+
+async function getSteamLinks(bmProfile) {
+    try {
+        const steamId = getSteamIdFromBmProfile(await bmProfile)
+
+        const piDetails = JSON.parse(localStorage.getItem("BME_PLAYER_INSIGHT_API"));
+        const PLAYER_INSIGHT_KEY = piDetails?.apiKey || null;
+        if (!PLAYER_INSIGHT_KEY) return "NO_API_KEY";
+        if (PLAYER_INSIGHT_KEY.length !== 64) return "INVALID_API_KEY";
+        if (!piDetails?.perms.includes("steamLinks")) return "NO_PERMISSION";
+
+        const rawLinks = await talkToBackgroundScript("BME_STEAM_LINKS", steamId, PLAYER_INSIGHT_KEY)
+        if (typeof (rawLinks) === "string") throw new Error(links);
+
+        const links = [];
+        for (const link of rawLinks) {
+            const index = links.findIndex(item => item.discordId === link.discordId);
+            if (index === -1) {
+                links.push({ discordId: link.discordId, lastSeen: link.lastSeen, owners: [link.owner] });
+                continue;
+            }
+            links[index].owners.push(link.owner);
+        }
+
+        return links;
+    } catch (error) {
+        console.error(`BME-EXTRA: Failed to load in steam links: ${error.message}`)
+        return []
+    }
+}
+async function getDiscordData(steamLinks) {
+    try {
+
+        steamLinks = await steamLinks;
+        const discordIds = steamLinks
+            .map(item => item.discordId)
+            .filter(item => 
+                //Ignore if already cached
+                !discordUserData.map(item => item.user.id).includes(item)
+            );
+
+        const piDetails = JSON.parse(localStorage.getItem("BME_PLAYER_INSIGHT_API"));
+        const PLAYER_INSIGHT_KEY = piDetails?.apiKey || null;        
+        if (!PLAYER_INSIGHT_KEY) return "NO_API_KEY";
+        if (PLAYER_INSIGHT_KEY.length !== 64) return "INVALID_API_KEY";
+        if (!piDetails?.perms.includes("discordUser")) return "NO_PERMISSION";
+
+
+        const promises = discordIds.map(discordId =>
+            talkToBackgroundScript("BME_DISCORD_DATA", discordId, PLAYER_INSIGHT_KEY)
+        )
+        discordUserData.push(...await Promise.all(promises))
+    } catch (error) {
+        return [];
+    }
+}
+
 
 function getSteamIdFromBmProfile(bmProfile) {
     const steamIdObject = bmProfile.included.find(identifier => identifier?.attributes?.type === "steamID");

@@ -1,5 +1,6 @@
 import { getElementWhenAppears, getIdentifierType, getTimeSpan } from "../../misc.js";
-import { getProxyCheckIpInfo } from "../cache/cache.js";
+import { cache, getProxyCheckIpInfo } from "../cache/cache.js";
+import { fillDiscordUserElement } from "./discordUserElement.js";
 
 export async function showExtraDataOnIps(bmId, bmProfile, requestProxyCheck) {
     bmProfile = await bmProfile;
@@ -126,7 +127,7 @@ function getPcDataElement(pc) {
         { label: "city:", value: pc.loc.cityName },
     ]
 
-    const host = pc.net.host?.substring(0, 40) || null;    
+    const host = pc.net.host?.substring(0, 40) || null;
     const thirdSectionContent = [
         { maxWidth: "55ch", labelWidth: "10ch", valueWidth: "45ch" },
         { label: "ASN:", value: pc.net.asn },
@@ -247,33 +248,11 @@ export async function displayAvatars(bmId, avatars, zoomable) {
     if (!nameElement) return console.error("BM-EXTRA: Failed to locate nameElement!");
 
     if (avatars.length === 0) return;
-    const avatarTitle = getAvatarTitle();
+    const avatarTitle = getIdentifierTableTitle("Avatar");
     nameElement.before(avatarTitle);
 
-    avatars.forEach(avatar => {
-        const avatarElement = getAvatarElement(avatar, zoomable);
-        nameElement.before(avatarElement);
-    })
-}
-function getAvatarTitle() {
-    const element = document.createElement("tr");
-    element.classList.add("css-147tpna");
-
-    const inner = document.createElement("th")
-    inner.colSpan = 3;
-    inner.innerText = "Avatar";
-    element.append(inner);
-
-    return element;
-}
-function getAvatarElement(item, zoomable) {
-    const tr = document.createElement("tr");
-    const lastSeen = item.lastSeen * 1000;
-    const iso = new Date(lastSeen).toISOString();
-
-    //Heavily modified Standard BattleMetrics Identifier
-    tr.innerHTML = `
-        <td data-title="Identifier">
+    avatars.forEach(item => {
+        const payload = `
             <div title="${item.avatar}" class="css-8uhtka bme-avatar-container ${zoomable ? "bme-zoomable-avatar" : ""}">
                 <div class="bme-avatar-placeholder">
                     <div>
@@ -282,16 +261,163 @@ function getAvatarElement(item, zoomable) {
                 </div>
                 <span class="css-q39y9k" title="${item.avatar}">${item.avatar}${item.avatarHits !== "N/A" ? ` | Seen on ${item.avatarHits < 101 ? item.avatarHits : "100+"} players` : ""}</span>
             </div>
+        `;
+        const avatarElement = getIdentifierTableElement("Avatar", payload, Number(item.lastSeen) * 1000)
+        nameElement.before(avatarElement);
+    })
+}
+
+export async function displaySteamLinks(bmId, steamLinks, loadData) {
+    steamLinks = await steamLinks;
+    if (steamLinks.length === 0) return;
+
+    const identifierWrapper = (await getElementWhenAppears("css-11gv980", true));
+    const identifierTable = identifierWrapper?.lastChild?.children;
+    if (!identifierTable) return console.error("BM-EXTRA: Failed to find identifierTable!");
+    const under = Array.from(identifierTable).find(item => {
+        const text = item?.innerText?.trim();
+        if (text === "IP" || text === "Name") return true;
+        return false;
+    });
+    if (!under) return console.error("BM-EXTRA: Failed to locate ipTitle!");
+
+    const discordTitle = getIdentifierTableTitle("Discord");
+    under.insertAdjacentElement("beforebegin", discordTitle)
+
+    steamLinks.forEach(link => {
+        const payload = `
+            <div title="${link.discordId}" class="css-8uhtka bme-unloaded-discord">
+                <span class="css-q39y9k bme-discord-title" title="${link.discordId}">${link.discordId}</span>
+            </div>
+            <div class="bme-discord-wrapper bme-discord-unloaded" style="--main-height: 0px; --main-overflow: hidden;" title="${link.discordId}"></div>
+        `;
+        const element = getIdentifierTableElement("Discord", payload, Number(link.lastSeen), link.owners)
+        discordTitle.insertAdjacentElement("afterend", element)
+    })
+
+    if (loadData) displayDiscordData();
+}
+
+function getIdentifierTableTitle(title) {
+    const element = document.createElement("tr");
+    element.classList.add("css-147tpna");
+
+    const inner = document.createElement("th")
+    inner.colSpan = 3;
+    inner.innerText = title;
+    element.append(inner);
+
+    return element;
+}
+let _locale = null;
+function getIdentifierTableElement(type, payload, lastSeen, meta) {
+    const tr = document.createElement("tr");
+    const locale = getLocale();
+
+    const date = new Date(lastSeen);
+    const dateStr = date.toLocaleDateString(locale);
+    const timeStr = date.toLocaleTimeString(locale, {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+    });
+
+    //Heavily modified Standard BattleMetrics Identifier
+    tr.innerHTML = `
+        <td data-title="Identifier">
+            ${payload}
         </td>
         <td data-title="Type">
-            <div class="css-18s4qom">Avatar</div>
+            <div class="css-18s4qom">${type}</div>
+            ${meta?.owners?.length > 0 ?
+            `
+                <button title="Show organizations that have this identifier." type="button" class="css-p43owu">
+                    <i class="glyphicon glyphicon-info-sign"></i>
+                </button>
+            `: ``
+        }
         </td>
         <td data-title="Last Seen">
-            <time>${`${iso.substring(8, 10)}/${iso.substring(5, 7)}/${iso.substring(0, 4)}`}</time><br />
-            <time class="css-18s4qom">${iso.substring(11, 16)}</time>
+            <time>${dateStr}</time><br />
+            <time class="css-18s4qom">${timeStr}</time>
             <time class="css-18s4qom">${getTimeSpan(lastSeen)} ago</time>
         </td>
     `;
 
+    const button = tr.querySelector("button");
+    if (button) {
+        button.addEventListener("click", () => {
+            alert(`Organizations who owns this identifier:\n - ${meta.owners.join("\n - ")}`)
+        })
+    }
+
     return tr;
+    function getLocale(params) {
+        if (_locale) return _locale;
+
+        const locale = JSON.parse(document.getElementById("storeBootstrap")?.innerText || null)?.state?.account?.locale || "en-gb";
+        _locale = locale;
+        return locale;
+    }
+}
+
+
+export function displayDiscordData() {
+    const token = JSON.parse(localStorage.getItem("BME_PLAYER_INSIGHT_API")).apiKey;
+
+
+    const unloadedDiscords = Array.from(document.querySelectorAll(".bme-unloaded-discord"));
+    const discordData = cache.discordUserData;
+    if (discordData.length === 0) return;
+
+    for (const discordElement of unloadedDiscords) {
+        const discordId = discordElement.title;
+
+        const data = discordData.find(item => item.user.id = discordId);
+        
+        const discordAvatar = document.createElement("div");
+        discordAvatar.classList.add("bme-avatar-placeholder");
+        discordAvatar.innerHTML = `
+            <div>
+                <img src="${data.user.avatar}?token=${token}" class="bme-avatar-identifier">
+            </div>
+        `;
+        discordElement.insertAdjacentElement("afterbegin", discordAvatar);
+
+        const span = discordElement.querySelector("span");
+
+        const ccCount = data.guilds.filter(guild => guild.tags?.contains("cc")).length
+        let mCount = 0;
+        data.guilds.forEach(guild => mCount += Number(guild.messageCount));
+        span.innerText = `${data.user.name} | ${data.user.displayName} | ${data.guilds.length} guilds | ${ccCount} cc | ${mCount} messages`;
+        span.classList.add("bme-clickable");
+
+        const discordUserElement = discordElement.parentNode.querySelector(".bme-discord-wrapper");
+        fillDiscordUserElement(discordUserElement, data, token)
+
+        let timeout = null;
+        span.addEventListener("click", e => {
+            if (timeout) clearTimeout(timeout);
+
+            const target = e.target;
+            const height = discordUserElement.scrollHeight;
+            if (target.classList.contains("open")) {
+                target.classList.remove("open");
+
+                discordUserElement.style.setProperty("--main-height", `${height}px`)
+                setTimeout(() => {
+                    discordUserElement.style.setProperty("--main-height", "0px")
+                    discordUserElement.style.setProperty("--main-overflow", "hidden")
+                }, 5);
+            }else{
+                target.classList.add("open")
+                discordUserElement.style.setProperty("--main-height", `${height}px`)
+                timeout = setTimeout(() => {
+                    discordUserElement.style.setProperty("--main-height", `fit-content`)
+                    discordUserElement.style.setProperty("--main-overflow", "visible")
+                }, 350);
+            }
+        })
+
+    }
 }

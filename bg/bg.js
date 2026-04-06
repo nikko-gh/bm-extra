@@ -1,3 +1,5 @@
+import { getOrgSteamLinks } from "./modules/orgSteamLinks.js";
+
 console.log("Service worker loaded!")
 
 /**
@@ -26,6 +28,8 @@ chrome.runtime.onMessage.addListener(async (req, sender) => {
     if (req.type.startsWith("BME_PLAYER_SUMMARIES")) return sendSteamPlayerSummaries(req.subject, req.apiKey, sender, returnObject);
     if (req.type.startsWith("BME_BAN_SUMMARIES")) return sendSteamPlayerBanSummaries(req.subject, req.apiKey, sender, returnObject);
     if (req.type.startsWith("BME_PUBLIC_BANS")) return sendPublicBans(req.subject, req.apiKey, sender, returnObject);
+    if (req.type.startsWith("BME_STEAM_LINKS")) return sendSteamLinks(req.subject, req.apiKey, sender, returnObject);
+    if (req.type.startsWith("BME_DISCORD_DATA")) return sendDiscordData(req.subject, req.apiKey, sender, returnObject);
     if (req.type.startsWith("BME_ATLAS_TEAMINFO")) return sendAtlasTeaminfo(req.subject, req.apiKey, sender, returnObject);
 
 })
@@ -129,7 +133,7 @@ async function sendHistoricAvatars(steamId, apiKey, sender, returnObject) {
 
         const data = await resp.json();
         returnObject.status = "OK";
-        returnObject.value = data;
+        returnObject.value = data.data.avatars;
         return chrome.tabs.sendMessage(sender.tab.id, returnObject);
     } catch (error) {
         console.error(error);
@@ -213,6 +217,44 @@ async function sendPublicBans(steamId, apiKey, sender, returnObject) {
         const data = await resp.json();
         returnObject.status = "OK";
         returnObject.value = data.data.bans;
+        return chrome.tabs.sendMessage(sender.tab.id, returnObject);
+    } catch (error) {
+        console.error(error);
+        returnObject.status = "ERROR";
+        returnObject.value = error;
+        return chrome.tabs.sendMessage(sender.tab.id, returnObject);
+    }
+}
+async function sendSteamLinks(steamId, apiKey, sender, returnObject) {
+    try {
+        const links = [];
+        
+        const resp = await fetch(`https://player-insight.flqyd.dev/api/steam/linked/${steamId}?token=${apiKey}`);
+        if (resp?.status !== 200) throw new Error(`Failed to request steam links | steamId: ${steamId} | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
+        const data = await resp.json();
+        data.data.links.forEach(item => links.push(item));
+
+        const orgLinks = await getOrgSteamLinks();
+        orgLinks.forEach(item => links.push(item));
+
+        returnObject.status = "OK";
+        returnObject.value = links;
+        return chrome.tabs.sendMessage(sender.tab.id, returnObject);
+    } catch (error) {
+        console.error(error);
+        returnObject.status = "ERROR";
+        returnObject.value = error;
+        return chrome.tabs.sendMessage(sender.tab.id, returnObject);
+    }
+}
+async function sendDiscordData(discordId, apiKey, sender, returnObject) {
+    try {
+        const resp = await fetch(`https://player-insight.flqyd.dev/api/discord/user/${discordId}?token=${apiKey}`);
+        if (resp?.status !== 200) throw new Error(`Failed to request steam links | steamId: ${discordId} | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
+
+        const data = await resp.json();
+        returnObject.status = "OK";
+        returnObject.value = data.data;
         return chrome.tabs.sendMessage(sender.tab.id, returnObject);
     } catch (error) {
         console.error(error);
