@@ -1,8 +1,8 @@
 import { getElementWhenAppears, getIdentifierType, getTimeSpan } from "../../misc.js";
 import { fillDiscordUserElement } from "./discordUserElement.js";
 import { cache, getProxyCheckIpInfo } from "../cache/cache.js";
-import { autoStart } from "./evasion-checker/actions.js";
-import { getEvasionCheckerPanel } from "./evasion-checker/panel.js";
+import { autoStart } from "./evasionChecker/actions.js";
+import { getEvasionCheckerPanel } from "./evasionChecker/panel.js";
 
 export async function showExtraDataOnIps(bmId, bmProfile, requestProxyCheck) {
     bmProfile = await bmProfile;
@@ -255,7 +255,7 @@ export async function displayAvatars(bmId, avatars, zoomable) {
 
     avatars.forEach(item => {
         const payload = `
-            <div title="${item.avatar}" class="css-8uhtka bme-avatar-container ${zoomable ? "bme-zoomable-avatar" : ""}">
+            <div title="${item.avatar}" class="css-8uhtka bme-avatar-container ${zoomable && "bme-zoomable-avatar"}">
                 <div class="bme-avatar-placeholder">
                     <div>
                         <img src="https://avatars.fastly.steamstatic.com/${item.avatar}_full.jpg" class="bme-avatar-identifier">
@@ -293,7 +293,7 @@ export async function displaySteamLinks(bmId, steamLinks, loadData) {
             </div>
             <div class="bme-discord-wrapper bme-discord-unloaded" style="--main-height: 0px; --main-overflow: hidden;" title="${link.discordId}"></div>
         `;
-        const element = getIdentifierTableElement("Discord", payload, Number(link.lastSeen), link.owners)
+        const element = getIdentifierTableElement("Discord", payload, Number(link.lastSeen), { owners: link.owners })
         discordTitle.insertAdjacentElement("afterend", element)
     })
 
@@ -324,20 +324,18 @@ function getIdentifierTableElement(type, payload, lastSeen, meta) {
         hour12: false
     });
 
-    //Heavily modified Standard BattleMetrics Identifier
+    //Heavily modified Standard BattleMetrics Identifier    
     tr.innerHTML = `
         <td data-title="Identifier">
             ${payload}
         </td>
         <td data-title="Type">
             <div class="css-18s4qom">${type}</div>
-            ${meta?.owners?.length > 0 ?
-            `
+            ${meta?.owners?.length > 0 && `
                 <button title="Show organizations that have this identifier." type="button" class="css-p43owu">
                     <i class="glyphicon glyphicon-info-sign"></i>
                 </button>
-            `: ``
-        }
+            `}
         </td>
         <td data-title="Last Seen">
             <time>${dateStr}</time><br />
@@ -354,7 +352,7 @@ function getIdentifierTableElement(type, payload, lastSeen, meta) {
     }
 
     return tr;
-    function getLocale(params) {
+    function getLocale() {
         if (_locale) return _locale;
 
         const locale = JSON.parse(document.getElementById("storeBootstrap")?.innerText || null)?.state?.account?.locale || "en-gb";
@@ -367,16 +365,17 @@ function getIdentifierTableElement(type, payload, lastSeen, meta) {
 export function displayDiscordData() {
     const token = JSON.parse(localStorage.getItem("BME_PLAYER_INSIGHT_API")).apiKey;
 
-
     const unloadedDiscords = Array.from(document.querySelectorAll(".bme-unloaded-discord"));
     const discordData = cache.discordUserData;
     if (discordData.length === 0) return;
 
     for (const discordElement of unloadedDiscords) {
-        const discordId = discordElement.title;
+        const discordId = discordElement.title;        
 
-        const data = discordData.find(item => item.user.id = discordId);
-        
+        const data = discordData.find(item => item.user.id === discordId);
+        if (!data) return; 
+        discordElement.classList.remove("bme-unloaded-discord");
+
         const discordAvatar = document.createElement("div");
         discordAvatar.classList.add("bme-avatar-placeholder");
         discordAvatar.innerHTML = `
@@ -411,7 +410,7 @@ export function displayDiscordData() {
                     discordUserElement.style.setProperty("--main-height", "0px")
                     discordUserElement.style.setProperty("--main-overflow", "hidden")
                 }, 5);
-            }else{
+            } else {
                 target.classList.add("open")
                 discordUserElement.style.setProperty("--main-height", `${height}px`)
                 timeout = setTimeout(() => {
@@ -428,11 +427,11 @@ export async function displayEvasionCheckerPanel(settings) {
     const panel = getEvasionCheckerPanel();
     const identifierWrapper = await getElementWhenAppears("css-11gv980", true);
 
-    if (settings.panelPlacement === "above") 
+    if (settings.panelPlacement === "top")
         identifierWrapper.insertAdjacentElement("beforebegin", panel)
     else
         identifierWrapper.insertAdjacentElement("afterend", panel)
-    
+
     for (let i = 0; i < 50; i++) { //Wait till shared identifiers load
         if (identifierWrapper.innerText.includes("Identifier shared with")) break;
         await new Promise(r => { setTimeout(r, 150 * (i / 10)) })

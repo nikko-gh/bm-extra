@@ -1,15 +1,14 @@
-import { getAuthToken, getSteamFriendlistFromRustApi, getSteamFriendlistFromSteam, talkToBackgroundScript } from "../../../misc.js";
+import { getAuthToken, getCurrentFriends, getHistoricFriends, talkToBackgroundScript } from "../../../misc.js";
 import { colorPlayer } from "./actions.js";
 import { getEcSettings } from "./panel.js";
 import { getShowCaseTimeString, showcaseDetails } from "./showcase.js";
 
 let main = null;
-
 export async function checkPlayer(playerElement, settings, check) {
     try {
         const authToken = getAuthToken();
 
-        if (!main && main === null) {
+        if (main === null) {
             main = undefined;
             setUpMain(authToken, settings)
         };
@@ -304,8 +303,7 @@ const playerCache = new Map();
 
 async function getAccountData(bmId, token) {
     const cached = playerCache.get(bmId);
-    if (cached && cached["account"])
-        return cached["account"];
+    if (cached && cached["account"]) return cached["account"];
 
     const data = await talkToBackgroundScript("BME_BM_ACCOUNT", bmId, token, 60000)
 
@@ -396,8 +394,7 @@ async function getAccountData(bmId, token) {
 }
 async function getBanData(bmId, token, count = 0) {
     const cached = playerCache.get(bmId);
-    if (cached && cached["bans"])
-        return cached["bans"];
+    if (cached && cached["bans"]) return cached["bans"];
 
     const data = await talkToBackgroundScript("BME_BM_BANS", bmId, token, 60000)
 
@@ -431,30 +428,35 @@ async function getBanData(bmId, token, count = 0) {
     }
 }
 async function getAssociates(playerData, core) {
+    const cached = playerCache.get(playerData.bmId);
+    if (cached && cached["associates"]) return cached["associates"];
+
+
     const steamId = playerData.steamId.identifier;
     if (!steamId) return [];
 
     const associates = {};
-    associates.friends = await getSteamFriends(steamId, core);
-    associates.historicFriends = await getHistoricSteamFriends(steamId, core);
+    associates.friends = await requestSteamFriends(steamId, core);
+    associates.historicFriends = await requestHistoricFriends(steamId, core);
     associates.teammates = [];
     associates.historicTeammates = [];
 
+    saveCache(playerData.bmId, associates, "associates")
     return associates;
 }
-async function getSteamFriends(steamId, core) {
+async function requestSteamFriends(steamId, core) {
     const friends = [];
     if (core.requestFriendsFromSteam) {
-        const steamFriends = await getSteamFriendlistFromSteam(steamId);
+        const steamFriends = await getCurrentFriends(steamId);
         if (typeof (steamFriends) !== "string")
             steamFriends.forEach(friend => { friends.push(friend.steamId) });
     }
     return friends;
 }
-async function getHistoricSteamFriends(steamId, core) {
+async function requestHistoricFriends(steamId, core) {
     const friends = [];
     if (core.requestFriendsFromRustApi) {
-        const steamFriends = await getSteamFriendlistFromRustApi(steamId);
+        const steamFriends = await getHistoricFriends(steamId);
         if (typeof (steamFriends) !== "string")
             steamFriends.forEach(friend => {
                 if (!friends.includes(friend.steamId)) friends.push(friend.steamId)

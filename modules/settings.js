@@ -43,7 +43,7 @@ function validatePlayerInsightPermission(perm) {
     if (perm === "HA" && perms.includes("steamAvatars")) return true;
     if (perm === "PB" && perms.includes("steamBans")) return true;
     if (perm === "SL" && perms.includes("steamLinks")) return true;
-    if (perm === "DU" && perms.includes("discordUser")) return true;
+    if (perm === "DD" && perms.includes("discordUser")) return true;
     return false;
 }
 
@@ -223,13 +223,13 @@ function getIdentifierSettings() {
     const showIspAsnData = getSettingsElement(
         "toggle", "Show extra IP info",
         "Shows the name of the ISP and ASN of the IP addresses.",
-        null, settingsBucket, "showIspAndAsnData", settings.showIspAndAsnData, { segment: showExtraInfoSegment }
+        null, bucket, "showIspAndAsnData", settings.showIspAndAsnData, { segment: showExtraInfoSegment }
     )
 
     const showMore = getSettingsElement(
         "toggle", "Show Proxycheck Info",
         "Shows extra information related to the IP Address from proxycheck.io",
-        ["PROXYCHECK"], settingsBucket, "requestProxyCheck", settings.requestProxyCheck
+        ["PROXYCHECK"], bucket, "requestProxyCheck", settings.requestProxyCheck
     )
     showExtraInfoSegment.append(showMore);
 
@@ -293,7 +293,7 @@ function getIdentifierSettings() {
     const loadDiscordData = getSettingsElement(
         "toggle", "Load Discord Data",
         `Load and display the discord Account information.`,
-        ["Player Insight - DU"], bucket, "loadDiscordData",
+        ["Player Insight - DD"], bucket, "loadDiscordData",
         settings.displayAvatars
     )
 
@@ -1238,59 +1238,62 @@ function getEvasionCheckerSettings() {
 
     const enabled = getSettingsElement(
         "toggle", "Enabled",
-        "Enable evasion checker part of the extension.",
+        "Enables Evasion Checker",
         null, bucket, "enabled", settings.enabled, { segment: specialSegment }
     )
 
     const panelPlacementOptions = [
-        { value: "under", display: "Under" },
-        { value: "above", display: "Above" },
+        { value: "top", display: "TOP" },
+        { value: "bottom", display: "BOTTOM" },
     ]
     const placement = getSettingsElement(
         "switch", "Placement",
-        "Determines the Evasion Checker Panel placement on the Identifier page",
+        "Choose where the Evasion Checker panel appears",
         null, bucket, "panelPlacement", settings.panelPlacement, { options: panelPlacementOptions }
     )
 
     const autoStart = getSettingsElement(
         "toggle", "Auto Start",
-        "Should the evasion check process start automatically if the conditions met.",
+        "Auto-start evasion checks when conditions are met",
         null, bucket, "core-autoStart", settings.core.autoStart
     )
     const autoStartLimit = getSettingsElement(
         "number", "Auto Start Limit",
-        "What should be the maximum number of accounts where the process should start automatically. -1 for unlimited.",
+        "Maximum number of accounts to start the process automatically. Use -1 for unlimited",
         null, bucket, "core-autoStartLimit", settings.core.autoStartLimit
     )
     const serverBanPriority = getSettingsElement(
         "toggle", "Server Ban Priority",
-        "Should a server ban highlighted before an EAC game ban?",
+        "Prioritize server bans over EAC game bans",
         null, bucket, "core-serverBanPriority", settings.core.serverBanPriority
     )
     const oldServerBan = getSettingsElement(
         "number", "Old Server Ban",
-        "After how many days should a server ban appear as old. -1 for never.", 
+        "Days until a server ban is marked as old. Use -1 for never", 
         null, bucket, "core-oldServerBan", settings.core.oldServerBan
     )
 
     const oldGameBan = getSettingsElement(
         "number", "Old Game Ban",
-        "After how many days should a game ban appear as old. -1 for never."
+        "Days until a game ban is marked as old. Use -1 for never",
+        null, bucket, "core-oldGameBan", settings.core.oldGameBan
     )
 
     const matchMinAssociate = getSettingsElement(
         "number", "Min Associates",
-        "The minimum number of associates in order to declare it as a match.",
+        "Minimum number of associates required to consider it a match",
         null, bucket, "core-matchMinAssociate", settings.core.matchMinAssociate
     )
+
     const matchMinName = getSettingsElement(
         "number", "Min Name Match",
-        "The minimum number of percentage on name matches to declare it as a match.",
+        "Minimum name match percentage required to consider it a match",
+        null, bucket, "core-matchMinNamePercentage", settings.core.matchMinNamePercentage
     )
 
     const caseSensitive = getSettingsElement(
-        "toggle", "Case Sensitive Name match",
-        "Should name comparisons treat uppercase and lowercase as different?",
+        "toggle", "Case-Sensitive Name Matching",
+        "Treat uppercase and lowercase letters different when matching names",
         null, bucket, "core-nameMatchCaseSensitive", settings.core.nameMatchCaseSensitive
     )
 
@@ -1301,13 +1304,13 @@ function getEvasionCheckerSettings() {
     )
     const friendsFromSteam = getSettingsElement(
         "toggle", "Friends from Steam",
-        "Should friends be request from Steam API, can be problematic if you request too much.",
+        "Load friends from Steam. May cause issues if used too often.",
         ["STEAM API KEY"], bucket, "core-requestFriendsFromSteam", settings.core.requestFriendsFromSteam
     )
     const friendsFromRustApi = getSettingsElement(
-        "toggle", "Friends from Rust Api",
-        "Should friends be requested from Rust Api.",
-        ["RUST API - HF"], bucket, "core-requestFriendsFromRustApi", settings.core.requestFriendsFromRustApi,
+        "toggle", "Friends from Player Insight",
+        "Load friends from Player Insight",
+        ["Player Insight - HF"], bucket, "core-requestFriendsFromRustApi", settings.core.requestFriendsFromRustApi,
     )
 
     //IGNOREDNAMES
@@ -1350,7 +1353,7 @@ function getEvasionCheckerSettings() {
     const oldGameBanColor = getSettingsElement(
         "color", "Old Game ban:",
         "Color of a game banned row.",
-        null, bucket, "color-gameBanned", settings.color.gameBanned,
+        null, bucket, "color-gameBannedOld", settings.color.gameBannedOld,
     )
 
     const gameBannedMatch = getSettingsElement(
@@ -2307,7 +2310,7 @@ function checkEvasionCheckerSettings() {
 function getDefaultEvasionCheckerSettings() {
     const settings = {};
     settings.enabled = true;
-    settings.panelPlacement = "under";
+    settings.panelPlacement = "bottom";
 
     settings.core = {};
     settings.core.autoStart = true;
