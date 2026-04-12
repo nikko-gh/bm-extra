@@ -29,7 +29,7 @@ async function findElementWhenAppears(selector) {
     let element = document.querySelector(selector);
     let count = 0;
 
-    while (count < MAX_ATTEMPTS) {        
+    while (count < MAX_ATTEMPTS) {
         element = document.querySelector(selector);
         if (element) return element;
 
@@ -58,22 +58,22 @@ export function getTimeSpan(timestamp, isDuration = false, daysOnly = false) {
 
     let str = "";
 
-    if (daysOnly){
+    if (daysOnly) {
         let days = Number((since / ONE_DAY).toFixed(1));
         if (days > 100) days = Math.floor(days);
 
         str = plural(days, "day")
-    } 
-        
+    }
 
-    if (!str && since > ONE_YEAR) str =  plural((since / ONE_YEAR).toFixed(1), "year");
-    if (!str && since > ONE_MONTH) str =  plural((since / ONE_MONTH).toFixed(1), "month");
-    if (!str && since > ONE_DAY) str =  plural(Math.floor(since / ONE_DAY), "day");
-    if (!str && since > ONE_HOUR) str =  plural(Math.floor(since / ONE_HOUR), "hour");
-    if (!str && since > ONE_MINUTE) str =  plural(Math.floor(since / ONE_MINUTE), "minute");
-    if (!str && since > ONE_SECOND) str =  plural(Math.floor(since / ONE_SECOND), "second");
-    if (!str) str =  `${since} ms`;
-    
+
+    if (!str && since > ONE_YEAR) str = plural((since / ONE_YEAR).toFixed(1), "year");
+    if (!str && since > ONE_MONTH) str = plural((since / ONE_MONTH).toFixed(1), "month");
+    if (!str && since > ONE_DAY) str = plural(Math.floor(since / ONE_DAY), "day");
+    if (!str && since > ONE_HOUR) str = plural(Math.floor(since / ONE_HOUR), "hour");
+    if (!str && since > ONE_MINUTE) str = plural(Math.floor(since / ONE_MINUTE), "minute");
+    if (!str && since > ONE_SECOND) str = plural(Math.floor(since / ONE_SECOND), "second");
+    if (!str) str = `${since} ms`;
+
     return `<span class="bme-time" data-raw="${timestamp}" data-duration="${isDuration}">${str}</span>`;
 }
 export function getBmInfoTimeString(timestamp) {
@@ -189,10 +189,10 @@ export async function getMyServers(onlyIds) {
         else return myServers.servers;
     }
 
-    
+
     const data = await requestMyServers('https://api.battlemetrics.com/servers?filter[rcon]=true&page[size]=100', token)
     if (!data) {
-        console.error(`Failed to request your servers | Returned type: ${typeof(data)}`);
+        console.error(`Failed to request your servers | Returned type: ${typeof (data)}`);
         return null;
     }
 
@@ -220,7 +220,7 @@ async function requestMyServers(url, token, count = 0) {
         })
 
         if (data.links.next) {
-            await new Promise(r => {setTimeout(r, 1000)});
+            await new Promise(r => { setTimeout(r, 1000) });
             const nextPage = await requestMyServers(data.links.next, token);
             if (!nextPage) return servers;
 
@@ -230,8 +230,8 @@ async function requestMyServers(url, token, count = 0) {
         return servers;
     } catch (error) {
         console.error(`Failed to request your servers. | ${error.message}`);
-        await new Promise(r => {setTimeout(r, 1000)});
-        return await requestMyServers(url, token, count+1);
+        await new Promise(r => { setTimeout(r, 1000) });
+        return await requestMyServers(url, token, count + 1);
     }
 }
 
@@ -307,7 +307,7 @@ export function getIdentifierType(identifier) {
 export function talkToBackgroundScript(type, subject, apiKey, rejectTime = 10000) {
     const requestId = Math.floor(Math.random() * 1000000);
     type = `${type}_${requestId}`;
-        
+
     return new Promise((resolve, reject) => {
         function handler(response) {
             if (response?.type !== `${type}_RESOLVED`) return;
@@ -332,4 +332,36 @@ export function talkToBackgroundScript(type, subject, apiKey, rejectTime = 10000
 export function removeSidebars() {
     const elementsToRemove = document.querySelectorAll(".bme-sidebar");
     elementsToRemove.forEach(item => item.remove())
+}
+
+export function makeDropDownMenu(header, body, ms, prefix = "", isClosed) {
+    if (isClosed) {
+        body.style.setProperty(`--${prefix}height`, "0px")
+        body.style.setProperty(`--${prefix}overflow`, "hidden")
+    }
+
+    body.style.setProperty(`--${prefix}transition`, `${ms}ms`)
+
+    let timeout = null;
+    header.addEventListener("click", e => {
+        if (timeout) clearTimeout(timeout);
+        const height = body.scrollHeight;
+        if (header.classList.contains("bme-open")) { //Close
+            header.classList.remove("bme-open");
+
+            body.style.setProperty(`--${prefix}height`, `${height}px`)
+            setTimeout(() => {
+                body.style.setProperty(`--${prefix}height`, "0px")
+                body.style.setProperty(`--${prefix}overflow`, "hidden")
+            }, 5);
+        } else { //Open
+            header.classList.add("bme-open");
+
+            body.style.setProperty(`--${prefix}height`, `${height}px`)
+            timeout = setTimeout(() => {
+                body.style.setProperty(`--${prefix}height`, `fit-content`)
+                body.style.setProperty(`--${prefix}overflow`, "visible")
+            }, ms);
+        }
+    })
 }

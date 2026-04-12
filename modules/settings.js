@@ -287,14 +287,12 @@ function getIdentifierSettings() {
     const showLinks = getSettingsElement(
         "toggle", "Show Links",
         `Display linked discord accounts`,
-        ["Player Insight - SL"], bucket, "showLinks",
-        settings.displayAvatars, { segment: linkSegment }
+        ["Player Insight - SL"], bucket, "showLinks", settings.showLinks, { segment: linkSegment }
     )
     const loadDiscordData = getSettingsElement(
         "toggle", "Load Discord Data",
         `Load and display the discord Account information.`,
-        ["Player Insight - DD"], bucket, "loadDiscordData",
-        settings.displayAvatars
+        ["Player Insight - DD"], bucket, "loadDiscordData", settings.loadDiscordData
     )
 
     linkSegment.append(loadDiscordData)

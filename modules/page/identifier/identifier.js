@@ -1,4 +1,4 @@
-import { getElementWhenAppears, getIdentifierType, getTimeSpan } from "../../misc.js";
+import { getElementWhenAppears, getIdentifierType, getTimeSpan, makeDropDownMenu } from "../../misc.js";
 import { fillDiscordUserElement } from "./discordUserElement.js";
 import { cache, getProxyCheckIpInfo } from "../cache/cache.js";
 import { autoStart } from "./evasionChecker/actions.js";
@@ -291,7 +291,7 @@ export async function displaySteamLinks(bmId, steamLinks, loadData) {
             <div title="${link.discordId}" class="css-8uhtka bme-unloaded-discord">
                 <span class="css-q39y9k bme-discord-title" title="${link.discordId}">${link.discordId}</span>
             </div>
-            <div class="bme-discord-wrapper bme-discord-unloaded" style="--main-height: 0px; --main-overflow: hidden;" title="${link.discordId}"></div>
+            <div class="bme-discord-wrapper bme-discord-unloaded" title="${link.discordId}"></div>
         `;
         const element = getIdentifierTableElement("Discord", payload, Number(link.lastSeen), { owners: link.owners })
         discordTitle.insertAdjacentElement("afterend", element)
@@ -396,30 +396,7 @@ export function displayDiscordData() {
         const discordUserElement = discordElement.parentNode.querySelector(".bme-discord-wrapper");
         fillDiscordUserElement(discordUserElement, data, token)
 
-        let timeout = null;
-        span.addEventListener("click", e => {
-            if (timeout) clearTimeout(timeout);
-
-            const target = e.target;
-            const height = discordUserElement.scrollHeight;
-            if (target.classList.contains("open")) {
-                target.classList.remove("open");
-
-                discordUserElement.style.setProperty("--main-height", `${height}px`)
-                setTimeout(() => {
-                    discordUserElement.style.setProperty("--main-height", "0px")
-                    discordUserElement.style.setProperty("--main-overflow", "hidden")
-                }, 5);
-            } else {
-                target.classList.add("open")
-                discordUserElement.style.setProperty("--main-height", `${height}px`)
-                timeout = setTimeout(() => {
-                    discordUserElement.style.setProperty("--main-height", `fit-content`)
-                    discordUserElement.style.setProperty("--main-overflow", "visible")
-                }, 350);
-            }
-        })
-
+        makeDropDownMenu(span, discordUserElement, 350, "main-", true);
     }
 }
 

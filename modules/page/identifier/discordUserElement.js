@@ -1,6 +1,8 @@
-import { getTimeSpan } from "../../misc.js";
+import { getTimeSpan, makeDropDownMenu } from "../../misc.js";
 
-export function fillDiscordUserElement(element, data, token) {    
+export function fillDiscordUserElement(element, data, token) {
+    element.classList.remove("bme-discord-unloaded");
+
     element.innerHTML = `<p>Discord ID: ${data.user.id}</p>`
 
     const accountAge = getDiscordTimestamp(data.user.id);
@@ -54,36 +56,8 @@ export function fillDiscordUserElement(element, data, token) {
 
         const body = document.createElement("div");
         body.classList.add("bme-dc-guild-body")
-        body.style.setProperty("--height", "0px")
-        body.style.setProperty("--overflow", "hidden")
-
-        let timeout = null;
-        header.addEventListener("click", e => {
-            let target = e.target;
-            while (target.parentNode && !target.classList.contains("bme-dc-guild-header")) target = target.parentNode;
-            if (target === null) return;
-
-            if (timeout) clearTimeout(timeout)
-
-            const height = body.scrollHeight;
-            if (target.classList.contains("bm-dc-open")) {
-                target.classList.remove("bm-dc-open");
-                body.style.setProperty("--height", `${height}px`)
-                setTimeout(() => {
-                    body.style.setProperty("--height", "0px")
-                    body.style.setProperty("--overflow", "hidden")
-                }, 5);
-            }else{
-                target.classList.add("bm-dc-open")
-                body.style.setProperty("--height", `${height}px`)
-                timeout = setTimeout(() => {
-                    body.style.setProperty("--height", `fit-content`)
-                    body.style.setProperty("--overflow", "visible")
-                }, 350);
-            }
-        })
-
-
+        makeDropDownMenu(header, body, 150, "", true)
+        
         const roleTitle = document.createElement("h4")
         roleTitle.innerText = "Roles:";
         body.append(roleTitle);
