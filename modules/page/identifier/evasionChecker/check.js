@@ -83,12 +83,12 @@ function getOutcome(main, player, settings, check) {
     if (gameBanned?.banned) gameBanned.days = getDaysSince(gameBanned.lastBan);
 
     if (color === "clean" && serverBanned?.days < settings.oldServerBan) color = `serverBanned${isMatch ? "Match" : ""}`;
-    if (color === "clear" || !settings.serverBanPriority) {
+    if (color === "clean" || !settings.serverBanPriority) {
         if (gameBanned?.banned && gameBanned.days < settings.oldGameBan) color = `gameBanned${isMatch ? "Match" : ""}`;
     }
 
     if (color === "clean" && serverBanned?.days > settings.oldServerBan) color = `serverBannedOld${isMatch ? "Match" : ""}`;
-    if (color === "clear" || !settings.serverBanPriority) {
+    if (color === "clean" || !settings.serverBanPriority) {
         if (gameBanned?.banned && gameBanned.days > settings.oldGameBan) color = `gameBannedOld${isMatch ? "Match" : ""}`;
     }
 
@@ -268,19 +268,10 @@ function setupBanLine(banLine, outcome) {
 function getBanReason(reason) {
     const settings = getEcSettings();
 
-    for (const item of settings.core.reasons) {
-        reason
-    }
     reason = reason.toLowerCase();
-    if (reason.includes("assoc")) return "A"
-    if (reason.includes("cheat")) return "H"
-    if (reason.includes("hack")) return "H"
-    if (reason.includes("evasi")) return "E"
-    if (reason.includes("evadi")) return "E"
-    if (reason.includes("suspi")) return "S"
-    if (reason.includes("verif")) return "S"
-    if (reason.includes("rule")) return "R"
-
+    for (const item of settings.core.reasons)
+        if (reason.includes(item.key)) return item.display;
+    
     return "?"
 }
 function getLinks(bmId) {

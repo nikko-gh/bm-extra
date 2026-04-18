@@ -1,9 +1,17 @@
+body::-webkit-scrollbar {
+    display: none;
+}
+
 #bme-server-panel {
     padding-left: 30px;
 }
 
 .main {
     min-height: 100dvh;
+}
+
+.bme-scroll-lock {
+    overflow: hidden;
 }
 
 #bme-server-panel p {
@@ -348,10 +356,10 @@
     width: 100%;
     height: var(--main-height);
     padding-left: 20px;
-    
+
     overflow: var(--main-overflow);
     transition: var(--main-transition) ease-in-out;
-    
+
     font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
@@ -449,6 +457,42 @@
     padding-left: 20px;
 }
 
+.bme-dc-messages-selector{
+    height: 50px;
+    min-height: 50px;
+    width: calc(100%-40px);
+    
+    overflow: hidden;
+    
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+    align-items: center;
+
+    
+    padding: 0px !important;
+    margin: 0px 20px;
+    background: #ffffff20;
+}
+.bme-dc-messages-selector::-webkit-scrollbar {
+    display: none;
+}
+.bme-dc-messages-selector button{
+    min-width: 40px;
+    min-height: 40px;
+    background: #00000080;
+    
+    outline: none;
+    border: none;
+    transition: 125ms;
+}
+.bme-dc-messages-selector button:hover{
+    background: #ffffff40;
+}
+.bme-active-selector {
+    background: #e5ff0050 !important;
+}
+
 .bme-dc-messages-container {
     display: flex;
     flex-direction: column;
@@ -462,6 +506,7 @@
 
 .bme-dc-messages-container>div {
     background: #00000060;
+    margin-right: 20px;
 }
 
 .bme-dc-roles-container:empty::before {
@@ -496,9 +541,27 @@
 }
 
 .bme-dc-message-element {
-    padding: 0px 10;
+    padding: 5px 10px;
     display: flex;
     gap: 10px;
+    transition: 100ms;
+}
+
+#bme-showcase-messages>.bme-dc-message-element:hover {
+    background: #ffffff10 !important;
+}
+
+.bme-dc-message-element>div {
+    padding-right: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+}
+
+.bme-dc-message-element>div>p {
+    text-wrap: wrap;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .bme-dc-message-element>img {
@@ -507,11 +570,14 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
+
+    background: #585858;
 }
 
 .bme-dc-message-element>div>p:first-child {
     font-size: 16px;
     font-weight: 600;
+    color: #bbbbbb;
 
     display: flex;
     align-items: center;
@@ -523,8 +589,202 @@
     color: #858585;
 }
 
+#bme-discord-input {
+    height: 50px;
+    background-color: #151515;
+
+    display: flex;
+    align-items: center;
+    font-family: "Menlo", "Monaco", "Consolas", "Courier New", monospace;
+
+    padding: 0px 3px;
+}
+
+#bme-discord-input input:hover,
+#bme-discord-input input {
+    width: 300px;
+    padding: 0px 10px;
+    outline: none !important;
+    background: #00000080;
+    border: 1px solid #00000099;
+    border-radius: 3px;
+
+    transition: 300ms ease-in-out;
+}
+
+#bme-discord-input p {
+    margin: 0;
+}
+
+#bme-discord-input>td {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 
 
+
+
+
+
+
+
+
+
+
+.bme-dc-showcase-wrapper {
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    z-index: 1000;
+    background: radial-gradient(circle, #00000099 30%, #ffffff10 130%);
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: 200ms;
+}
+
+.bme-showcase-visible {
+    opacity: 1 !important;
+}
+
+.bme-dc-showcase p {
+    margin: 0;
+}
+
+.bme-dc-showcase {
+    width: 700px;
+    height: 95vh;
+    background: #090909;
+    border: 3px solid #c8c8c8;
+
+    box-shadow: 0 0 75px 150px #ffffff10;
+}
+
+.bme-dc-showcase-header {
+    display: flex;
+    gap: 20px;
+    flex-wrap: nowrap;
+    align-items: center;
+
+    width: 100%;
+    height: 52px;
+    overflow: hidden;
+    border-bottom: 2px solid #ffffff;
+}
+
+.bme-dc-showcase-header img {
+    width: 50px;
+    height: 50px;
+
+    background: #ffffff;
+}
+
+.bme-dc-showcase-header p {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.bme-load-img {
+    /* finish laster, shimmer effect and pulse*/
+}
+
+.bme-load-text:empty {
+    width: var(--width);
+    height: var(--height);
+
+    border-radius: 12.5px;
+    position: relative;
+    overflow: hidden;
+
+    background: #ffffff40;
+}
+
+
+.bme-load-text:empty::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 150%;
+    height: 100%;
+
+    background: linear-gradient(140deg, #00000000 0%, #ffffff40 50%, #00000000 100%);
+
+    animation: sweep 3s ease-in-out infinite;
+}
+
+@keyframes sweep {
+    0% {
+        left: -120%;
+    }
+
+    60% {
+        left: 120%;
+    }
+
+    100% {
+        left: 120%;
+    }
+}
+
+#bme-showcase-messages::-webkit-scrollbar {
+    display: none;
+}
+
+#bme-showcase-messages {
+    width: 100%;
+    height: calc(95vh - 58px);
+
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+
+    overflow: scroll;
+}
+
+.bme-focus {
+    animation: bme-highlight 750ms ease-out;
+}
+
+@keyframes bme-highlight {
+    0% {
+        background: #ffffff00;
+    }
+
+    70% {
+        background: #ffffff30;
+    }
+
+    100% {
+        background: #ffffff00;
+    }
+}
+.bme-showcase-load-more{
+    width: 300px;
+    height: 28px;
+    font-size: 14px;
+    margin: 20px auto;
+    background: #0c5da5;
+    
+    border: none;
+    outline: none !important;
+    transition: 125ms;
+}
+.bme-showcase-load-more:hover{
+    opacity: 0.95;
+}
+.bme-active-button,
+.bme-showcase-load-more:active{
+        opacity: 0.8 !important;
+}
 
 
 
@@ -541,7 +801,8 @@
 .tiptap {
     font-family: monospace !important;
 }
-form > .tiptap-container > div > .tiptap{
+
+form>.tiptap-container>div>.tiptap {
     background: #00000020;
     padding: 5px;
 }

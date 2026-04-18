@@ -23,11 +23,11 @@ body {
 
 .bme-sidebar-left {
     left: 50dvw;
-    transform: translateX(calc(-360px + -590px));
+    transform: translateX(calc(-360px + -580px));
 }
 
 .bme-sidebar-right {
-    left: calc(50dvw + 590px);
+    left: calc(50dvw + 600px);
 }
 
 

@@ -76,7 +76,7 @@ async function onIdentifierPage(bmId) {
     if (settings.highlightVpn) highlightVpnIdentifiers(bmId, { label: settings.removeVpnLabel, threshold: settings.vpnAbove, background: settings.vpnBgColor, opacity: settings.vpnOpacity })
     if (settings.displayAvatars) displayAvatars(bmId, playerCache.identifiers.avatars, settings.zoomableAvatars)
     if (settings.swapBattleEyeGuid) swapBattleEyeGuid(bmId, playerCache.bmProfile);
-    if (settings.showLinks) displaySteamLinks(bmId, playerCache.steamLinks, settings.loadDiscordData)
+    if (settings.showLinks) displaySteamLinks(bmId, playerCache.steamLinks, settings.loadDiscordData, settings.showEmptyIdInput)
 
     const evasionCheckerSettings = JSON.parse(localStorage.getItem("BME_EVASION_CHECKER_SETTINGS"));
     if (evasionCheckerSettings.enabled) displayEvasionCheckerPanel(evasionCheckerSettings);

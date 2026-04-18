@@ -278,7 +278,7 @@ export function setNativeValue(select, value, highlight) {
     select.dispatchEvent(new Event("input", { bubbles: true }));
     select.dispatchEvent(new Event("change", { bubbles: true }));
 }
-function highlightElement(element, color) {
+export function highlightElement(element, color) {
     element.classList.add(`bme-${color}-change`);
     setTimeout(() => { element.classList.remove(`bme-${color}-change`); }, 400);
 }

@@ -540,9 +540,8 @@ async function getSteamLinks(bmProfile) {
         return []
     }
 }
-async function getDiscordData(steamLinks) {
+export async function getDiscordData(steamLinks) {
     try {
-
         steamLinks = await steamLinks;
         const discordIds = steamLinks
             .map(item => item.discordId)
@@ -556,7 +555,6 @@ async function getDiscordData(steamLinks) {
         if (!PLAYER_INSIGHT_KEY) return "NO_API_KEY";
         if (PLAYER_INSIGHT_KEY.length !== 64) return "INVALID_API_KEY";
         if (!piDetails?.perms.includes("discordUser")) return "NO_PERMISSION";
-
 
         const promises = discordIds.map(discordId =>
             talkToBackgroundScript("BME_DISCORD_DATA", discordId, PLAYER_INSIGHT_KEY)

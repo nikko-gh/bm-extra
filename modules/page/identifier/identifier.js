@@ -1,6 +1,6 @@
-import { getElementWhenAppears, getIdentifierType, getTimeSpan, makeDropDownMenu } from "../../misc.js";
-import { fillDiscordUserElement } from "./discordUserElement.js";
-import { cache, getProxyCheckIpInfo } from "../cache/cache.js";
+import { getElementWhenAppears, getIdentifierType, getTimeSpan, highlightElement, makeDropDownMenu, shouldAbort, talkToBackgroundScript } from "../../misc.js";
+import { fillDiscordUserElement } from "./discord/discordUserElement.js";
+import { cache, getDiscordData, getProxyCheckIpInfo } from "../cache/cache.js";
 import { autoStart } from "./evasionChecker/actions.js";
 import { getEvasionCheckerPanel } from "./evasionChecker/panel.js";
 
@@ -269,9 +269,10 @@ export async function displayAvatars(bmId, avatars, zoomable) {
     })
 }
 
-export async function displaySteamLinks(bmId, steamLinks, loadData) {
+const storedLinks = {};
+export async function displaySteamLinks(bmId, steamLinks, loadData, showInput) {
     steamLinks = await steamLinks;
-    if (steamLinks.length === 0) return;
+    if (steamLinks.length === 0 && !showInput) return;
 
     const identifierWrapper = (await getElementWhenAppears("css-11gv980", true));
     const identifierTable = identifierWrapper?.lastChild?.children;
@@ -282,22 +283,80 @@ export async function displaySteamLinks(bmId, steamLinks, loadData) {
         return false;
     });
     if (!under) return console.error("BM-EXTRA: Failed to locate ipTitle!");
+    if (storedLinks[bmId]) steamLinks[bmId].forEach(link => { steamLinks.push(link) })
+
 
     const discordTitle = getIdentifierTableTitle("Discord");
+    discordTitle.id = "bme-steam-links"
+    if (shouldAbort(bmId, "bme-steam-links")) return;
     under.insertAdjacentElement("beforebegin", discordTitle)
 
+    if (showInput) discordTitle.insertAdjacentElement("afterend", getDiscordInput(bmId, discordTitle))
+
     steamLinks.forEach(link => {
-        const payload = `
-            <div title="${link.discordId}" class="css-8uhtka bme-unloaded-discord">
-                <span class="css-q39y9k bme-discord-title" title="${link.discordId}">${link.discordId}</span>
-            </div>
-            <div class="bme-discord-wrapper bme-discord-unloaded" title="${link.discordId}"></div>
-        `;
-        const element = getIdentifierTableElement("Discord", payload, Number(link.lastSeen), { owners: link.owners })
+        const element = getSteamLinkElement(link.discordId, link.lastSeen, link.owners ?? [])
         discordTitle.insertAdjacentElement("afterend", element)
     })
 
     if (loadData) displayDiscordData();
+}
+function getSteamLinkElement(discordId, lastSeen, owners) {
+    const payload = `
+        <div title="${discordId}" class="css-8uhtka bme-unloaded-discord">
+            <span class="css-q39y9k bme-discord-title" title="${discordId}">${discordId}</span>
+        </div>
+        <div class="bme-discord-wrapper bme-discord-unloaded" title="${discordId}"></div>
+    `;
+    return getIdentifierTableElement("Discord", payload, Number(lastSeen), { owners: owners })
+}
+function getDiscordInput(bmId, title) {
+    const element = document.createElement("tr");
+    element.id = "bme-discord-input"
+    element.classList.add("css-147tpna")
+
+    element.innerHTML = `
+        <td>
+            <p>Discord ID:</p>
+            <input placeholder="Insert Discord ID">
+        </td>
+    `;
+
+    const input = element.querySelector("input");
+
+    input.addEventListener("change", async e => {
+        try {
+            const value = e.target.value;
+
+            if (isNaN(Number(value))) throw new Error("Not a valid ID");
+            if (value.length < 17 || value.length > 20) throw new Error("Not a valid ID");
+
+            const steamLinks = await cache[bmId].steamLinks;
+
+            const currentIds = steamLinks.map(item => item.discordId);
+            if (currentIds.includes(value)) throw new Error("Already Listed ID");
+
+            const link = {
+                discordId: value,
+                lastSeen: Date.now(),
+                owner: ["Local"]
+            }
+
+            steamLinks.push(link)
+
+            const linkElement = getSteamLinkElement(link.discordId, link.lastSeen, link.owner);
+            title.insertAdjacentElement("afterend", linkElement);
+
+            getDiscordData([link]);
+
+            highlightElement(e.target, "green");
+        } catch (error) {
+            highlightElement(e.target, "red");
+        } finally {
+            e.target.value = "";
+        }
+    })
+
+    return element;
 }
 
 function getIdentifierTableTitle(title) {
@@ -370,10 +429,10 @@ export function displayDiscordData() {
     if (discordData.length === 0) return;
 
     for (const discordElement of unloadedDiscords) {
-        const discordId = discordElement.title;        
+        const discordId = discordElement.title;
 
         const data = discordData.find(item => item.user.id === discordId);
-        if (!data) return; 
+        if (!data) return;
         discordElement.classList.remove("bme-unloaded-discord");
 
         const discordAvatar = document.createElement("div");

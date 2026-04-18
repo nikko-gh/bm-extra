@@ -294,10 +294,13 @@ function getIdentifierSettings() {
         `Load and display the discord Account information.`,
         ["Player Insight - DD"], bucket, "loadDiscordData", settings.loadDiscordData
     )
+    const showEmptyIdInput = getSettingsElement(
+        "toggle", "Show Input",
+        `Shows an input field in which you can request discord data manually.`,
+        ["Player Insight - DD"], bucket, "showEmptyIdInput", settings.showEmptyIdInput
+    )
 
-    linkSegment.append(loadDiscordData)
-
-
+    linkSegment.append(loadDiscordData, showEmptyIdInput)
 
 
     const resetButton = getResetButton("bm-identifier")
@@ -1228,7 +1231,6 @@ function getEvasionCheckerSettings() {
     titleRow.appendChild(title);
 
     element.append(titleRow)
-
     const bucket = "BME_EVASION_CHECKER_SETTINGS";
     const settings = JSON.parse(localStorage.getItem(bucket));
 
@@ -2058,6 +2060,7 @@ function getDefaultIdentifierSettings() {
     settings.vpnOpacity = 0.6;
     settings.showLinks = false;
     settings.loadDiscordData = false;
+    settings.showEmptyIdInput = false;
     return settings;
 }
 function checkBmInfoSettings() {

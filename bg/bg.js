@@ -32,6 +32,7 @@ chrome.runtime.onMessage.addListener(async (req, sender) => {
     if (req.type.startsWith("BME_PUBLIC_BANS")) return sendPublicBans(req.subject, req.apiKey, sender, returnObject);
     if (req.type.startsWith("BME_STEAM_LINKS")) return sendSteamLinks(req.subject, req.apiKey, sender, returnObject);
     if (req.type.startsWith("BME_DISCORD_DATA")) return sendDiscordData(req.subject, req.apiKey, sender, returnObject);
+    if (req.type.startsWith("BME_DISCORD_MESSAGES")) return sendDiscordMessages(req.subject, req.apiKey, sender, returnObject);
     if (req.type.startsWith("BME_ATLAS_TEAMINFO")) return sendAtlasTeaminfo(req.subject, req.apiKey, sender, returnObject);
 })
 
@@ -176,7 +177,7 @@ async function sendSteamPlayerSummaries(steamIds, API_KEY, sender, returnObject)
     try {
         const resp = await fetch(`https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${API_KEY}&steamids=${steamIds}`);
         if (resp.status === 429) throw new Error("Rate Limit")
-        if (resp?.status !== 200) throw new Error(`Requesting Steam Player Summaries Failed | steamId: ${steamId} | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
+        if (resp?.status !== 200) throw new Error(`Requesting Steam Player Summaries Failed | steamId: ${steamIds} | API KEY: ${API_KEY.substring(0, 10)}... | Status: ${resp?.status}`)
 
         const data = await resp.json();
         returnObject.status = "OK";
@@ -265,6 +266,22 @@ async function sendDiscordData(discordId, apiKey, sender, returnObject) {
     try {
         const resp = await fetch(`https://player-insight.flqyd.dev/api/discord/user/${discordId}?token=${apiKey}`);
         if (resp?.status !== 200) throw new Error(`Failed to request steam links | steamId: ${discordId} | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
+
+        const data = await resp.json();
+        returnObject.status = "OK";
+        returnObject.value = data.data;
+        return chrome.tabs.sendMessage(sender.tab.id, returnObject);
+    } catch (error) {
+        console.error(error);
+        returnObject.status = "ERROR";
+        returnObject.value = error;
+        return chrome.tabs.sendMessage(sender.tab.id, returnObject);
+    }
+}
+async function sendDiscordMessages(path, apiKey, sender, returnObject) {
+    try {
+        const resp = await fetch(`https://player-insight.flqyd.dev/api/discord/messages/${path}?token=${apiKey}`);
+        if (resp?.status !== 200) throw new Error(`Failed to request messages | Path: ${path}| API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
 
         const data = await resp.json();
         returnObject.status = "OK";
