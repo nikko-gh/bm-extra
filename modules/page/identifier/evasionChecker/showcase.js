@@ -312,11 +312,9 @@ function getNameSection(main, player, outcome) {
     }
 }
 function getSessionSection(main, player, outcome) {
-    console.log(main, player, outcome);
     const element = document.createElement("div");
-
     const header = getSessionHeader(main, player, outcome);
-
+    
     element.append(header)
     return element;
 

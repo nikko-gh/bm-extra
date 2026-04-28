@@ -25,8 +25,8 @@ export async function showExtraDataOnIps(bmId, bmProfile, requestProxyCheck) {
     if (requestProxyCheck) {
         const proxyCheckData = await getProxyCheckIpInfo(ips);
         ips = ips.map(item => {
-            const ip = item.ip;
-            const proxyCheck = proxyCheckData.get(ip) || null;
+            const ip = item.ip;            
+            const proxyCheck = proxyCheckData?.get(ip) || null;
 
             return { ...item, proxyCheck }
         })

@@ -80,23 +80,27 @@ export function fillDiscordUserElement(element, data, token) {
         let longestRole = 0;
         let longestTs = 0;
         for (const item of guild.roles) {
-            const inner = new DOMParser().parseFromString(getTimeSpan(item.lastSeen), 'text/html');
+            const inner = new DOMParser().parseFromString(`${getTimeSpan(item.lastSeen)} ago`, 'text/html');
+            
             if (longestTs < inner.body.innerText.length) longestTs = inner.body.innerText.length;
-
-
             if (longestRole < item.role.length) longestRole = item.role.length;
         }
 
         for (const item of guild.roles) {
             const role = document.createElement("p");
 
-            const roleDetails = [
-                `${getTimeSpan(item.lastSeen)} ago`.padEnd(longestTs),
-                `   ${item.role.padEnd(longestRole)}   `,
-                `${item.count}x seen`
-            ]
+            role.innerHTML += `${getTimeSpan(item.lastSeen)} ago`;
+            if (role.innerText.length < longestTs) {
+                role.innerHTML += '&nbsp;'.repeat(longestTs - role.innerText.length);
+            }            
+            
+            role.innerHTML += ` |&nbsp;&nbsp;&nbsp;`;
+            role.innerText += `${item.role}`;
+            if (item.role.length < longestRole) {
+                role.innerHTML += '&nbsp;'.repeat(longestRole - item.role.length);
+            }
 
-            role.innerHTML = roleDetails.join(" | ").replaceAll(" ", "\u00A0");
+            role.innerHTML += `&nbsp;&nbsp;&nbsp;| ${item.count}x seen`;            
             roles.append(role);
         }
 
