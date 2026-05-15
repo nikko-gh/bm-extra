@@ -126,7 +126,7 @@ async function sendPremiumStatus(steamId, sender, returnObject) {
 }
 async function sendProxyCheck(ips, apiKey, sender, returnObject) {
     try {
-        const resp = await fetch(`http://proxycheck.io/v3/${ips}?key=${apiKey}`);
+        const resp = await fetch(`https://proxycheck.io/v3/${ips}?key=${apiKey}`);
         if (resp?.status !== 200) throw new Error(`Requesting Proxycheck data failed | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
 
         const data = await resp.json();
