@@ -176,7 +176,7 @@ function getBmData(bmId, bmData, bmActivity) {
         if (msg.attributes.messageType === "rustLog:playerDeath:PVP" && bmId == data.killer_id) { //KILL
             returnData.kills.push(timestamp);
         }
-        if (msg.attributes.messageType === "rustLog:playerDeath:PVP" && bmId != data.killer_id) { //KILL
+        if (msg.attributes.messageType === "rustLog:playerDeath:PVP" && bmId != data.killer_id) { //DEATH
             returnData.deaths.push(timestamp);
         }
     })
