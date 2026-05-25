@@ -1,5 +1,8 @@
-import { getElementWhenAppears, getIdentifierType, getTimeSpan } from "../../misc.js";
-import { getProxyCheckIpInfo } from "../cache/cache.js";
+import { getElementWhenAppears, getIdentifierType, getTimeSpan, highlightElement, makeDropDownMenu, shouldAbort, talkToBackgroundScript } from "../../misc.js";
+import { fillDiscordUserElement } from "./discord/discordUserElement.js";
+import { cache, getDiscordData, getProxyCheckIpInfo } from "../cache/cache.js";
+import { autoStart } from "./evasionChecker/actions.js";
+import { getEvasionCheckerPanel } from "./evasionChecker/panel.js";
 
 export async function showExtraDataOnIps(bmId, bmProfile, requestProxyCheck) {
     bmProfile = await bmProfile;
@@ -23,7 +26,7 @@ export async function showExtraDataOnIps(bmId, bmProfile, requestProxyCheck) {
         const proxyCheckData = await getProxyCheckIpInfo(ips);
         ips = ips.map(item => {
             const ip = item.ip;
-            const proxyCheck = proxyCheckData.get(ip) || null;
+            const proxyCheck = proxyCheckData?.get(ip) || null;
 
             return { ...item, proxyCheck }
         })
@@ -126,7 +129,7 @@ function getPcDataElement(pc) {
         { label: "city:", value: pc.loc.cityName },
     ]
 
-    const host = pc.net.host?.substring(0, 40) || null;    
+    const host = pc.net.host?.substring(0, 40) || null;
     const thirdSectionContent = [
         { maxWidth: "55ch", labelWidth: "10ch", valueWidth: "45ch" },
         { label: "ASN:", value: pc.net.asn },
@@ -247,34 +250,12 @@ export async function displayAvatars(bmId, avatars, zoomable) {
     if (!nameElement) return console.error("BM-EXTRA: Failed to locate nameElement!");
 
     if (avatars.length === 0) return;
-    const avatarTitle = getAvatarTitle();
+    const avatarTitle = getIdentifierTableTitle("Avatar");
     nameElement.before(avatarTitle);
 
-    avatars.forEach(avatar => {
-        const avatarElement = getAvatarElement(avatar, zoomable);
-        nameElement.before(avatarElement);
-    })
-}
-function getAvatarTitle() {
-    const element = document.createElement("tr");
-    element.classList.add("css-147tpna");
-
-    const inner = document.createElement("th")
-    inner.colSpan = 3;
-    inner.innerText = "Avatar";
-    element.append(inner);
-
-    return element;
-}
-function getAvatarElement(item, zoomable) {
-    const tr = document.createElement("tr");
-    const lastSeen = item.lastSeen * 1000;
-    const iso = new Date(lastSeen).toISOString();
-
-    //Heavily modified Standard BattleMetrics Identifier
-    tr.innerHTML = `
-        <td data-title="Identifier">
-            <div title="${item.avatar}" class="css-8uhtka bme-avatar-container ${zoomable ? "bme-zoomable-avatar" : ""}">
+    avatars.forEach(item => {
+        const payload = `
+            <div title="${item.avatar}" class="css-8uhtka bme-avatar-container ${zoomable && "bme-zoomable-avatar"}">
                 <div class="bme-avatar-placeholder">
                     <div>
                         <img src="https://avatars.fastly.steamstatic.com/${item.avatar}_full.jpg" class="bme-avatar-identifier">
@@ -282,16 +263,238 @@ function getAvatarElement(item, zoomable) {
                 </div>
                 <span class="css-q39y9k" title="${item.avatar}">${item.avatar}${item.avatarHits !== "N/A" ? ` | Seen on ${item.avatarHits < 101 ? item.avatarHits : "100+"} players` : ""}</span>
             </div>
+        `;
+        const avatarElement = getIdentifierTableElement("Avatar", payload, Number(item.lastSeen) * 1000)
+        nameElement.before(avatarElement);
+    })
+}
+
+const storedLinks = {};
+export async function displaySteamLinks(bmId, steamLinks, loadData, showInput) {
+    steamLinks = await steamLinks;
+    if (steamLinks.length === 0 && !showInput) return;
+
+    const identifierWrapper = (await getElementWhenAppears("css-11gv980", true));
+    const identifierTable = identifierWrapper?.lastChild?.children;
+    if (!identifierTable) return console.error("BM-EXTRA: Failed to find identifierTable!");
+    const under = Array.from(identifierTable).find(item => {
+        const text = item?.innerText?.trim();
+        if (text === "IP" || text === "Name") return true;
+        return false;
+    });
+    if (!under) return console.error("BM-EXTRA: Failed to locate ipTitle!");
+    if (storedLinks[bmId]) steamLinks[bmId].forEach(link => { steamLinks.push(link) })
+
+    const discordTitle = getIdentifierTableTitle("Discord");
+    discordTitle.id = "bme-steam-links"
+    if (shouldAbort(bmId, "bme-steam-links")) return;
+    under.insertAdjacentElement("beforebegin", discordTitle)
+
+    if (showInput) discordTitle.insertAdjacentElement("afterend", getDiscordInput(bmId, discordTitle))
+
+    steamLinks.forEach(link => {
+        const element = getSteamLinkElement(link.discordId, link.lastSeen, link.owners ?? [], link.attached ?? [])
+        discordTitle.insertAdjacentElement("afterend", element)
+    })
+
+    if (loadData) displayDiscordData();
+}
+function getSteamLinkElement(discordId, lastSeen, owners, attached) {
+    let payload = `
+        <div title="${discordId}" class="css-8uhtka bme-unloaded-discord">
+            <p class="css-q39y9k bme-discord-title" title="${discordId}">${discordId}</p>
+        </div>
+        <div class="bme-discord-wrapper bme-discord-unloaded" title="${discordId}"></div>
+    `;
+    if (attached?.length > 0) payload += `
+        <div>
+            <div class="bme-share bme-header">
+                <span>
+                    <i class="glyphicon glyphicon-chevron-right css-1pdr3ri"></i> 
+                    <i class="glyphicon glyphicon-info-sign" style="color: rgb(255, 149, 0);"></i> 
+                    Identifier is shared with ${attached.length} player(s)
+                </span>
+            </div>
+            <div class="bme-attached-container bme-body">
+                <ol>
+                    ${attached.map(steamId => `<li><a href="https://www.battlemetrics.com/rcon/players?filter%5Bsearch%5D=${steamId}&filter%5Bservers%5D=false&filter%5BplayerFlags%5D=&sort=score&showServers=false&method=quick&redirect=1">${steamId}</a></li>`).join("")}
+                </ol>
+            </div>
+        </div>
+    `
+    const element = getIdentifierTableElement("Discord", payload, Number(lastSeen), { owners: owners })
+
+    const header = element.querySelector(".bme-header");
+    const body = element.querySelector(".bme-body")
+    if (header && body) makeDropDownMenu(header, body, 200, "", true)
+
+    return element;
+}
+function getDiscordInput(bmId, title) {
+    const element = document.createElement("tr");
+    element.id = "bme-discord-input"
+    element.classList.add("css-147tpna")
+
+    element.innerHTML = `
+        <td>
+            <p>Discord ID:</p>
+            <input placeholder="Insert Discord ID">
+        </td>
+    `;
+
+    const input = element.querySelector("input");
+
+    input.addEventListener("change", async e => {
+        try {
+            const value = e.target.value;            
+            if (isNaN(Number(value))) throw new Error("Not a valid ID");
+            if (value.length < 17 || value.length > 20) throw new Error("Not a valid ID");
+
+            
+            const steamLinks = await cache[bmId].steamLinks;
+            const currentIds = steamLinks.map(item => item.discordId);            
+            if (currentIds.includes(value)) throw new Error("Already Listed ID");
+
+            const link = {
+                discordId: value,
+                lastSeen: Date.now(),
+                owner: ["Local"],
+                attached: []
+            }
+
+            steamLinks.push(link)
+
+            const linkElement = getSteamLinkElement(link.discordId, link.lastSeen, link.owner);
+            title.insertAdjacentElement("afterend", linkElement);
+
+            getDiscordData([link]);
+
+            highlightElement(e.target, "green");
+        } catch (error) {
+            highlightElement(e.target, "red");
+        } finally {
+            e.target.value = "";
+        }
+    })
+
+    return element;
+}
+
+function getIdentifierTableTitle(title) {
+    const element = document.createElement("tr");
+    element.classList.add("css-147tpna");
+
+    const inner = document.createElement("th")
+    inner.colSpan = 3;
+    inner.innerText = title;
+    element.append(inner);
+
+    return element;
+}
+let _locale = null;
+function getIdentifierTableElement(type, payload, lastSeen, meta) {
+    const tr = document.createElement("tr");
+    const locale = getLocale();
+
+    const date = new Date(lastSeen);
+    const dateStr = date.toLocaleDateString(locale);
+    const timeStr = date.toLocaleTimeString(locale, {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+    });
+
+    //Heavily modified Standard BattleMetrics Identifier    
+    tr.innerHTML = `
+        <td data-title="Identifier">
+            ${payload}
         </td>
         <td data-title="Type">
-            <div class="css-18s4qom">Avatar</div>
+            <div class="css-18s4qom">${type}</div>
+            ${meta?.owners?.length > 0 ? `
+                <button title="Show organizations that have this identifier." type="button" class="css-p43owu">
+                    <i class="glyphicon glyphicon-info-sign"></i>
+                </button>
+            ` : ``}
         </td>
         <td data-title="Last Seen">
-            <time>${`${iso.substring(8, 10)}/${iso.substring(5, 7)}/${iso.substring(0, 4)}`}</time><br />
-            <time class="css-18s4qom">${iso.substring(11, 16)}</time>
+            <time>${dateStr}</time><br />
+            <time class="css-18s4qom">${timeStr}</time>
             <time class="css-18s4qom">${getTimeSpan(lastSeen)} ago</time>
         </td>
     `;
 
+    const button = tr.querySelector("button");
+    if (button) {
+        button.addEventListener("click", () => {
+            alert(`Organizations who owns this identifier:\n - ${meta.owners.join("\n - ")}`)
+        })
+    }
+
     return tr;
+    function getLocale() {
+        if (_locale) return _locale;
+
+        const locale = JSON.parse(document.getElementById("storeBootstrap")?.innerText || null)?.state?.account?.locale || "en-gb";
+        _locale = locale;
+        return locale;
+    }
+}
+
+
+export function displayDiscordData() {
+    const token = JSON.parse(localStorage.getItem("BME_PLAYER_INSIGHT_API")).apiKey;
+
+    const unloadedDiscords = Array.from(document.querySelectorAll(".bme-unloaded-discord"));
+    const discordData = cache.discordUserData;
+    if (discordData.length === 0) return;
+
+    for (const discordElement of unloadedDiscords) {
+        const discordId = discordElement.title;
+
+        const data = discordData.find(item => item.user.id === discordId);
+        if (!data) continue;
+        discordElement.classList.remove("bme-unloaded-discord");
+
+        const discordAvatar = document.createElement("div");
+        discordAvatar.classList.add("bme-avatar-placeholder");
+        discordAvatar.innerHTML = `
+            <div>
+                <img src="${data.user.avatar}?token=${token}" class="bme-avatar-identifier">
+            </div>
+        `;
+        discordElement.insertAdjacentElement("afterbegin", discordAvatar);
+
+        const span = discordElement.querySelector("p");
+
+        const ccCount = data.guilds.filter(guild => guild.tags?.includes("cc")).length
+        let mCount = 0;
+        data.guilds.forEach(guild => mCount += Number(guild.messageCount));
+
+        span.innerText = `${data.user.name} | ${data.user.displayName} | ${data.guilds.length} guilds | `;
+        span.innerHTML += `${ccCount > 0 ? `<span class="bme-red-text">${ccCount} cc</span>` : `${ccCount} cc`} | ${mCount} messages`;
+        span.classList.add("bme-clickable");
+
+        const discordUserElement = discordElement.parentNode.querySelector(".bme-discord-wrapper");
+        fillDiscordUserElement(discordUserElement, data, token)
+
+        makeDropDownMenu(span, discordUserElement, 350, "main-", true);
+    }
+}
+
+export async function displayEvasionCheckerPanel(settings) {
+    const panel = getEvasionCheckerPanel();
+    const identifierWrapper = await getElementWhenAppears("css-11gv980", true);
+
+    if (settings.panelPlacement === "top")
+        identifierWrapper.insertAdjacentElement("beforebegin", panel)
+    else
+        identifierWrapper.insertAdjacentElement("afterend", panel)
+
+    for (let i = 0; i < 50; i++) { //Wait till shared identifiers load
+        if (identifierWrapper.innerText.includes("Identifier shared with")) break;
+        await new Promise(r => { setTimeout(r, 150 * (i / 10)) })
+    }
+
+    if (settings.core.autoStart) autoStart(settings);
 }

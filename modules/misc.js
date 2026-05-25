@@ -29,7 +29,7 @@ async function findElementWhenAppears(selector) {
     let element = document.querySelector(selector);
     let count = 0;
 
-    while (count < MAX_ATTEMPTS) {        
+    while (count < MAX_ATTEMPTS) {
         element = document.querySelector(selector);
         if (element) return element;
 
@@ -58,22 +58,22 @@ export function getTimeSpan(timestamp, isDuration = false, daysOnly = false) {
 
     let str = "";
 
-    if (daysOnly){
+    if (daysOnly) {
         let days = Number((since / ONE_DAY).toFixed(1));
         if (days > 100) days = Math.floor(days);
 
         str = plural(days, "day")
-    } 
-        
+    }
 
-    if (!str && since > ONE_YEAR) str =  plural((since / ONE_YEAR).toFixed(1), "year");
-    if (!str && since > ONE_MONTH) str =  plural((since / ONE_MONTH).toFixed(1), "month");
-    if (!str && since > ONE_DAY) str =  plural(Math.floor(since / ONE_DAY), "day");
-    if (!str && since > ONE_HOUR) str =  plural(Math.floor(since / ONE_HOUR), "hour");
-    if (!str && since > ONE_MINUTE) str =  plural(Math.floor(since / ONE_MINUTE), "minute");
-    if (!str && since > ONE_SECOND) str =  plural(Math.floor(since / ONE_SECOND), "second");
-    if (!str) str =  `${since} ms`;
-    
+
+    if (!str && since > ONE_YEAR) str = plural((since / ONE_YEAR).toFixed(1), "year");
+    if (!str && since > ONE_MONTH) str = plural((since / ONE_MONTH).toFixed(1), "month");
+    if (!str && since > ONE_DAY) str = plural(Math.floor(since / ONE_DAY), "day");
+    if (!str && since > ONE_HOUR) str = plural(Math.floor(since / ONE_HOUR), "hour");
+    if (!str && since > ONE_MINUTE) str = plural(Math.floor(since / ONE_MINUTE), "minute");
+    if (!str && since > ONE_SECOND) str = plural(Math.floor(since / ONE_SECOND), "second");
+    if (!str) str = `${since} ms`;
+
     return `<span class="bme-time" data-raw="${timestamp}" data-duration="${isDuration}">${str}</span>`;
 }
 export function getBmInfoTimeString(timestamp) {
@@ -88,26 +88,27 @@ function plural(value, unit) {
     return `${value} ${unit}s`;
 }
 
-export async function getSteamFriendlistFromSteam(steamId) {
+export async function getCurrentFriends(steamId) {
     try {
         const STEAM_API_KEY = localStorage.getItem("BME_STEAM_API_KEY");
         if (!STEAM_API_KEY) return "NO_API_KEY";
 
-        return await talkToBackgroundScript("BME_STEAM_FRIENDLIST", steamId, STEAM_API_KEY)
+        return await talkToBackgroundScript("BME_CURRENT_FRIENDS", steamId, STEAM_API_KEY)
     } catch (error) {
         console.error(error);
         if (error.message === "TIMEOUT") return error.message;
         return "ERROR";
     }
 }
-export async function getSteamFriendlistFromRustApi(steamId) {
+export async function getHistoricFriends(steamId) {
     try {
-        const RUST_API_KEY = localStorage.getItem("BME_RUST_API_KEY");
-        if (!RUST_API_KEY) return "NO_API_KEY";
-        if (RUST_API_KEY.length !== 64) return "INVALID_API_KEY";
-        if (RUST_API_KEY[rustApiKeyPermissionBits.historicFriends] !== "1") return "MISSING_PERMISSION"
+        const piDetails = JSON.parse(localStorage.getItem("BME_PLAYER_INSIGHT_API"));
+        const PLAYER_INSIGHT_KEY = piDetails?.apiKey || null;
+        if (!PLAYER_INSIGHT_KEY) return "NO_API_KEY";
+        if (PLAYER_INSIGHT_KEY.length !== 64) return "INVALID_API_KEY";
+        if (!piDetails?.perms.includes("steamFriends")) return "NO_PERMISSION";
 
-        return await talkToBackgroundScript("BME_RUST_API_FRIENDLIST", steamId, RUST_API_KEY);
+        return await talkToBackgroundScript("BME_HISTORIC_FRIENDS", steamId, PLAYER_INSIGHT_KEY);
     } catch (error) {
         console.error(error);
         if (error.message === "TIMEOUT") return "TIMEOUT";
@@ -180,9 +181,7 @@ export async function getLastServer(bmProfile, onlyMyServer) {
     return lastServer
 }
 export async function getMyServers(onlyIds) {
-    const externalAuthToken = localStorage.getItem("BME_BATTLEMETRICS_API_KEY");
-    const internalAuthToken = !externalAuthToken ? getAuthToken() : null;
-    const token = externalAuthToken ? externalAuthToken : internalAuthToken;
+    const token = getAuthToken();
 
     let myServers = JSON.parse(localStorage.getItem("BME_MY_SERVER_CACHE"));
     if (myServers && myServers.timestamp > Date.now() - 24 * 60 * 60 * 1000) {
@@ -190,10 +189,10 @@ export async function getMyServers(onlyIds) {
         else return myServers.servers;
     }
 
-    
+
     const data = await requestMyServers('https://api.battlemetrics.com/servers?filter[rcon]=true&page[size]=100', token)
     if (!data) {
-        console.error(`Failed to request your servers | Status: ${resp?.status}`);
+        console.error(`Failed to request your servers | Returned type: ${typeof (data)}`);
         return null;
     }
 
@@ -206,8 +205,6 @@ export async function getMyServers(onlyIds) {
     if (onlyIds) return myServers.servers.map(server => server.id);
     else return myServers.servers;
 }
-
-
 async function requestMyServers(url, token, count = 0) {
     if (count > 2) return null;
     try {
@@ -223,8 +220,8 @@ async function requestMyServers(url, token, count = 0) {
         })
 
         if (data.links.next) {
-            await new Promise(r => {setTimeout(r, 1000)});
-            const nextPage = requestMyServers(data.links.next, token);
+            await new Promise(r => { setTimeout(r, 1000) });
+            const nextPage = await requestMyServers(data.links.next, token);
             if (!nextPage) return servers;
 
             servers.push(...nextPage);
@@ -233,12 +230,23 @@ async function requestMyServers(url, token, count = 0) {
         return servers;
     } catch (error) {
         console.error(`Failed to request your servers. | ${error.message}`);
-        await new Promise(r => {setTimeout(r, 1000)});
-        return await requestMyServers(url, token, count+1);
+        await new Promise(r => { setTimeout(r, 1000) });
+        return await requestMyServers(url, token, count + 1);
     }
 }
 
-export function getAuthToken() {
+let _lastResp = null;
+export function getAuthToken(type) {
+    if (type === "internal") return getInternalAuthToken();
+
+    if (_lastResp) return _lastResp;
+    const internal = getInternalAuthToken();
+    const external = getExternalAuthToken();
+
+    _lastResp = external || internal;
+    return external || internal;
+}
+function getInternalAuthToken() {
     const authElement = document.getElementById("oauthToken");
     if (!authElement) {
         console.error("BM-EXTRA: Auth element wasn't found.")
@@ -251,6 +259,9 @@ export function getAuthToken() {
     }
 
     return authToken;
+}
+function getExternalAuthToken() {
+    return localStorage.getItem("BME_BATTLEMETRICS_API_KEY") || null;
 }
 
 export function setNativeValue(select, value, highlight) {
@@ -267,7 +278,7 @@ export function setNativeValue(select, value, highlight) {
     select.dispatchEvent(new Event("input", { bubbles: true }));
     select.dispatchEvent(new Event("change", { bubbles: true }));
 }
-function highlightElement(element, color) {
+export function highlightElement(element, color) {
     element.classList.add(`bme-${color}-change`);
     setTimeout(() => { element.classList.remove(`bme-${color}-change`); }, 400);
 }
@@ -293,7 +304,7 @@ export function getIdentifierType(identifier) {
     return { type, id }
 }
 
-export function talkToBackgroundScript(type, subject, apiKey) {
+export function talkToBackgroundScript(type, subject, apiKey, rejectTime = 10000) {
     const requestId = Math.floor(Math.random() * 1000000);
     type = `${type}_${requestId}`;
 
@@ -311,7 +322,7 @@ export function talkToBackgroundScript(type, subject, apiKey) {
         const timer = setTimeout(() => {
             chrome.runtime.onMessage.removeListener(handler);
             reject(new Error(`TIMEOUT`));
-        }, 10000);
+        }, rejectTime);
 
         chrome.runtime.onMessage.addListener(handler);
         chrome.runtime.sendMessage({ type, subject, apiKey });
@@ -321,4 +332,46 @@ export function talkToBackgroundScript(type, subject, apiKey) {
 export function removeSidebars() {
     const elementsToRemove = document.querySelectorAll(".bme-sidebar");
     elementsToRemove.forEach(item => item.remove())
+}
+
+export function makeDropDownMenu(header, body, ms, prefix = "", isClosed) {
+    if (isClosed) {
+        body.style.setProperty(`--${prefix}height`, "0px")
+        body.style.setProperty(`--${prefix}overflow`, "hidden")
+    }
+
+    body.style.setProperty(`--${prefix}transition`, `${ms}ms`)
+
+    let timeout = null;
+    header.addEventListener("click", e => {
+        if (timeout) clearTimeout(timeout);
+        const height = body.scrollHeight;
+        if (header.classList.contains("bme-open")) { //Close
+            header.classList.remove("bme-open");
+
+            body.style.setProperty(`--${prefix}height`, `${height}px`)
+            setTimeout(() => {
+                body.style.setProperty(`--${prefix}height`, "0px")
+                body.style.setProperty(`--${prefix}overflow`, "hidden")
+            }, 5);
+        } else { //Open
+            header.classList.add("bme-open");
+
+            body.style.setProperty(`--${prefix}height`, `${height}px`)
+            timeout = setTimeout(() => {
+                body.style.setProperty(`--${prefix}height`, `fit-content`)
+                body.style.setProperty(`--${prefix}overflow`, "visible")
+            }, ms);
+        }
+    })
+}
+
+
+let _locale = null;
+export function getLocale() {
+    if (_locale) return _locale;
+
+    const locale = JSON.parse(document.getElementById("storeBootstrap").innerHTML)?.state?.account?.locale ?? "en-us";
+    _locale = locale;
+    return locale;
 }

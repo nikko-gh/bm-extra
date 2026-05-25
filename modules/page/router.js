@@ -1,7 +1,7 @@
 import { setupCacheFor, cache } from "../page/cache/cache.js";
 import { checkAndSetupSettingsIfMissing } from "../settings.js";
 import { advancedBans, closeAdminLog, displayInfoPanel, displayServerActivity, limitItem, removeSteamInformation, displayAlertLink } from "./overview/overview.js";
-import { highlightVpnIdentifiers, showExtraDataOnIps, displayAvatars } from "./identifier/identifier.js";
+import { highlightVpnIdentifiers, showExtraDataOnIps, displayAvatars, displayEvasionCheckerPanel, displaySteamLinks } from "./identifier/identifier.js";
 import { convertTimestampsToDay, displayAvatar, displaySettingsButton, redactIdentifiers, selectLastServer, swapBattleEyeGuid } from "./display.js";
 import { insertBanPresets, insertFriendComparator, insertFriendsSidebarElement, insertHistoricFriendsSidebarElement, insertPublicBansSidebarElement, insertSidebars, insertTeaminfoSidebarElement } from "../sidebar.js";
 import { removeSidebars } from "../misc.js";
@@ -70,12 +70,18 @@ async function onIdentifierPage(bmId) {
     const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
     sidebar(bmId, playerCache, sidebarSettings)
 
+
     if (settings.showAvatar) displayAvatar(bmId, playerCache.bmProfile, playerCache.steamData);
     if (settings.showIspAndAsnData) showExtraDataOnIps(bmId, playerCache.bmProfile, settings.requestProxyCheck)
     if (settings.highlightVpn) highlightVpnIdentifiers(bmId, { label: settings.removeVpnLabel, threshold: settings.vpnAbove, background: settings.vpnBgColor, opacity: settings.vpnOpacity })
     if (settings.displayAvatars) displayAvatars(bmId, playerCache.identifiers.avatars, settings.zoomableAvatars)
     if (settings.swapBattleEyeGuid) swapBattleEyeGuid(bmId, playerCache.bmProfile);
+    if (settings.showLinks) displaySteamLinks(bmId, playerCache.steamLinks, settings.loadDiscordData, settings.showEmptyIdInput)
+
+    const evasionCheckerSettings = JSON.parse(localStorage.getItem("BME_EVASION_CHECKER_SETTINGS"));
+    if (evasionCheckerSettings.enabled) displayEvasionCheckerPanel(evasionCheckerSettings);
 }
+
 async function onAddBanPage(bmId) {
     const settings = JSON.parse(localStorage.getItem("BME_BAN_PAGE_SETTINGS"))
 
@@ -101,7 +107,7 @@ let currentSequence = "";
 function detectHotkey(settings) {
     const binds = [];
     for (const key in settings) {
-        if (!settings[key].enabled) return;
+        if (!settings[key].enabled) continue;
 
         binds.push({ type: key, hotkey: settings[key].hotkey });
     }
