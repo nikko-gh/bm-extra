@@ -1,3 +1,4 @@
+import { makeDropDownMenu } from "../../../misc.js";
 import { getPercentage } from "./check.js";
 
 export async function showcaseDetails(main, player, outcome, settings) {
@@ -34,9 +35,9 @@ function getShowcaseContainer(main, player, outcome, settings) {
     const header = getHeader(main, player)
 
     const nameSection = getNameSection(main, player, outcome);
-    const sessionsSection = getSessionSection(main, player, outcome);
+    //const sessionsSection = getSessionSection(main, player, outcome);
 
-    container.append(header, nameSection, sessionsSection);
+    container.append(header, nameSection, /*sessionsSection*/);
     return container;
 }
 function getHeader(main, player) {
@@ -157,7 +158,6 @@ function getNameSection(main, player, outcome) {
             recalculateNameSectionBodyHeight(target.parentNode.lastChild);
             target.classList.add("active-section");
         })
-
         return header;
     }
     function recalculateNameSectionBodyHeight(body) {

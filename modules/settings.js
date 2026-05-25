@@ -1297,11 +1297,13 @@ function getEvasionCheckerSettings() {
         null, bucket, "core-nameMatchCaseSensitive", settings.core.nameMatchCaseSensitive
     )
 
+    /*
     const matchMaxDifference = getSettingsElement(
         "number", "Max Difference", 
         "Reserved for future update, doesn't do anything at the moment.",
         null, bucket, "core-matchMaxDifference", settings.core.matchMaxDifference
     )
+    */
     const friendsFromSteam = getSettingsElement(
         "toggle", "Friends from Steam",
         "Load friends from Steam. May cause issues if used too often.",
@@ -1315,10 +1317,7 @@ function getEvasionCheckerSettings() {
 
     //IGNOREDNAMES
     //REMOVEDNAMES
-
     //SERVER BAN REASONS
-
-
 
     const unchecked = getSettingsElement(
         "color", "Unchecked:",
@@ -1389,7 +1388,7 @@ function getEvasionCheckerSettings() {
 
     specialSegment.append(
         placement, autoStart, autoStartLimit, serverBanPriority, oldServerBan,
-        oldGameBan, matchMinAssociate, matchMinName, caseSensitive, matchMaxDifference,
+        oldGameBan, matchMinAssociate, matchMinName, caseSensitive, /*matchMaxDifference,*/
         friendsFromSteam, friendsFromRustApi,
 
         unchecked, checking, clean, inconclusive, failed, gameBan, oldGameBanColor,
@@ -2323,8 +2322,8 @@ function getDefaultEvasionCheckerSettings() {
     settings.core.matchMinNamePercentage = 70;
     settings.core.matchMinAssociate = 1;
     settings.core.matchMaxDifference = 86400000,
-        settings.core.requestFriendsFromSteam = false;
-    settings.core.requestFriendsFromRustApi = true;
+    settings.core.requestFriendsFromSteam = false;
+    settings.core.requestFriendsFromRustApi = false;
     settings.core.ignoreNames = [
         ".",
         "123",
