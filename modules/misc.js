@@ -40,6 +40,15 @@ async function findElementWhenAppears(selector) {
     return null;
 }
 
+export async function getIdentifiers() {
+    try {
+        const element = await getElementWhenAppears("css-1h3zvt0", true);
+        return Array.from(element?.lastChild?.children);
+    } catch (error) {
+        return [];
+    }
+}
+
 const ONE_SECOND = 1000;
 const ONE_MINUTE = 60 * ONE_SECOND;
 const ONE_HOUR = 60 * ONE_MINUTE;

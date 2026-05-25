@@ -1,4 +1,4 @@
-import { getElementWhenAppears, getIdentifierType, getTimeSpan, highlightElement, makeDropDownMenu, shouldAbort, talkToBackgroundScript } from "../../misc.js";
+import { getElementWhenAppears, getIdentifiers, getIdentifierType, getTimeSpan, highlightElement, makeDropDownMenu, shouldAbort, talkToBackgroundScript } from "../../misc.js";
 import { fillDiscordUserElement } from "./discord/discordUserElement.js";
 import { cache, getDiscordData, getProxyCheckIpInfo } from "../cache/cache.js";
 import { autoStart } from "./evasionChecker/actions.js";
@@ -37,11 +37,10 @@ export async function showExtraDataOnIps(bmId, bmProfile, requestProxyCheck) {
     padEndValues.isp = Math.max(...ips.map(ip => ip?.isp?.length || ip?.proxyCheck?.net?.isp?.length || 0), 3);
     padEndValues.asn = Math.max(...ips.map(ip => ip?.asn?.length || ip?.proxyCheck?.net?.asn?.length || 0), 3);
 
-    const identifierWrapper = await getElementWhenAppears("css-11gv980", true);
-    const identifierTable = identifierWrapper?.lastChild?.children;
-    if (!identifierTable) console.error("BM-EXTRA: Failed to find identifier table.");
+    const identifers = await getIdentifiers();
+    if (!identifers.length) return console.error("BM-EXTRA: Failed to find identifier table.");
 
-    for (const identifier of identifierTable) {
+    for (const identifier of identifers) {
         const { type, id } = getIdentifierType(identifier);
         if (type !== "IP" || !id) continue;
 
@@ -196,26 +195,38 @@ function getConType(pc) {
 }
 
 export async function highlightVpnIdentifiers(bmId, vpnSettings) {
-    const identifierWrapper = (await getElementWhenAppears("css-11gv980", true));
-    const identifierTable = identifierWrapper?.lastChild?.children;
-    if (!identifierTable) console.error("BM-EXTRA: Failed to find identifier table.");
+    const identifers = await getIdentifiers();
+    const typeIdentifier = identifers[0];
+    const parent = typeIdentifier.parentNode;
 
-    for (const identifier of identifierTable) {
+    const observer = new MutationObserver(() => {        
+        if (!document.body.contains(typeIdentifier)) {
+            console.log("REMOVED");
+            
+            const url = window.location.href;
+            if (url.includes("identifiers") && url.includes(bmId)) highlightVpnIdentifiers(bmId, vpnSettings);
+            observer.disconnect();
+        }
+    });
+    observer.observe(document.body, { childList: true });
+
+    for (const identifier of identifers) {
         const { type, id } = getIdentifierType(identifier);
         if (type !== "IP") continue;
-        if (!identifier.firstChild?.innerText?.includes("This IP appears to belong to")) continue;
+        if (!identifier.firstChild?.innerText?.includes("is IP appears to belo")) continue;
         makeItVpn(identifier, vpnSettings);
     }
-    if (vpnSettings.threshold > -1) checkConnections(identifierTable, vpnSettings);
+    if (vpnSettings.threshold > -1) checkConnections(vpnSettings);
 }
-async function checkConnections(identifierTable, vpnSettings) {
+async function checkConnections(vpnSettings) {
     for (let i = 0; i < 50; i++) { //Wait till shared identifiers load
-        if (!document.body.contains(identifierTable[0])) return;
-        if (identifierTable[0].parentNode.innerText.includes("Identifier shared with")) break;
+        if (document.body.innerText.includes("Identifier shared with")) break;
+
         await new Promise(r => { setTimeout(r, 150 * (i / 10)) })
     }
 
-    for (const identifier of identifierTable) {
+    const identifers = await getIdentifiers();
+    for (const identifier of identifers) {
         const { type, id } = getIdentifierType(identifier);
         if (type !== "IP") continue;
         if (identifier.classList.contains("bme-vpn-identifier")) continue;
@@ -228,7 +239,6 @@ async function checkConnections(identifierTable, vpnSettings) {
 
         if (connectionCount > vpnSettings.threshold) makeItVpn(identifier, vpnSettings);
     }
-
 }
 function makeItVpn(identifier, vpnSettings) {
     identifier.classList.add("bme-vpn-identifier");
@@ -243,8 +253,7 @@ function makeItVpn(identifier, vpnSettings) {
 export async function displayAvatars(bmId, avatars, zoomable) {
     avatars = await avatars;
 
-    const identifierWrapper = (await getElementWhenAppears("css-11gv980", true));
-    const identifierTable = identifierWrapper?.lastChild?.children;
+    const identifierTable = getElementWhenAppears("css-1h3zvt0", true);
     if (!identifierTable) return console.error("BM-EXTRA: Failed to find identifierTable!");
     const nameElement = Array.from(identifierTable).find(item => item?.innerText?.trim() === "Name");
     if (!nameElement) return console.error("BM-EXTRA: Failed to locate nameElement!");
@@ -346,13 +355,13 @@ function getDiscordInput(bmId, title) {
 
     input.addEventListener("change", async e => {
         try {
-            const value = e.target.value;            
+            const value = e.target.value;
             if (isNaN(Number(value))) throw new Error("Not a valid ID");
             if (value.length < 17 || value.length > 20) throw new Error("Not a valid ID");
 
-            
+
             const steamLinks = await cache[bmId].steamLinks;
-            const currentIds = steamLinks.map(item => item.discordId);            
+            const currentIds = steamLinks.map(item => item.discordId);
             if (currentIds.includes(value)) throw new Error("Already Listed ID");
 
             const link = {
@@ -484,15 +493,15 @@ export function displayDiscordData() {
 
 export async function displayEvasionCheckerPanel(settings) {
     const panel = getEvasionCheckerPanel();
-    const identifierWrapper = await getElementWhenAppears("css-11gv980", true);
+    const identifierTable = await getElementWhenAppears("css-1h3zvt0", true);
 
     if (settings.panelPlacement === "top")
-        identifierWrapper.insertAdjacentElement("beforebegin", panel)
+        identifierTable.insertAdjacentElement("beforebegin", panel)
     else
-        identifierWrapper.insertAdjacentElement("afterend", panel)
+        identifierTable.insertAdjacentElement("afterend", panel)
 
     for (let i = 0; i < 50; i++) { //Wait till shared identifiers load
-        if (identifierWrapper.innerText.includes("Identifier shared with")) break;
+        if (identifierTable.innerText.includes("Identifier shared with")) break;
         await new Promise(r => { setTimeout(r, 150 * (i / 10)) })
     }
 

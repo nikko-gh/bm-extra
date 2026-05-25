@@ -7,7 +7,8 @@
     "content_scripts": [
         {
             "matches": [
-                "https://www.battlemetrics.com/*"
+                "https://www.battlemetrics.com/*",
+                "https://beta.battlemetrics.com/*"
             ],
             "run_at": "document_start",
             "js": [
@@ -32,6 +33,7 @@
                 "modules/*.js"
             ],
             "matches": [
+                "*://beta.battlemetrics.com/*",
                 "*://www.battlemetrics.com/*",
                 "*://battlemetrics.com/*"
             ]
