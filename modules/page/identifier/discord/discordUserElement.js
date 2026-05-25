@@ -1,14 +1,13 @@
 import { getTimeSpan, makeDropDownMenu, talkToBackgroundScript } from "../../../misc.js";
 import { focusOnMessage, getDiscordChannelShowcase } from "./discordShowcase.js";
 
-const meta = {};
+const meta = { users: {} };
 const PAGE_COUNT = 15;
 
 
 export function fillDiscordUserElement(element, data, token) {
     meta.token = token;
-    meta.data = data;
-
+    meta.users[data.user.id] = data;
 
     element.classList.remove("bme-discord-unloaded");
 
@@ -27,7 +26,11 @@ export function fillDiscordUserElement(element, data, token) {
 
     element.innerHTML += `<h3>Avatars(${data.user.historicAvatars.length}):</h3>
     <div class="bme-discord-avatar-container">
-        ${data.user.historicAvatars.map(item => `<img class="bme-discord-avatar" src="${item.avatar}?token=${token}" />`).join("")}
+    ${data.user.historicAvatars.map(item => `
+        <div class="avatar" style="--avatar:url('${item.avatar}?token=${token}')">
+            <img src="${item.avatar}?token=${token}" />
+        </div>
+    `).join("")}
     </div>`
 
     element.innerHTML += `<h3>Names(${data.user.historicNames.length}):</h3><div class="bme-discord-name-container"></div>`
@@ -40,7 +43,6 @@ export function fillDiscordUserElement(element, data, token) {
         nameContainer.append(nameElement);
     }
 
-
     element.innerHTML += `<h3>Guilds(${data.guilds.length}):</h3>`;
 
     for (const guild of data.guilds) {
@@ -48,6 +50,8 @@ export function fillDiscordUserElement(element, data, token) {
         guildElement.classList.add("bme-dc-guild-container")
 
         const header = document.createElement("div");
+        if (guild.tags.includes("cc"))
+            header.classList.add("bme-red-text")
         header.classList.add("bme-dc-guild-header")
 
         const guildDetails = [
@@ -60,8 +64,8 @@ export function fillDiscordUserElement(element, data, token) {
             <img src="${guild.avatar}">
             <div>
                 <h4>${guild.name}</h4>
-                <p>${guildDetails.join(" | ")}<p>
-            <div>`;
+                <p>${guildDetails.join(" | ")}</p>
+            </div>`;
 
         const body = document.createElement("div");
         body.classList.add("bme-dc-guild-body")
@@ -75,13 +79,11 @@ export function fillDiscordUserElement(element, data, token) {
         roles.classList.add("bme-dc-roles-container")
         body.append(roles)
 
-
-
         let longestRole = 0;
         let longestTs = 0;
         for (const item of guild.roles) {
             const inner = new DOMParser().parseFromString(`${getTimeSpan(item.lastSeen)} ago`, 'text/html');
-            
+
             if (longestTs < inner.body.innerText.length) longestTs = inner.body.innerText.length;
             if (longestRole < item.role.length) longestRole = item.role.length;
         }
@@ -92,15 +94,15 @@ export function fillDiscordUserElement(element, data, token) {
             role.innerHTML += `${getTimeSpan(item.lastSeen)} ago`;
             if (role.innerText.length < longestTs) {
                 role.innerHTML += '&nbsp;'.repeat(longestTs - role.innerText.length);
-            }            
-            
+            }
+
             role.innerHTML += ` |&nbsp;&nbsp;&nbsp;`;
             role.innerText += `${item.role}`;
             if (item.role.length < longestRole) {
                 role.innerHTML += '&nbsp;'.repeat(longestRole - item.role.length);
             }
 
-            role.innerHTML += `&nbsp;&nbsp;&nbsp;| ${item.count}x seen`;            
+            role.innerHTML += `&nbsp;&nbsp;&nbsp;| ${item.count}x seen`;
             roles.append(role);
         }
 
@@ -116,7 +118,7 @@ export function fillDiscordUserElement(element, data, token) {
         }
 
         const messages = guild.lastMessages[0] ?? [];
-        if (messages.length > 0) fillMessageContainer(messageContainer, messages, guild.id)
+        if (messages.length > 0) fillMessageContainer(messageContainer, messages, guild.id, data.user.id)
 
         body.append(messageContainer)
         guildElement.append(header, body)
@@ -154,28 +156,29 @@ export function getMessageElement(username, timestamp, avatar, contents, token) 
 }
 
 function getPageSelector(guild, msgContainer, data, token, activeButton = 0) {
+    console.log(guild, msgContainer, data);
+
     const selector = document.createElement("div");
-    selector.id = `bme-selector-${guild.id}`
+    selector.id = `bme-selector-${guild.id}-${data.user.id}`
     selector.classList.add("bme-dc-messages-selector")
 
-    const maxButtons = Math.floor(guild.messageCount / PAGE_COUNT)+1;
+    const maxButtons = Math.floor(guild.messageCount / PAGE_COUNT) + 1;
     const buttonArray = getButtonRange(activeButton, maxButtons);
 
     let focus = null;
     for (const idx of buttonArray) {
         const button = document.createElement("button");
-        button.innerHTML = idx+1;
+        button.innerHTML = idx + 1;
 
         if (idx === activeButton) button.classList.add("bme-active-selector")
 
         button.addEventListener("click", e => {
             if (e.target.classList.contains("bme-active-selector")) return;
-        
-            const mainSelector = document.querySelector(`#bme-selector-${guild.id}`);
+
+            const mainSelector = document.querySelector(`#bme-selector-${guild.id}-${data.user.id}`);
             getMessagesAndFillContainer(msgContainer, idx, guild, data.user.id, token);
             if (mainSelector) mainSelector.replaceWith(getPageSelector(guild, msgContainer, data, token, idx));
         })
-
 
         selector.appendChild(button);
     }
@@ -203,23 +206,25 @@ function getPageSelector(guild, msgContainer, data, token, activeButton = 0) {
 
 async function getMessagesAndFillContainer(container, page, guild, userId, token) {
     const messages = guild.lastMessages[page];
-    if (messages) return fillMessageContainer(container, messages, guild.id);
+    if (messages) return fillMessageContainer(container, messages, guild.id, userId);
 
     const requestedMessages = await requestMessages(guild, page, userId, token)
-    fillMessageContainer(container, requestedMessages, guild.id);
+    fillMessageContainer(container, requestedMessages, guild.id, userId);
 
     async function requestMessages(guild, page, userId, token) {
         const messages = guild.lastMessages[page];
         if (messages) return messages;
 
         const requestedMessages = await talkToBackgroundScript("BME_DISCORD_MESSAGES", `last/${guild.id}/${userId}/${page}`, token)
+        console.log(guild.name);
+
         guild.lastMessages[page] = requestedMessages;
         return requestedMessages;
     }
 }
-function fillMessageContainer(container, messages, guildId) {
+function fillMessageContainer(container, messages, guildId, userId) {
     container.innerHTML = "";
-    const data = meta.data;
+    const data = meta.users[userId];
     const token = meta.token;
 
     for (const message of messages) {

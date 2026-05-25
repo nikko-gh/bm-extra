@@ -1419,7 +1419,7 @@ function getApiKeysSettings() {
         detail: `Key can be generated at <a href="https://steamcommunity.com/dev/apikey" target="_blank">Steam Web API</a>.`
     });
     const battleMetricsKeyElements = getApiKeyDiv("BattleMetrics API Key:", "BME_BATTLEMETRICS_API_KEY", "bm-api", {
-        detail: "OPTIONAL: Provided key will take priority, it isn't necessary."
+        detail: "OPTIONAL: Provided key will take priority, but it isn't necessary."
     });
     const piPermsSegment = document.createElement("div");
     piPermsSegment.classList.add("bme-settings-segment");
@@ -1432,7 +1432,7 @@ function getApiKeysSettings() {
     proxyCheckSegment.classList.add("bme-settings-segment");
     const proxyCheckApiKeyElement = getApiKeyDiv("Proxycheck API Key:", "BME_PROXY_CHECK_SETTINGS", "proxy-check", {
         segment: proxyCheckSegment,
-        detail: `Key cam be generated at <a href="https://proxycheck.io/" target="_blank">proxycheck.io</a>.`
+        detail: `Key can be generated at <a href="https://proxycheck.io/" target="_blank">proxycheck.io</a>.`
     });
 
 

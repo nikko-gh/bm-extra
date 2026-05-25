@@ -139,16 +139,22 @@ class BattleZone {
     }
 }
 
-/*
-class ExampleOrganization {
-    id = "1234";
 
-    static {
-        organizations.push(new this());
-    }
-
-    async getTeamInfo(steamId, serverId, token) {
-        return "..."; // return the actual raw teaminfo here
-    }
-}
-*/
+// class ExampleOrganization {
+//     id = "1234";
+// 
+//     static {
+//        organizations.push(new this());
+//     }
+//
+//     /**
+//      * Function that returns the response of the `teaminfo` command from a specific server.
+//      * @param {String} steamId - Steam ID(steamID64) of the target player
+//      * @param {Number} serverId - Battlemetrics Server ID where the command should run
+//      * @param {String} token - Battlemetrics Access Token for the API
+//      * @returns {String}
+//      */
+//     async getTeamInfo(steamId, serverId, token) {
+//        return ""; // return the actual raw teaminfo here
+//     }
+// }

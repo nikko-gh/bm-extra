@@ -242,15 +242,30 @@ async function sendPublicBans(steamId, apiKey, sender, returnObject) {
 }
 async function sendSteamLinks(steamId, apiKey, sender, returnObject) {
     try {
-        const links = [];
-        
+        const rawLinks = [];
+
         const resp = await fetch(`https://player-insight.flqyd.dev/api/steam/linked/${steamId}?token=${apiKey}`);
         if (resp?.status !== 200) throw new Error(`Failed to request steam links | steamId: ${steamId} | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
         const data = await resp.json();
-        data.data.links.forEach(item => links.push(item));
+        data.data.links.forEach(item => rawLinks.push(item));
 
         const orgLinks = await getOrgSteamLinks();
-        orgLinks.forEach(item => links.push(item));
+        orgLinks.forEach(item => rawLinks.push(item));
+
+        const links = [];
+        for (const link of rawLinks) {
+            const index = links.findIndex(item => item.discordId === link.discordId);
+            if (index === -1) {
+                links.push({ discordId: link.discordId, lastSeen: link.lastSeen, owners: [link.owner], attached: link.attached ? link.attached : [] });
+            } else {
+                links[index].owners.push(link.owner);
+                if (link.attached.length > 0) {
+                    link.attached.forEach(attached => {
+                        if (!links[index].attached.includes(attached)) links[index].attached.push(attached);
+                    })
+                }
+            }
+        }
 
         returnObject.status = "OK";
         returnObject.value = links;
@@ -362,7 +377,7 @@ async function getPlayerData(bmId, token, count = 0) {
     } catch (error) {
         console.error(`Failed to request BattleMetrics Account: ${error.message}`);
         await new Promise(r => { setTimeout(r, 1000) });
-        return getPlayerData(bmId, token, count+1);
+        return getPlayerData(bmId, token, count + 1);
     }
 }
 
@@ -386,7 +401,7 @@ async function getBmBansData(bmId, token, count = 0) {
         if (resp?.status === 429) await new Promise(r => { setTimeout(r, 30000); })
         if (resp?.status !== 200) throw new Error(`Fetch failed for ${bmId} | Status: ${resp?.status}`);
         await bmRateLimitLock(Number(resp.headers.get("x-rate-limit-remaining")));
-        
+
         const data = await resp.json();
         return data
     } catch (error) {
@@ -397,7 +412,7 @@ async function getBmBansData(bmId, token, count = 0) {
 }
 
 
-async function bmRateLimitLock(current) {    
+async function bmRateLimitLock(current) {
     if (current < 175) await new Promise(r => { setTimeout(r, 1000) })
     if (current < 125) await new Promise(r => { setTimeout(r, 4000) })
     if (current < 100) await new Promise(r => { setTimeout(r, 5000) })

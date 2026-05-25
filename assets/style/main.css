@@ -351,6 +351,28 @@ body::-webkit-scrollbar {
     transform: none !important;
 }
 
+.bme-share {
+    margin-top: 2px;
+    font-size: 14px;
+    user-select: none;
+    cursor: pointer;
+}
+
+.bme-share:hover {
+    opacity: 0.9;
+}
+
+.bme-share:active {
+    opacity: 1;
+}
+
+
+.bme-attached-container {
+    cursor: pointer;
+    height: var(--height);
+    transition: var(--transition);
+    overflow: var(--overflow);
+}
 
 .bme-discord-wrapper {
     width: 100%;
@@ -362,7 +384,7 @@ body::-webkit-scrollbar {
 
     font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
 }
-
+.bme-discord-title,
 .bme-discord-wrapper h4,
 .bme-discord-wrapper p {
     margin: 0px;
@@ -375,21 +397,50 @@ body::-webkit-scrollbar {
     gap: 5px;
 }
 
-.bme-discord-avatar-container>img {
+.avatar {
     width: 100px;
     height: 100px;
-    transition: 125ms;
-    transform-origin: top left;
     position: relative;
-    border-color: #0d0d0d;
+    overflow: visible;
+    flex-shrink: 0;
 }
 
-.bme-discord-avatar-container>img:hover {
-    transform: scale(4);
+.avatar img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border: 1px solid #0d0d0d;
+}
+
+/* zoomed copy */
+.avatar::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    width: 100px;
+    height: 100px;
+
+    background-image: var(--avatar);
+    background-size: cover;
+    background-position: center;
+
+    transform: scale(1);
+
+    transition: transform 125ms;
+
+    pointer-events: none;
     z-index: 1000;
 
-    background: #0c0c0c;
-    border: #cfcfcf 1px solid;
+    border: 1px solid #cfcfcf;
+    opacity: 0;
+}
+
+/* only wrapper hover triggers zoom */
+.avatar:hover::after {
+    transform: scale(4);
+    opacity: 1;
 }
 
 .bme-discord-name-container {
@@ -401,6 +452,7 @@ body::-webkit-scrollbar {
     gap: 10px;
     transition: 75ms ease-out;
     cursor: pointer;
+    align-items: center;
 }
 
 .bm-dc-open,
@@ -457,38 +509,42 @@ body::-webkit-scrollbar {
     padding-left: 20px;
 }
 
-.bme-dc-messages-selector{
+.bme-dc-messages-selector {
     height: 50px;
     min-height: 50px;
     width: calc(100%-40px);
-    
+
     overflow: hidden;
-    
+
     display: flex;
     gap: 5px;
     justify-content: center;
     align-items: center;
 
-    
+
     padding: 0px !important;
     margin: 0px 20px;
     background: #ffffff20;
 }
+
 .bme-dc-messages-selector::-webkit-scrollbar {
     display: none;
 }
-.bme-dc-messages-selector button{
+
+.bme-dc-messages-selector button {
     min-width: 40px;
     min-height: 40px;
     background: #00000080;
-    
+
     outline: none;
     border: none;
     transition: 125ms;
 }
-.bme-dc-messages-selector button:hover{
+
+.bme-dc-messages-selector button:hover {
     background: #ffffff40;
 }
+
 .bme-active-selector {
     background: #e5ff0050 !important;
 }
@@ -767,23 +823,26 @@ body::-webkit-scrollbar {
         background: #ffffff00;
     }
 }
-.bme-showcase-load-more{
+
+.bme-showcase-load-more {
     width: 300px;
     height: 28px;
     font-size: 14px;
     margin: 20px auto;
     background: #0c5da5;
-    
+
     border: none;
     outline: none !important;
     transition: 125ms;
 }
-.bme-showcase-load-more:hover{
+
+.bme-showcase-load-more:hover {
     opacity: 0.95;
 }
+
 .bme-active-button,
-.bme-showcase-load-more:active{
-        opacity: 0.8 !important;
+.bme-showcase-load-more:active {
+    opacity: 0.8 !important;
 }
 
 

@@ -70,7 +70,7 @@ function loadMoreButton(group, type, message, token) {
         const messageId = message.messageId;
         requestAndCacheData(group, messageId, type, token);
 
-        button.innerText = "Loading messages.";
+        button.innerText = "Loading messages...";
     })
     button.innerText = "Load more messages!";
     return button;

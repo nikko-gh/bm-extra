@@ -521,18 +521,8 @@ async function getSteamLinks(bmProfile) {
         if (PLAYER_INSIGHT_KEY.length !== 64) return "INVALID_API_KEY";
         if (!piDetails?.perms.includes("steamLinks")) return "NO_PERMISSION";
 
-        const rawLinks = await talkToBackgroundScript("BME_STEAM_LINKS", steamId, PLAYER_INSIGHT_KEY)
-        if (typeof (rawLinks) === "string") throw new Error(links);
-
-        const links = [];
-        for (const link of rawLinks) {
-            const index = links.findIndex(item => item.discordId === link.discordId);
-            if (index === -1) {
-                links.push({ discordId: link.discordId, lastSeen: link.lastSeen, owners: [link.owner] });
-                continue;
-            }
-            links[index].owners.push(link.owner);
-        }
+        const links = await talkToBackgroundScript("BME_STEAM_LINKS", steamId, PLAYER_INSIGHT_KEY)
+        if (typeof (rawLinks) === "string") throw new Error(rawLinks);
 
         return links;
     } catch (error) {

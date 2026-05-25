@@ -25,7 +25,7 @@ export async function showExtraDataOnIps(bmId, bmProfile, requestProxyCheck) {
     if (requestProxyCheck) {
         const proxyCheckData = await getProxyCheckIpInfo(ips);
         ips = ips.map(item => {
-            const ip = item.ip;            
+            const ip = item.ip;
             const proxyCheck = proxyCheckData?.get(ip) || null;
 
             return { ...item, proxyCheck }
@@ -285,7 +285,6 @@ export async function displaySteamLinks(bmId, steamLinks, loadData, showInput) {
     if (!under) return console.error("BM-EXTRA: Failed to locate ipTitle!");
     if (storedLinks[bmId]) steamLinks[bmId].forEach(link => { steamLinks.push(link) })
 
-
     const discordTitle = getIdentifierTableTitle("Discord");
     discordTitle.id = "bme-steam-links"
     if (shouldAbort(bmId, "bme-steam-links")) return;
@@ -294,20 +293,43 @@ export async function displaySteamLinks(bmId, steamLinks, loadData, showInput) {
     if (showInput) discordTitle.insertAdjacentElement("afterend", getDiscordInput(bmId, discordTitle))
 
     steamLinks.forEach(link => {
-        const element = getSteamLinkElement(link.discordId, link.lastSeen, link.owners ?? [])
+        const element = getSteamLinkElement(link.discordId, link.lastSeen, link.owners ?? [], link.attached ?? [])
         discordTitle.insertAdjacentElement("afterend", element)
     })
 
     if (loadData) displayDiscordData();
 }
-function getSteamLinkElement(discordId, lastSeen, owners) {
-    const payload = `
+function getSteamLinkElement(discordId, lastSeen, owners, attached) {
+    let payload = `
         <div title="${discordId}" class="css-8uhtka bme-unloaded-discord">
-            <span class="css-q39y9k bme-discord-title" title="${discordId}">${discordId}</span>
+            <p class="css-q39y9k bme-discord-title" title="${discordId}">${discordId}</p>
         </div>
         <div class="bme-discord-wrapper bme-discord-unloaded" title="${discordId}"></div>
     `;
-    return getIdentifierTableElement("Discord", payload, Number(lastSeen), { owners: owners })
+    if (attached?.length > 0) payload += `
+        <div>
+            <div class="bme-share bme-header">
+                <span>
+                    <i class="glyphicon glyphicon-chevron-right css-1pdr3ri"></i> 
+                    <i class="glyphicon glyphicon-info-sign" style="color: rgb(255, 149, 0);"></i> 
+                    Identifier is shared with ${attached.length} player(s)
+                </span>
+            </div>
+            <div class="bme-attached-container bme-body">
+                <ol>
+                    ${attached.map(steamId => `<li><a href="https://www.battlemetrics.com/rcon/players?filter%5Bsearch%5D=${steamId}&filter%5Bservers%5D=false&filter%5BplayerFlags%5D=&sort=score&showServers=false&method=quick&redirect=1">${steamId}</a></li>`).join("")}
+                </ol>
+            </div>
+        </div>
+    `
+    const element = getIdentifierTableElement("Discord", payload, Number(lastSeen), { owners: owners })
+
+    const header = element.querySelector(".bme-header");
+    const body = element.querySelector(".bme-body")
+    if (header && body) makeDropDownMenu(header, body, 200, "", true)
+
+
+    return element;
 }
 function getDiscordInput(bmId, title) {
     const element = document.createElement("tr");
@@ -326,19 +348,23 @@ function getDiscordInput(bmId, title) {
     input.addEventListener("change", async e => {
         try {
             const value = e.target.value;
-
+            console.log(value);
+            
             if (isNaN(Number(value))) throw new Error("Not a valid ID");
             if (value.length < 17 || value.length > 20) throw new Error("Not a valid ID");
 
+            
             const steamLinks = await cache[bmId].steamLinks;
-
             const currentIds = steamLinks.map(item => item.discordId);
+            console.log(currentIds);
+            
             if (currentIds.includes(value)) throw new Error("Already Listed ID");
 
             const link = {
                 discordId: value,
                 lastSeen: Date.now(),
-                owner: ["Local"]
+                owner: ["Local"],
+                attached: []
             }
 
             steamLinks.push(link)
@@ -390,11 +416,11 @@ function getIdentifierTableElement(type, payload, lastSeen, meta) {
         </td>
         <td data-title="Type">
             <div class="css-18s4qom">${type}</div>
-            ${meta?.owners?.length > 0 && `
+            ${meta?.owners?.length > 0 ? `
                 <button title="Show organizations that have this identifier." type="button" class="css-p43owu">
                     <i class="glyphicon glyphicon-info-sign"></i>
                 </button>
-            `}
+            ` : ``}
         </td>
         <td data-title="Last Seen">
             <time>${dateStr}</time><br />
@@ -444,12 +470,14 @@ export function displayDiscordData() {
         `;
         discordElement.insertAdjacentElement("afterbegin", discordAvatar);
 
-        const span = discordElement.querySelector("span");
+        const span = discordElement.querySelector("p");
 
-        const ccCount = data.guilds.filter(guild => guild.tags?.contains("cc")).length
+        const ccCount = data.guilds.filter(guild => guild.tags?.includes("cc")).length
         let mCount = 0;
         data.guilds.forEach(guild => mCount += Number(guild.messageCount));
-        span.innerText = `${data.user.name} | ${data.user.displayName} | ${data.guilds.length} guilds | ${ccCount} cc | ${mCount} messages`;
+
+        span.innerText = `${data.user.name} | ${data.user.displayName} | ${data.guilds.length} guilds | `;
+        span.innerHTML += `${ccCount > 0 ? `<span class="bme-red-text">${ccCount} cc</span>` : `${ccCount} cc`} | ${mCount} messages`;
         span.classList.add("bme-clickable");
 
         const discordUserElement = discordElement.parentNode.querySelector(".bme-discord-wrapper");
