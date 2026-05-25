@@ -452,6 +452,51 @@ class Ace {
     }
 }
 
+class Hive {
+    id = "75736";
+
+    static {
+        organizations.push(new this());
+    }
+
+    async getTeamInfo(steamId, serverId, token) {
+        const resp = await fetch(`https://api.battlemetrics.com/servers/${serverId}/command`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+                "Accept-Version": "^0.1.0"
+            },
+            body: JSON.stringify({
+                data: {
+                    type: "rconCommand",
+                    attributes: {
+                        command: "2d689696-94a4-4807-ac64-8f67a78381e7",
+                        options: {
+                            type: "teaminfo",
+                            steamid: steamId
+                        }
+                    }
+                }
+            })
+        })
+
+        if (resp.status !== 200) {
+            console.error(`Failed to request teaminfo | Status: ${resp.status}`);
+            return "error";
+        }
+
+        const data = await resp.json();
+        const result = data.data?.attributes?.result[0]?.children[1]?.children[0]?.children[0]?.reference.result
+        if (!result) {
+            console.error(`Failed to request teaminfo | Status: ${resp.status} | Result: ${result}`);
+            return "error";
+        }
+
+        return result;
+    }
+}
+
 // class ExampleOrganization {
 //     id = "1234";
 // 
