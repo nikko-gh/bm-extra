@@ -414,7 +414,7 @@ td>div>div>ol>li {
     background: #ffffff25;
 }
 
-#bme-showcase-name-active{
+#bme-showcase-name-active {
     background: #ffffff10;
 }
 
@@ -425,11 +425,12 @@ td>div>div>ol>li {
     background: transparent;
 }
 
-.showcase-dummy-name-item{
+.showcase-dummy-name-item {
     width: 300px;
     height: 50px;
 }
-.last-dummy{
+
+.last-dummy {
     border-bottom: var(--border) 2px solid;
 }
 
@@ -445,12 +446,18 @@ td>div>div>ol>li {
     font-weight: 600;
     max-width: 230px;
 
+    font-family: monospace;
+
     text-wrap: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.showcase-name-item>div>p:last-child {
+.showcase-name-item>div:first-child>p:last-child {
     font: 13px;
     padding-left: 10px;
+    color: rgba(214, 214, 214, 0.8);
+}
+.showcase-name-item>div>p:last-child {
+    user-select: none;    
 }

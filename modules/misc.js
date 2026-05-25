@@ -365,3 +365,13 @@ export function makeDropDownMenu(header, body, ms, prefix = "", isClosed) {
         }
     })
 }
+
+
+let _locale = null;
+export function getLocale() {
+    if (_locale) return _locale;
+
+    const locale = JSON.parse(document.getElementById("storeBootstrap").innerHTML)?.state?.account?.locale ?? "en-us";
+    _locale = locale;
+    return locale;
+}

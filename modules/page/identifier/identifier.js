@@ -328,7 +328,6 @@ function getSteamLinkElement(discordId, lastSeen, owners, attached) {
     const body = element.querySelector(".bme-body")
     if (header && body) makeDropDownMenu(header, body, 200, "", true)
 
-
     return element;
 }
 function getDiscordInput(bmId, title) {
@@ -347,17 +346,13 @@ function getDiscordInput(bmId, title) {
 
     input.addEventListener("change", async e => {
         try {
-            const value = e.target.value;
-            console.log(value);
-            
+            const value = e.target.value;            
             if (isNaN(Number(value))) throw new Error("Not a valid ID");
             if (value.length < 17 || value.length > 20) throw new Error("Not a valid ID");
 
             
             const steamLinks = await cache[bmId].steamLinks;
-            const currentIds = steamLinks.map(item => item.discordId);
-            console.log(currentIds);
-            
+            const currentIds = steamLinks.map(item => item.discordId);            
             if (currentIds.includes(value)) throw new Error("Already Listed ID");
 
             const link = {
@@ -458,7 +453,7 @@ export function displayDiscordData() {
         const discordId = discordElement.title;
 
         const data = discordData.find(item => item.user.id === discordId);
-        if (!data) return;
+        if (!data) continue;
         discordElement.classList.remove("bme-unloaded-discord");
 
         const discordAvatar = document.createElement("div");

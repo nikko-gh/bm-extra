@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "bm-extra",
-    "version": "1.2.1",
+    "version": "1.3.0",
     "description": "BattleMetrics Extension that aims to enhance your experience with quality of life features.",
     "author": "FlQyD",
     "content_scripts": [
@@ -17,7 +17,7 @@
                 "./assets/style/main.css",
                 "./assets/style/settings.css",
                 "./assets/style/sidebar.css",
-                "./assets/style/evasion-checker.css"
+                "./assets/style/evasionChecker.css"
             ]
         }
     ],
@@ -38,11 +38,11 @@
         }
     ],
     "host_permissions": [
-        "*://api.battlemetrics.com/*",
-        "*://api.steampowered.com/*",
-        "*://player-insight.flqyd.dev/*",
-        "*://rust-api.facepunch.com/*",
-        "*://proxycheck.io/*"
+        "https://api.battlemetrics.com/*",
+        "https://api.steampowered.com/*",
+        "https://player-insight.flqyd.dev/*",
+        "https://rust-api.facepunch.com/*",
+        "https://proxycheck.io/*"
     ],
     "permissions": [
         "downloads"

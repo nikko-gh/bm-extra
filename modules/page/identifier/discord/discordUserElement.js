@@ -1,4 +1,4 @@
-import { getTimeSpan, makeDropDownMenu, talkToBackgroundScript } from "../../../misc.js";
+import { getLocale, getTimeSpan, makeDropDownMenu, talkToBackgroundScript } from "../../../misc.js";
 import { focusOnMessage, getDiscordChannelShowcase } from "./discordShowcase.js";
 
 const meta = { users: {} };
@@ -133,7 +133,7 @@ export function getMessageElement(username, timestamp, avatar, contents, token) 
     messageWrapper.innerHTML = `<img src="${avatar ? `${avatar}?token=${token}` : `https://cdn.discordapp.com/embed/avatars/3.png`}">`
     const txtContainer = document.createElement("div");
 
-    const locale = JSON.parse(document.getElementById("storeBootstrap").innerHTML)?.state?.account?.locale ?? "en-us";
+    const locale = getLocale();
     const d = new Date(timestamp);
     const year = d.toLocaleString(locale, { year: 'numeric' });
     const month = d.toLocaleString(locale, { month: '2-digit' });
@@ -156,8 +156,6 @@ export function getMessageElement(username, timestamp, avatar, contents, token) 
 }
 
 function getPageSelector(guild, msgContainer, data, token, activeButton = 0) {
-    console.log(guild, msgContainer, data);
-
     const selector = document.createElement("div");
     selector.id = `bme-selector-${guild.id}-${data.user.id}`
     selector.classList.add("bme-dc-messages-selector")
@@ -216,7 +214,6 @@ async function getMessagesAndFillContainer(container, page, guild, userId, token
         if (messages) return messages;
 
         const requestedMessages = await talkToBackgroundScript("BME_DISCORD_MESSAGES", `last/${guild.id}/${userId}/${page}`, token)
-        console.log(guild.name);
 
         guild.lastMessages[page] = requestedMessages;
         return requestedMessages;

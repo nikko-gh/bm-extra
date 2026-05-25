@@ -50,10 +50,7 @@ async function loadPlayersHub(type) {
     if (type === "normal") return loadPlayers(bmId, authToken.external || authToken.internal, true);
     if (type === "inclusive") return loadPlayers(bmId, authToken.external || authToken.internal, false);
     if (type === "thorough") return loadPlayersThorough(bmId, authToken.external || authToken.internal, false);
-
-    console.log(type);
-
-
+    
     return false
 }
 async function loadPlayers(bmId, authToken, ignoreVpns) {

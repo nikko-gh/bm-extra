@@ -1,4 +1,4 @@
-import { makeDropDownMenu } from "../../../misc.js";
+import { getLocale, makeDropDownMenu } from "../../../misc.js";
 import { getPercentage } from "./check.js";
 
 export async function showcaseDetails(main, player, outcome, settings) {
@@ -238,7 +238,13 @@ function getNameSection(main, player, outcome) {
         nameElement.innerText = name.identifier;
 
         const lastSeenElement = document.createElement("p");
-        lastSeenElement.innerText = name.lastSeen;
+        const formatted = new Intl.DateTimeFormat(getLocale(), {
+            year: "numeric",
+            month: "short",
+            day: "2-digit",
+        }).format(new Date(name.lastSeen));
+
+        lastSeenElement.innerText = formatted;
 
         details.append(nameElement, lastSeenElement);
 
@@ -314,7 +320,7 @@ function getNameSection(main, player, outcome) {
 function getSessionSection(main, player, outcome) {
     const element = document.createElement("div");
     const header = getSessionHeader(main, player, outcome);
-    
+
     element.append(header)
     return element;
 

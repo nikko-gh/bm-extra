@@ -257,14 +257,17 @@ async function sendSteamLinks(steamId, apiKey, sender, returnObject) {
             const index = links.findIndex(item => item.discordId === link.discordId);
             if (index === -1) {
                 links.push({ discordId: link.discordId, lastSeen: link.lastSeen, owners: [link.owner], attached: link.attached ? link.attached : [] });
-            } else {
-                links[index].owners.push(link.owner);
-                if (link.attached.length > 0) {
-                    link.attached.forEach(attached => {
-                        if (!links[index].attached.includes(attached)) links[index].attached.push(attached);
-                    })
-                }
+                continue;
             }
+
+            links[index].owners.push(link.owner);
+
+            if (link.attached.length === 0) return
+            link.attached.forEach(attached => {
+                if (links[index].attached.includes(attached)) return;
+
+                links[index].attached.push(attached);
+            })
         }
 
         returnObject.status = "OK";
