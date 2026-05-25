@@ -139,6 +139,230 @@ class BattleZone {
     }
 }
 
+class FalconNetwork {
+    id = "110187";
+
+    static {
+        organizations.push(new this());
+    }
+
+    async getTeamInfo(steamId, serverId, token) {
+        const resp = await fetch(`https://api.battlemetrics.com/servers/${serverId}/command`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+                "Accept-Version": "^0.1.0"
+            },
+            body: JSON.stringify({
+                data: {
+                    type: "rconCommand",
+                    attributes: {
+                        command: "41b418ed-552b-4dbe-9955-29cdbdd2db01",
+                        options: {
+                            type: "teaminfo",
+                            steamid: steamId
+                        }
+                    }
+                }
+            })
+        })
+
+        if (resp.status !== 200) {
+            console.error(`Failed to request teaminfo | Status: ${resp.status}`);
+            return "error";
+        }
+
+        const data = await resp.json();
+        const result = data.data?.attributes?.result[0]?.children[1]?.children[0]?.children[0]?.reference.result
+        if (!result) {
+            console.error(`Failed to request teaminfo | Status: ${resp.status} | Result: ${result}`);
+            return "error";
+        }
+
+        return result;
+    }
+}
+
+class Rustix {
+    id = "99713";
+
+    static {
+        organizations.push(new this());
+    }
+
+    async getTeamInfo(steamId, serverId, token) {
+        const resp = await fetch(`https://api.battlemetrics.com/servers/${serverId}/command`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+                "Accept-Version": "^0.1.0"
+            },
+            body: JSON.stringify({
+                data: {
+                    type: "rconCommand",
+                    attributes: {
+                        command: "a7fe4768-745b-4118-9ce6-6906479f10ef",
+                        options: {
+                            type: "teaminfo",
+                            steamid: steamId
+                        }
+                    }
+                }
+            })
+        })
+
+        if (resp.status !== 200) {
+            console.error(`Failed to request teaminfo | Status: ${resp.status}`);
+            return "error";
+        }
+
+        const data = await resp.json();
+        const result = data.data?.attributes?.result[0]?.children[1]?.children[0]?.children[0]?.reference.result
+        if (!result) {
+            console.error(`Failed to request teaminfo | Status: ${resp.status} | Result: ${result}`);
+            return "error";
+        }
+
+        return result;
+    }
+}
+
+class RustLands {
+    id = "59930";
+
+    static {
+        organizations.push(new this());
+    }
+
+    async getTeamInfo(steamId, serverId, token) {
+        const resp = await fetch(`https://api.battlemetrics.com/servers/${serverId}/command`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+                "Accept-Version": "^0.1.0"
+            },
+            body: JSON.stringify({
+                data: {
+                    type: "rconCommand",
+                    attributes: {
+                        command: "6fb3538a-243e-4310-9468-db272ce5b20a",
+                        options: {
+                            type: "teaminfo",
+                            steamid: steamId
+                        }
+                    }
+                }
+            })
+        })
+
+        if (resp.status !== 200) {
+            console.error(`Failed to request teaminfo | Status: ${resp.status}`);
+            return "error";
+        }
+
+        const data = await resp.json();
+        const result = data.data?.attributes?.result[0]?.children[1]?.children[0]?.children[0]?.reference.result
+        if (!result) {
+            console.error(`Failed to request teaminfo | Status: ${resp.status} | Result: ${result}`);
+            return "error";
+        }
+
+        return result;
+    }
+}
+
+class TrustYourSkill {
+    id = "16330";
+
+    static {
+        organizations.push(new this());
+    }
+
+    async getTeamInfo(steamId, serverId, token) {
+        const resp = await fetch(`https://api.battlemetrics.com/servers/${serverId}/command`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+                "Accept-Version": "^0.1.0"
+            },
+            body: JSON.stringify({
+                data: {
+                    type: "rconCommand",
+                    attributes: {
+                        command: "0f24f509-fad4-4205-bb49-c50f9b85bc08",
+                        options: {
+                            type: "teaminfo",
+                            steamid: steamId
+                        }
+                    }
+                }
+            })
+        })
+
+        if (resp.status !== 200) {
+            console.error(`Failed to request teaminfo | Status: ${resp.status}`);
+            return "error";
+        }
+
+        const data = await resp.json();
+        const result = data.data?.attributes?.result[0]?.children[1]?.children[0]?.children[0]?.reference.result
+        if (!result) {
+            console.error(`Failed to request teaminfo | Status: ${resp.status} | Result: ${result}`);
+            return "error";
+        }
+
+        return result;
+    }
+}
+
+class KovacRust {
+    id = "126406";
+
+    static {
+        organizations.push(new this());
+    }
+
+    async getTeamInfo(steamId, serverId, token) {
+        const resp = await fetch(`https://api.battlemetrics.com/servers/${serverId}/command`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+                "Accept-Version": "^0.1.0"
+            },
+            body: JSON.stringify({
+                data: {
+                    type: "rconCommand",
+                    attributes: {
+                        command: "36aa8d8a-57e1-45ca-bb21-39705a8e4acd",
+                        options: {
+                            command: "teaminfo",
+                            steamid: steamId
+                        }
+                    }
+                }
+            })
+        })
+
+        if (resp.status !== 200) {
+            console.error(`Failed to request teaminfo | Status: ${resp.status}`);
+            return "error";
+        }
+
+        const data = await resp.json();
+        const result = data.data?.attributes?.result[0]?.children[1]?.children[0]?.children[0]?.reference.result
+        if (!result) {
+            console.error(`Failed to request teaminfo | Status: ${resp.status} | Result: ${result}`);
+            return "error";
+        }
+
+        return result;
+    }
+}
 
 // class ExampleOrganization {
 //     id = "1234";

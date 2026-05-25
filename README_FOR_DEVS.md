@@ -39,7 +39,7 @@ In some cases, the string returned by the `teaminfo` command may be:
 - `Player is not in a team` - Player doesn't belong to a team
 - `Player not found` -  Player cannot be found by the server, likely never joined in this wipe yet.
 
-If any error occurs  while you are requesting the teaminfo, simply return `"error"`. It will be processed as a generic failed attemp.
+If any error occurs while you are requesting the teaminfo, simply return `"error"`. It will be processed as a generic failed attempt.
 
 ## Account Linking
 

@@ -124,7 +124,7 @@ function getPcDataElement(pc) {
         { label: "score:", ...getScore(pc.det.score) },
         { label: "risk:", ...getScore(pc.det.risk, true) },
         { label: "zone:", value: `${pc.loc.continent} | ${pc.loc.countryCode} | ${pc.loc.regionCode}` },
-        { label: "county:", value: pc.loc.countryName },
+        { label: "country:", value: pc.loc.countryName },
         { label: "region:", value: pc.loc.regionName },
         { label: "city:", value: pc.loc.cityName },
     ]

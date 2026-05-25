@@ -1595,7 +1595,7 @@ function getSmUpdater() {
     element.classList.add("bme-sm-settings-updater")
 
     const title = document.createElement("h2");
-    title.innerText = "Stored Steamer Mode Names:";
+    title.innerText = "Stored Streamer Mode Names:";
     element.appendChild(title);
 
     const text = document.createElement("p");
