@@ -1,5 +1,6 @@
 import { getInfoPanel } from "./getInfoPanel.js";
 import { shouldAbort, getElementWhenAppears, getTimeSpan, getSteamIdObject } from "../../misc.js";
+import { invokeRerender } from "../display.js";
 
 export async function displayServerActivity(bmId, bmProfile) {
     bmProfile = await bmProfile;
@@ -290,6 +291,8 @@ function getBanItem(banData, banId) {
 }
 
 export async function displayAlertLink(bmId) {
+    if (document.querySelector("#bme-alert-link")) return;
+
     const navbar = (await getElementWhenAppears("container", true))?.children[1]?.children;
     if (!navbar) return console.error(`BM-EXTRA: Failed to locate navbar!`);
     for (const navElement of navbar) {
@@ -297,12 +300,15 @@ export async function displayAlertLink(bmId) {
         const link = document.createElement("li");
         link.classList.add("bme-alert-element")
         link.innerHTML = `
-        <a href="/alerts/add?player=${bmId}" target="_blank">
+        <a href="/alerts/add?player=${bmId}" target="_blank" id="bme-alert-link">
             <img class="bme-alert-icon" src="${chrome.runtime.getURL("assets/img/add-alert.png")}">
             <p>Add Alert</p>
         </a>`;
         navElement.before(link);
-        return;
+        break;
     }
-    console.error(`BM-EXTRA: Failed to display alert link.`);
+    const item = document.querySelector("#bme-alert-link");
+    if (!item) return console.error(`BM-EXTRA: Failed to display alert link.`);
+
+    invokeRerender(item, bmId, "overview", displayAlertLink, [bmId], 20);
 }

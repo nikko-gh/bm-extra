@@ -170,8 +170,6 @@ function requestAndFillShowcase(group, token, focusMsgId) {
 }
 
 
-
-
 export function focusOnMessage(msg) {
     requestAnimationFrame(() => {
         if (msg) {

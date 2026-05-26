@@ -2,19 +2,18 @@ import { setupCacheFor, cache } from "../page/cache/cache.js";
 import { checkAndSetupSettingsIfMissing } from "../settings.js";
 import { advancedBans, closeAdminLog, displayInfoPanel, displayServerActivity, limitItem, removeSteamInformation, displayAlertLink } from "./overview/overview.js";
 import { highlightVpnIdentifiers, showExtraDataOnIps, displayAvatars, displayEvasionCheckerPanel, displaySteamLinks } from "./identifier/identifier.js";
-import { convertTimestampsToDay, displayAvatar, displaySettingsButton, redactIdentifiers, selectLastServer, swapBattleEyeGuid } from "./display.js";
+import { convertTimestampsToDay, displayAvatar, displaySettingsButton, invokeRerender, redactIdentifiers, selectLastServer, swapBattleEyeGuid } from "./display.js";
 import { insertBanPresets, insertFriendComparator, insertFriendsSidebarElement, insertHistoricFriendsSidebarElement, insertPublicBansSidebarElement, insertSidebars, insertTeaminfoSidebarElement } from "../sidebar.js";
-import { removeSidebars } from "../misc.js";
+import { getElementWhenAppears, removeSidebars } from "../misc.js";
 
-let settingsChecked = false;
+let setup = false;
 export function router(url) {
-    if (!settingsChecked) {
+    if (!setup) {
+        setup = true;
         checkAndSetupSettingsIfMissing();
 
         const privacySettings = JSON.parse(localStorage.getItem("BME_KEYBINDS_SETTINGS"));
         detectHotkey(privacySettings);
-
-        settingsChecked = true;
     }
 
     const path = url.pathname.split("/").filter(Boolean);
@@ -42,19 +41,20 @@ export function router(url) {
     //Remove sidebar in any other case
     removeSidebars();
 }
+
 async function onOverviewPage(bmId) {
     const settings = JSON.parse(localStorage.getItem("BME_OVERVIEW_SETTINGS"))
 
     const playerCache = cache[bmId];
 
     const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
-    sidebar(bmId, playerCache, sidebarSettings)
+    sidebar(bmId, playerCache, sidebarSettings, "overview")
 
     displaySettingsButton();
     if (settings.showAlert) displayAlertLink(bmId);
     if (settings.showServer) displayServerActivity(bmId, playerCache.bmProfile);
     if (settings.showInfoPanel) displayInfoPanel(bmId, playerCache.bmProfile, playerCache.steamData, playerCache.bmActivity, playerCache.rustPremium);
-    if (settings.showAvatar) displayAvatar(bmId, playerCache.bmProfile, playerCache.steamData);
+    if (settings.showAvatar) displayAvatar(bmId, playerCache.bmProfile, playerCache.steamData, "overview");
     if (settings.removeSteamInfo) removeSteamInformation(bmId);
     if (settings.advancedBans) advancedBans(bmId, playerCache.bmBanData);
     if (settings.closeAdminLog) closeAdminLog(bmId);
@@ -68,10 +68,9 @@ async function onIdentifierPage(bmId) {
     const playerCache = cache[bmId];
 
     const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
-    sidebar(bmId, playerCache, sidebarSettings)
+    sidebar(bmId, playerCache, sidebarSettings, "identifier")
 
-
-    if (settings.showAvatar) displayAvatar(bmId, playerCache.bmProfile, playerCache.steamData);
+    if (settings.showAvatar) displayAvatar(bmId, playerCache.bmProfile, playerCache.steamData, "identifier");
     if (settings.showIspAndAsnData) showExtraDataOnIps(bmId, playerCache.bmProfile, settings.requestProxyCheck)
     if (settings.highlightVpn) highlightVpnIdentifiers(bmId, { label: settings.removeVpnLabel, threshold: settings.vpnAbove, background: settings.vpnBgColor, opacity: settings.vpnOpacity })
     if (settings.displayAvatars) displayAvatars(bmId, playerCache.identifiers.avatars, settings.zoomableAvatars)
@@ -79,20 +78,24 @@ async function onIdentifierPage(bmId) {
     if (settings.showLinks) displaySteamLinks(bmId, playerCache.steamLinks, settings.loadDiscordData, settings.showEmptyIdInput)
 
     const evasionCheckerSettings = JSON.parse(localStorage.getItem("BME_EVASION_CHECKER_SETTINGS"));
-    if (evasionCheckerSettings.enabled) displayEvasionCheckerPanel(evasionCheckerSettings);
+    if (evasionCheckerSettings.enabled) displayEvasionCheckerPanel(bmId, evasionCheckerSettings);
 }
+
 
 async function onAddBanPage(bmId) {
     const settings = JSON.parse(localStorage.getItem("BME_BAN_PAGE_SETTINGS"))
 
     const playerCache = cache[bmId];
 
-    sidebar(bmId, playerCache, settings);
+    sidebar(bmId, playerCache, settings, "ban");
 
     if (settings.selectLastServer) selectLastServer(bmId, playerCache.bmProfile);
 }
-async function sidebar(bmId, playerCache, settings) {
-    await insertSidebars();
+async function sidebar(bmId, playerCache, settings, page) {
+    await insertSidebars(page);
+    const sidebarElement = document.querySelector(".bme-sidebar-left");
+    invokeRerender(sidebarElement, bmId, page, sidebar, [bmId, playerCache, settings, page], 5);
+
     if (settings.friendComparator?.enabled) insertFriendComparator();
     if (settings.friends?.enabled) insertFriendsSidebarElement(playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData, playerCache.serverPop, settings);
     if (settings.historicFriends?.enabled) insertHistoricFriendsSidebarElement(playerCache.historicFriends, playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData, playerCache.serverPop, settings);

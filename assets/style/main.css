@@ -646,14 +646,13 @@ body::-webkit-scrollbar {
 }
 
 #bme-discord-input {
-    height: 50px;
     background-color: #151515;
 
     display: flex;
     align-items: center;
     font-family: "Menlo", "Monaco", "Consolas", "Courier New", monospace;
 
-    padding: 0px 3px;
+    padding: 8px 3px;
 }
 
 #bme-discord-input input:hover,
@@ -884,4 +883,7 @@ form>.tiptap-container>div>.tiptap {
 
 #nprogress{
     display: none;
+}
+.css-1h3zvt0 td{
+    padding: 3px !important;
 }
