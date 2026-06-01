@@ -49,7 +49,7 @@ body::-webkit-scrollbar {
     transform: scale(1.1);
 }
 
-.offline p {
+.bme-offline p {
     color: #b4b4b4 !important;
 }
 
@@ -383,6 +383,15 @@ body::-webkit-scrollbar {
     transition: var(--main-transition) ease-in-out;
 
     font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+.bme-dc-title{
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+.bme-discord-wrapper > p:first-child{
+    margin-top: 8px;
 }
 .bme-discord-title,
 .bme-discord-wrapper h4,
@@ -881,9 +890,10 @@ form>.tiptap-container>div>.tiptap {
 
 
 
-#nprogress{
+#nprogress {
     display: none;
 }
-.css-1h3zvt0 td{
+
+.css-1clz4cn td {
     padding: 3px !important;
 }

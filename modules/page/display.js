@@ -1,4 +1,4 @@
-import { shouldAbort, getElementWhenAppears, getLastServer, getStreamerModeName, getSteamIdObject, setNativeValue, getIdentifierType, getTimeSpan, getIdentifiers } from "../misc.js";
+import { shouldAbort, getElementWhenAppears, getLastServer, getStreamerModeName, getSteamIdObject, setNativeValue, getIdentifierType, getTimeSpan, getIdentifiers, cssAnchors, getHiddenTableRow } from "../misc.js";
 import { displaySettings } from "../settings.js";
 
 export async function displaySettingsButton(bmId) {
@@ -33,12 +33,12 @@ export async function displayAvatar(bmId, bmProfile, bmSteamData, loc) {
     }
     if (!avatarUrl) return;
 
-    const mainElement = await getElementWhenAppears("main", true);    
+    const mainElement = await getElementWhenAppears("main", true);
 
     //if overview page, wait till RCON element appears, last stage of page load
     if (location.href.split("/").length === 6) await getElementWhenAppears("RCONPlayerPage");
 
-    const title = mainElement?.querySelector("div")?.firstChild;    
+    const title = mainElement?.querySelector("div")?.firstChild;
     if (!title) return;
 
     const avatarElement = document.createElement("img");
@@ -50,7 +50,7 @@ export async function displayAvatar(bmId, bmProfile, bmSteamData, loc) {
     invokeRerender(title, bmId, loc, displayAvatar, [bmId, bmProfile, bmSteamData, loc])
 }
 
-export async function swapBattleEyeGuid(bmId, bmProfile) {
+export async function swapBattleEyeGuid(bmId, bmProfile, target) {
     bmProfile = await bmProfile;
 
     const steamIdObject = getSteamIdObject(bmProfile.included);
@@ -61,26 +61,35 @@ export async function swapBattleEyeGuid(bmId, bmProfile) {
     if (!smName) return console.error("BM-EXTRA: Failed to get Streamer Mode name")
 
     const identifiers = await getIdentifiers();
+    let battleEyeGuidElement = null;
     for (const identifier of identifiers) {
 
         const { type, id } = getIdentifierType(identifier)
+        if (type === "SM Name") //Already present, just make sure it stays there
+            return invokeRerender(identifier, bmId, target, swapBattleEyeGuid, [bmId, bmProfile, target])
+
         if (type !== "BattlEye GUID") continue;
-
-        const infoElement = identifier.children[1];
-        infoElement.firstChild.innerText = "SM Name";
-        infoElement.lastChild.remove(); //Remove org lister
-        infoElement.lastChild.remove(); //Remove session button
-        infoElement.lastChild.remove(); //Remove copy button
-        infoElement.lastChild.remove(); //Remove empty p tag
-
-        identifier.title = smName;
-        identifier.children[0].firstChild.title = smName;
-        const smNameElement = identifier.children[0]?.firstChild?.firstChild;
-        smNameElement.innerText = smName;
-        smNameElement.title = smName
-
-        return;
+        battleEyeGuidElement = identifier;
+        break;
     }
+    if (!battleEyeGuidElement) return console.error("BME-EXTRA: Failed to locate BattleEye GUID");
+
+    const infoElement = battleEyeGuidElement.children[1];
+    infoElement.firstChild.innerText = "SM Name";
+    infoElement.lastChild.remove(); //Remove org lister
+    infoElement.lastChild.remove(); //Remove session button
+    infoElement.lastChild.remove(); //Remove copy button
+    infoElement.lastChild.remove(); //Remove empty p tag
+
+    battleEyeGuidElement.title = smName;
+    battleEyeGuidElement.children[0].firstChild.title = smName;
+    const smNameElement = battleEyeGuidElement.children[0]?.firstChild?.firstChild;
+    smNameElement.innerText = smName;
+    smNameElement.title = smName;
+
+    const hiddenElement = getHiddenTableRow();
+    battleEyeGuidElement.parentNode.append(hiddenElement);
+    invokeRerender(hiddenElement, bmId, target, swapBattleEyeGuid, [bmId, bmProfile, target]);
 }
 
 export async function selectLastServer(bmId, bmProfile) {
@@ -108,9 +117,7 @@ export async function selectLastServer(bmId, bmProfile) {
 let currentRedactedElements = [] //key, originalValue
 let showIdentifiersTimeout = null;
 export async function redactIdentifiers(redactSteamId, redactIps, redactTime) {
-    const tables = Array.from(document.getElementsByClassName("css-1h3zvt0"));
-    console.log(tables);
-
+    const tables = Array.from(document.getElementsByClassName(cssAnchors.identifierTable));
     tables.forEach(table => redactIdentifierTable(table, redactSteamId, redactIps));
 
     if (showIdentifiersTimeout) clearTimeout(showIdentifiersTimeout);
@@ -209,22 +216,16 @@ function revertItems(arr, buttons) {
 
 
 
-
-
-
-
-
-export async function invokeRerender(target, bmId, loc, func, params, limit = 100) {
+export async function invokeRerender(target, bmId, loc, func, params, limit = 20) {
     let i = 0;
-    while (document.body.contains(target)) {
+    while (document.contains(target)) {
         i++;
-
-        if (!onLocation(loc)) return; //Left the page
-        if (i > limit) return; //Limit reached
         
+        if (i > limit) return;
+        if (!onLocation(loc)) return; //Left the page
         await new Promise(r => { setTimeout(r, 100 + (i * 25)) });
     }
-    
+
     if (!onLocation(loc)) return; //Left the page
     func(...params); //Replacing missing elements
 }
@@ -234,6 +235,6 @@ function onLocation(loc) {
         if (arr.length !== 6) return false;
         if (arr[4] !== "players") return false;
     } else if (!window.location.href.includes(loc)) return false;
-    
+
     return true;
 }

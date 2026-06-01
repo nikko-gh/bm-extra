@@ -244,8 +244,9 @@ export function colorPlayer(player, color) {
     player.style.setProperty("--border", colors[color]);
 }
 function isButtonUseable(btn) {
-    if (btn.classList.contains("bme-ec-used")) return false;
-    if (btn.classList.contains("bme-ec-inactive")) return false;
+    if (!btn) return false;
+    if (btn.classList?.contains("bme-ec-used")) return false;
+    if (btn.classList?.contains("bme-ec-inactive")) return false;
 
     return true;
 }

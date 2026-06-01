@@ -1,4 +1,4 @@
-import { getElementWhenAppears, getIdentifiers, getIdentifierType, getTimeSpan, highlightElement, makeDropDownMenu, shouldAbort, talkToBackgroundScript } from "../../misc.js";
+import { cssAnchors, getElementWhenAppears, getHiddenTableRow, getIdentifiers, getIdentifierType, getTimeSpan, highlightElement, makeDropDownMenu, shouldAbort, talkToBackgroundScript } from "../../misc.js";
 import { fillDiscordUserElement } from "./discord/discordUserElement.js";
 import { cache, getDiscordData, getProxyCheckIpInfo } from "../cache/cache.js";
 import { autoStart } from "./evasionChecker/actions.js";
@@ -68,9 +68,9 @@ function convertIdentifier(identifier, ipObject, padEndValues, requestProxyCheck
     let text = `${ipValue}  |  ISP: ${ispValue}  |  ${asnValue}`;
     if (requestProxyCheck) text += `  |  ${conTypeString || ""}`
     ipElement.innerHTML = text;
-    if (!conTypeString && requestProxyCheck) {
+    if (!conTypeString && requestProxyCheck && !ipElement.parentNode.querySelector("button")) {
         const pcButton = getPcButton(identifier, ipObject, padEndValues, requestProxyCheck);
-        ipElement.after(pcButton);
+        if (pcButton) ipElement.after(pcButton);
     }
 
     if (!ipObject.proxyCheck) return;
@@ -86,6 +86,8 @@ function convertIdentifier(identifier, ipObject, padEndValues, requestProxyCheck
     })
 }
 function getPcButton(identifier, ipObject, padEndValues, requestProxyCheck) {
+    if (!ipObject.ip) return null;
+
     const button = document.createElement("button");
     button.classList.add("bme-button")
     button.innerText = "CHECK";
@@ -224,7 +226,7 @@ async function checkConnections(vpnSettings) {
         if (identifier.classList.contains("bme-vpn-identifier")) continue;
 
         const sharedText = identifier?.firstChild?.lastChild?.innerText?.trim();
-        if (!sharedText.includes("Identifier shared with")) continue;
+        if (!sharedText?.includes("Identifier shared with")) continue;
 
         let connectionCount = sharedText === "Identifier shared with more than 250 players." ?
             250 : Number(sharedText.split("with ")[1].split(" player")[0]);
@@ -243,7 +245,6 @@ function makeItVpn(identifier, vpnSettings) {
 }
 
 export async function displayAvatars(bmId, avatars, zoomable) {
-    if (document.body.querySelector("#bme-avatars-title")) return;
     avatars = await avatars;
 
     const identifiers = await getIdentifiers();
@@ -252,17 +253,19 @@ export async function displayAvatars(bmId, avatars, zoomable) {
 
     if (avatars.length === 0) return;
     const avatarTitle = getIdentifierTableTitle("Avatar", "bme-avatars-title");
+
+    if (document.body.querySelector("#bme-avatars-title")) return;
     nameElement.before(avatarTitle);
 
     avatars.forEach(item => {
         const payload = `
-            <div title="${item.avatar}" class="css-8uhtka bme-avatar-container ${zoomable && "bme-zoomable-avatar"}">
+            <div title="${item.avatar}" class="${cssAnchors.identifierContentContainer} bme-avatar-container ${zoomable && "bme-zoomable-avatar"}">
                 <div class="bme-avatar-placeholder">
                     <div>
                         <img src="https://avatars.fastly.steamstatic.com/${item.avatar}_full.jpg" class="bme-avatar-identifier">
                     </div>
                 </div>
-                <span class="css-1n6n1f5" title="${item.avatar}">${item.avatar}${item.avatarHits !== "N/A" ? ` | Seen on ${item.avatarHits < 101 ? item.avatarHits : "100+"} players` : ""}</span>
+                <span class="${cssAnchors.identifierContent}" title="${item.avatar}">${item.avatar}${item.avatarHits !== "N/A" ? ` | Seen on ${item.avatarHits < 101 ? item.avatarHits : "100+"} players` : ""}</span>
             </div>
         `;
         const avatarElement = getIdentifierTableElement("Avatar", payload, Number(item.lastSeen) * 1000)
@@ -291,7 +294,9 @@ export async function displaySteamLinks(bmId, steamLinks, loadData, showInput) {
     const discordTitle = getIdentifierTableTitle("Discord", "bme-discord-title");
     discordTitle.id = "bme-steam-links"
     if (shouldAbort(bmId, "bme-steam-links")) return;
-    under.insertAdjacentElement("beforebegin", discordTitle)
+    under.insertAdjacentElement("beforebegin", discordTitle);
+    invokeRerender(discordTitle, bmId, "identifiers", displaySteamLinks, [bmId, steamLinks, loadData, showInput]);
+
 
     if (showInput) discordTitle.insertAdjacentElement("afterend", getDiscordInput(bmId, discordTitle))
 
@@ -304,16 +309,17 @@ export async function displaySteamLinks(bmId, steamLinks, loadData, showInput) {
 }
 function getSteamLinkElement(discordId, lastSeen, owners, attached) {
     let payload = `
-        <div title="${discordId}" class="css-8uhtka bme-unloaded-discord">
-            <p class="css-1n6n1f5 bme-discord-title" title="${discordId}">${discordId}</p>
+        <div title="${discordId}" class="${cssAnchors.identifierContentContainer} bme-dc-title bme-unloaded-discord">
+            <p class="${cssAnchors.identifierContent} bme-discord-title" title="${discordId}">${discordId}</p>
         </div>
         <div class="bme-discord-wrapper bme-discord-unloaded" title="${discordId}"></div>
     `;
+
     if (attached?.length > 0) payload += `
         <div>
             <div class="bme-share bme-header">
                 <span>
-                    <i class="glyphicon glyphicon-chevron-right css-1pdr3ri"></i> 
+                    <i class="glyphicon glyphicon-chevron-right ${cssAnchors.identifierArrowIcon}"></i> 
                     <i class="glyphicon glyphicon-info-sign" style="color: rgb(255, 149, 0);"></i> 
                     Identifier is shared with ${attached.length} player(s)
                 </span>
@@ -336,7 +342,6 @@ function getSteamLinkElement(discordId, lastSeen, owners, attached) {
 function getDiscordInput(bmId, title) {
     const element = document.createElement("tr");
     element.id = "bme-discord-input"
-    element.classList.add("css-147tpna")
 
     element.innerHTML = `
         <td>
@@ -367,11 +372,10 @@ function getDiscordInput(bmId, title) {
 
             steamLinks.push(link)
 
-            const linkElement = getSteamLinkElement(link.discordId, link.lastSeen, link.owner);
+            const linkElement = getSteamLinkElement(link.discordId, link.lastSeen, link.owner, link.attached);
             title.insertAdjacentElement("afterend", linkElement);
 
             getDiscordData([link]);
-
             highlightElement(e.target, "green");
         } catch (error) {
             highlightElement(e.target, "red");
@@ -385,7 +389,7 @@ function getDiscordInput(bmId, title) {
 
 function getIdentifierTableTitle(title, id = "") {
     const element = document.createElement("tr");
-    element.classList.add("css-y5msm0");
+    element.classList.add(cssAnchors.identifierTableTitleContainer);
     if (id) element.id = id;
 
     const inner = document.createElement("th")
@@ -414,17 +418,17 @@ function getIdentifierTableElement(type, payload, lastSeen, meta) {
             ${payload}
         </td>
         <td data-title="Type">
-            <div class="css-1d6fayl">${type}</div>
+            <div class="${cssAnchors.identifierTableTypeHeader}">${type}</div>
             ${meta?.owners?.length > 0 ? `
-                <button title="Show organizations that have this identifier." type="button" class="css-dz605m">
+                <button title="Show organizations that have this identifier." type="button" class="${cssAnchors.identifierTableTypeButton}">
                     <i class="glyphicon glyphicon-info-sign"></i>
                 </button>
             ` : ``}
         </td>
         <td data-title="Last Seen">
             <time>${dateStr}</time><br />
-            <time class="css-1d6fayl">${timeStr}</time>
-            <time class="css-1d6fayl">${getTimeSpan(lastSeen)} ago</time>
+            <time class="${cssAnchors.identifierTableTime}">${timeStr}</time>
+            <time class="${cssAnchors.identifierTableTime}">${getTimeSpan(lastSeen)} ago</time>
         </td>
     `;
 
@@ -452,6 +456,7 @@ export function displayDiscordData() {
     const unloadedDiscords = Array.from(document.querySelectorAll(".bme-unloaded-discord"));
     const discordData = cache.discordUserData;
     if (discordData.length === 0) return;
+
 
     for (const discordElement of unloadedDiscords) {
         const discordId = discordElement.title;
@@ -490,14 +495,14 @@ export async function displayEvasionCheckerPanel(bmId, settings) {
     if (document.body.querySelector("#bme-ec-panel")) return;
 
     const panel = getEvasionCheckerPanel();
-    
-    const identifierTable = await getElementWhenAppears("css-1h3zvt0", true);
+    const identifierTable = await getElementWhenAppears(cssAnchors.identifierTable, true);
+
     if (settings.panelPlacement === "top")
         identifierTable.insertAdjacentElement("beforebegin", panel)
     else
         identifierTable.insertAdjacentElement("afterend", panel)
-    
-    invokeRerender(panel, bmId, "identifiers", displayEvasionCheckerPanel, [bmId, settings]);
+
+    invokeRerender(panel, bmId, "identifiers", displayEvasionCheckerPanel, [bmId, settings], 10);
     for (let i = 0; i < 50; i++) { //Wait till shared identifiers load
         if (identifierTable.innerText.includes("Identifier shared with")) break;
         await new Promise(r => { setTimeout(r, 150 * (i / 10)) })

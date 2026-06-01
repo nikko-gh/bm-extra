@@ -58,7 +58,7 @@ async function onOverviewPage(bmId) {
     if (settings.removeSteamInfo) removeSteamInformation(bmId);
     if (settings.advancedBans) advancedBans(bmId, playerCache.bmBanData);
     if (settings.closeAdminLog) closeAdminLog(bmId);
-    if (settings.swapBattleEyeGuid) swapBattleEyeGuid(bmId, playerCache.bmProfile);
+    if (settings.swapBattleEyeGuid) swapBattleEyeGuid(bmId, playerCache.bmProfile, "overview");
     if (settings.maxNames > 0) limitItem(bmId, settings.maxNames, "Name");
     if (settings.maxIps > 0) limitItem(bmId, settings.maxIps, "IP");
 }
@@ -70,11 +70,11 @@ async function onIdentifierPage(bmId) {
     const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
     sidebar(bmId, playerCache, sidebarSettings, "identifier")
 
-    if (settings.showAvatar) displayAvatar(bmId, playerCache.bmProfile, playerCache.steamData, "identifier");
+    if (settings.showAvatar) displayAvatar(bmId, playerCache.bmProfile, playerCache.steamData, "identifiers");
     if (settings.showIspAndAsnData) showExtraDataOnIps(bmId, playerCache.bmProfile, settings.requestProxyCheck)
     if (settings.highlightVpn) highlightVpnIdentifiers(bmId, { label: settings.removeVpnLabel, threshold: settings.vpnAbove, background: settings.vpnBgColor, opacity: settings.vpnOpacity })
     if (settings.displayAvatars) displayAvatars(bmId, playerCache.identifiers.avatars, settings.zoomableAvatars)
-    if (settings.swapBattleEyeGuid) swapBattleEyeGuid(bmId, playerCache.bmProfile);
+    if (settings.swapBattleEyeGuid) swapBattleEyeGuid(bmId, playerCache.bmProfile, "identifiers");
     if (settings.showLinks) displaySteamLinks(bmId, playerCache.steamLinks, settings.loadDiscordData, settings.showEmptyIdInput)
 
     const evasionCheckerSettings = JSON.parse(localStorage.getItem("BME_EVASION_CHECKER_SETTINGS"));
@@ -93,8 +93,6 @@ async function onAddBanPage(bmId) {
 }
 async function sidebar(bmId, playerCache, settings, page) {
     await insertSidebars(page);
-    const sidebarElement = document.querySelector(".bme-sidebar-left");
-    invokeRerender(sidebarElement, bmId, page, sidebar, [bmId, playerCache, settings, page], 5);
 
     if (settings.friendComparator?.enabled) insertFriendComparator();
     if (settings.friends?.enabled) insertFriendsSidebarElement(playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData, playerCache.serverPop, settings);

@@ -1,5 +1,5 @@
 import { getInfoPanel } from "./getInfoPanel.js";
-import { shouldAbort, getElementWhenAppears, getTimeSpan, getSteamIdObject } from "../../misc.js";
+import { shouldAbort, getElementWhenAppears, getTimeSpan, getSteamIdObject, cssAnchors, getIdentifiers, getHiddenTableRow } from "../../misc.js";
 import { invokeRerender } from "../display.js";
 
 export async function displayServerActivity(bmId, bmProfile) {
@@ -29,18 +29,20 @@ export async function displayServerActivity(bmId, bmProfile) {
     const title = rconElement?.firstChild;
     if (!title) return console.error("BM-EXTRA: Failed to setup serverElement.")
     const serverElement = getCurrentServersElement(onlineServers.length ? onlineServers : [servers[0]]);
-
-    serverElement.id = "bme-server-panel"
     if (!serverElement) return console.error("BM-EXTRA: serverElement failed to assemble.")
 
     if (shouldAbort(bmId, "bme-server-panel")) return;
     title.insertAdjacentElement("afterend", serverElement);
+
+    invokeRerender(serverElement, bmId, "overview", displayServerActivity, [bmId, bmProfile]);
 }
 function getCurrentServersElement(servers) {
     const element = document.createElement("div");
+    element.id = "bme-server-panel";
+
     for (const server of servers) {
-        if (!server.online && !element.classList.contains("offline"))
-            element.classList.add("offline");
+        if (!server.online && !element.classList.contains("bme-offline"))
+            element.classList.add("bme-offline");
 
         const firstLine = document.createElement("p");
         const prefix = server.online ? "Current server" : "Last server";
@@ -218,24 +220,26 @@ export async function closeAdminLog(bmId) {
 }
 
 export async function limitItem(bmId, limit, item) {
-    const identifierWrapper = (await getElementWhenAppears("css-11gv980", true));
-    const identifierTable = identifierWrapper?.lastChild?.children;
-    if (!identifierTable) return console.error("BM-EXTRA: identifierTable is missing!")
+    const identifiers = await getIdentifiers();
 
     let count = 0;
-    for (const identifier of identifierTable) {
+    let removed = false;
+    for (const identifier of identifiers) {
         const type = identifier?.children[1]?.firstChild?.innerText;
         if (type !== item) continue;
 
         count++;
         if (count <= limit) continue;
-        if (shouldAbort(bmId, null, "overview")) return;
+        if (!removed) removed = true;
         identifier.classList.add("bme-hidden");
     }
+    const hidden = getHiddenTableRow();
+    identifiers[0].parentNode.append(hidden);
+    invokeRerender(hidden, bmId, "overview", limitItem, [bmId, limit, item]);
 }
 
-export async function advancedBans(bmId, banDataP) {
-    const banData = await banDataP
+export async function advancedBans(bmId, banData) {
+    banData = await banData;
 
     const rconElement = await getElementWhenAppears("RCONPlayerPage");
     const sections = rconElement?.lastChild?.firstChild?.childNodes;
@@ -248,26 +252,49 @@ export async function advancedBans(bmId, banDataP) {
         break;
     }
 
-    if (!banSection) return console.error("BM-EXTRA: Failed to locate ban section.");
-    const banList = banSection.lastChild?.firstChild?.childNodes;
-    if (!banList) return console.error("BM-EXTRA: Failed to locate ban list.");
+    const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            for (const node of mutation.addedNodes) {
+                if (node.nodeName !== "UL") continue
 
-    const urlId = location.href.split("/")[5];
-    if (urlId !== bmId) return true; //Page changed | Abort
-    for (const banElement of banList) {
-        const banId = banElement.firstChild.href.split("/")[6];
-        const banSpan = banElement.firstChild.firstChild;
+                processBanList(Array.from(node.children), banData);
+            }
+        }
+    });
+
+    observer.observe(banSection, {
+        childList: true,
+        subtree: true
+    });
+
+    const cleaner = setInterval(() => {
+        if (banSection.isConnected) return;
+        observer.disconnect();
+        clearInterval(cleaner);
+    }, 2500);
+
+    const banList = banSection.querySelector("ul");
+    const banElements = Array.from(banList.children);
+
+    processBanList(banElements, banData)
+}
+function processBanList(banElements, banData) {
+    for (const banElement of banElements) {
+        const url = banElement.firstChild.href;
+        const banId = url.split("/")[6];
 
         const banItem = getBanItem(banData, banId);
-        if (!banItem || !banSpan) continue;
 
+        const banSpan = banElement.querySelector("span");
+        if (!banItem || !banSpan) continue;
         convertBanSpan(banItem, banSpan);
     }
 }
 function convertBanSpan(ban, span) {
-    const banReason = ban.attributes.reason.split(" - ")[0];
-    const timestamp = new Date(ban.attributes.timestamp).getTime();
+    const reasonArr = ban.attributes.reason.split(" - ");
+    const banReason = reasonArr.slice(0, reasonArr.length - 1).join(" - ");
 
+    const timestamp = new Date(ban.attributes.timestamp).getTime();
     const expiration = ban.attributes.expires === null ? 0 : new Date(ban.attributes.expires).getTime();
     const active = expiration === 0 ? true : Date.now() < expiration;
     const length = expiration === 0 ? 0 : expiration - timestamp;

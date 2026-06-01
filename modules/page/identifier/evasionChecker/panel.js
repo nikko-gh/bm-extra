@@ -134,10 +134,12 @@ function getOrgChanger() {
     return element;
 }
 function getOrgs() {
-    const bootstrap = document.getElementById("storeBootstrap");
-    const bootstrapJson = JSON.parse(bootstrap.innerText);
-
     const orgs = [{ id: "all", name: "Global" }];
+
+    const bootstrap = document.getElementById("storeBootstrap");
+    if (!bootstrap) return orgs;
+
+    const bootstrapJson = JSON.parse(bootstrap.innerText);
 
     for (const org of bootstrapJson.state.account.organizations || []) {
         const orgInfo = getOrgInfo(org);
