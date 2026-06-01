@@ -5,7 +5,7 @@ import { getEcSettings } from "./panel.js";
 export async function loadPlayersPressed(e, autoStart = false) {
     const btn = e.target
 
-    if (!isButtonUsable(btn)) return;
+    if (!isButtonUseable(btn)) return;
     btn.classList.add("bme-ec-inactive")
 
     const modeChanger = document.getElementById("bme-ec-load-mode-changer");
@@ -205,7 +205,7 @@ function getPlayerElement(player) {
 
 export async function checkPlayersPressed(e) {
     const btn = e.target
-    if (!isButtonUsable(btn)) return;
+    if (!isButtonUseable(btn)) return;
 
     const buttons = [btn];
 
