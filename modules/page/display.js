@@ -206,28 +206,34 @@ function revertItems(arr, buttons) {
 
 
 
+const elements = new Set();
+export async function invokeRerender(target, bmId, loc, func, params, limit = 10000) {
+    const call = () => { func(...params) };
+    const item = { element: target, loc, bmId, call, start: Date.now(), limit }
 
+    if (!item.element.isConnected) return item.call();
+    elements.add(item)
+}
+checkMutations();
+function checkMutations() {
+    const observer = new MutationObserver(() => {
+        if (elements.size === 0) return;
 
+        const bmId = window.location.href.split("/")[5];
+        for (const item of elements) checkElement(item, bmId);
+    });
 
+    observer.observe(document.body, { childList: true, subtree: true });
+}
+function checkElement(item, bmId) {
+    if (!onLocation(item.loc)) return elements.delete(item); //swtiched page
+    if (Date.now() - item.start > item.limit) return elements.delete(item) //old
+    if (item.bmId !== bmId) return elements.delete(item); //switched page
 
+    if (item.element.isConnected) return; //Still on page
 
-
-
-
-
-
-export async function invokeRerender(target, bmId, loc, func, params, limit = 20) {
-    let i = 0;
-    while (document.contains(target)) {
-        i++;
-        
-        if (i > limit) return;
-        if (!onLocation(loc)) return; //Left the page
-        await new Promise(r => { setTimeout(r, 100 + (i * 25)) });
-    }
-
-    if (!onLocation(loc)) return; //Left the page
-    func(...params); //Replacing missing elements
+    elements.delete(item); //Disappeared
+    item.call();
 }
 function onLocation(loc) {
     if (loc === "overview") {

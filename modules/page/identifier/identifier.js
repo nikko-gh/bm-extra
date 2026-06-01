@@ -502,7 +502,7 @@ export async function displayEvasionCheckerPanel(bmId, settings) {
     else
         identifierTable.insertAdjacentElement("afterend", panel)
 
-    invokeRerender(panel, bmId, "identifiers", displayEvasionCheckerPanel, [bmId, settings], 10);
+    invokeRerender(panel, bmId, "identifiers", displayEvasionCheckerPanel, [bmId, settings]);
     for (let i = 0; i < 50; i++) { //Wait till shared identifiers load
         if (identifierTable.innerText.includes("Identifier shared with")) break;
         await new Promise(r => { setTimeout(r, 150 * (i / 10)) })

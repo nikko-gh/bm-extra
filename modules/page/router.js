@@ -2,7 +2,7 @@ import { setupCacheFor, cache } from "../page/cache/cache.js";
 import { checkAndSetupSettingsIfMissing } from "../settings.js";
 import { advancedBans, closeAdminLog, displayInfoPanel, displayServerActivity, limitItem, removeSteamInformation, displayAlertLink } from "./overview/overview.js";
 import { highlightVpnIdentifiers, showExtraDataOnIps, displayAvatars, displayEvasionCheckerPanel, displaySteamLinks } from "./identifier/identifier.js";
-import { convertTimestampsToDay, displayAvatar, displaySettingsButton, invokeRerender, redactIdentifiers, selectLastServer, swapBattleEyeGuid } from "./display.js";
+import { convertTimestampsToDay, displayAvatar, displaySettingsButton, redactIdentifiers, selectLastServer, swapBattleEyeGuid } from "./display.js";
 import { insertBanPresets, insertFriendComparator, insertFriendsSidebarElement, insertHistoricFriendsSidebarElement, insertPublicBansSidebarElement, insertSidebars, insertTeaminfoSidebarElement } from "../sidebar.js";
 import { getElementWhenAppears, removeSidebars } from "../misc.js";
 
