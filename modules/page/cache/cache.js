@@ -203,7 +203,7 @@ async function getSteamData(bmId) {
 async function getBmProfileData(bmId, authToken) {
     try {
         const resp = await fetch(`https://api.battlemetrics.com/players/${bmId}?version=^0.1.0&include=server,identifier&access_token=${authToken}`);
-        
+
         if (resp?.status !== 200) throw new Error(`Failed to request profile information. | Status: ${resp?.status}`);
 
         const data = resp.json()
@@ -530,18 +530,23 @@ async function getSteamLinks(bmProfile) {
         return []
     }
 }
+let discordDataLoading = false;
 export async function getDiscordData(steamLinks) {
+    if (discordDataLoading) return;
     try {
+        discordDataLoading = true;
         steamLinks = await steamLinks;
         const discordIds = steamLinks
             .map(item => item.discordId)
-            .filter(item => 
+            .filter(item =>
                 //Ignore if already cached
                 !discordUserData.map(item => item.user.id).includes(item)
             );
 
+        if (discordIds.length === 0) return //There is no new item.;
+
         const piDetails = JSON.parse(localStorage.getItem("BME_PLAYER_INSIGHT_API"));
-        const PLAYER_INSIGHT_KEY = piDetails?.apiKey || null;        
+        const PLAYER_INSIGHT_KEY = piDetails?.apiKey || null;
         if (!PLAYER_INSIGHT_KEY) return "NO_API_KEY";
         if (PLAYER_INSIGHT_KEY.length !== 64) return "INVALID_API_KEY";
         if (!piDetails?.perms.includes("discordUser")) return "NO_PERMISSION";
@@ -550,8 +555,13 @@ export async function getDiscordData(steamLinks) {
             talkToBackgroundScript("BME_DISCORD_DATA", discordId, PLAYER_INSIGHT_KEY)
         )
         discordUserData.push(...await Promise.all(promises))
+
+        //If loaded check again for late arrived items.
+        getDiscordData(steamLinks);
     } catch (error) {
         return [];
+    } finally {
+        discordDataLoading = false;
     }
 }
 
@@ -574,7 +584,8 @@ export async function getProxyCheckIpInfo(ips, filter = true) {
 
     const barrier = settings.checkAfter === -1 ? 0 : Date.now() - settings.checkAfter;
 
-    const allIps = ips.map(ip => ip.ip);
+    const allIps = ips.filter(item => item.ip).map(ip => ip.ip);
+    if (allIps.length === 0) return new Map();
     const returnIps = getCachedIpsData(allIps);
 
     if (filter) {

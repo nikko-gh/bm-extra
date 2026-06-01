@@ -4,6 +4,19 @@ export const rustApiKeyPermissionBits = {
     publicBans: 57,
 };
 
+export const cssAnchors = {
+    identifierTable: "css-1clz4cn",
+    identifierContentContainer: "css-1h52dri",
+    identifierContent: "css-1n6n1f5",
+    identifierArrowIcon: "css-1c83ua",
+    identifierTableTitleContainer: "css-y5msm0",
+    identifierTableType: "css-1d6fayl",
+    identifierTableTypeButton: "css-dz605m",
+    identifierTableTime: "css-1d6fayl",
+
+}
+
+
 const _getElement = {};
 /**
  * Returns a Promise that contains either the element or null if it cannot be found on the page.
@@ -38,6 +51,15 @@ async function findElementWhenAppears(selector) {
         count++;
     }
     return null;
+}
+
+export async function getIdentifiers() {
+    try {
+        const element = await getElementWhenAppears("css-1clz4cn", true);
+        return Array.from(element?.lastChild?.children);
+    } catch (error) {
+        return [];
+    }
 }
 
 const ONE_SECOND = 1000;
@@ -374,4 +396,12 @@ export function getLocale() {
     const locale = JSON.parse(document.getElementById("storeBootstrap").innerHTML)?.state?.account?.locale ?? "en-us";
     _locale = locale;
     return locale;
+}
+
+export function getHiddenTableRow() {
+    const element = document.createElement("tr");
+    element.classList.add("bme-hidden")
+    element.innerHTML = `<td></td><td></td><td></td>`;
+
+    return element;
 }

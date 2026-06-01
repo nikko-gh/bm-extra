@@ -1,4 +1,4 @@
-import { shouldAbort, getElementWhenAppears, getLastServer, getStreamerModeName, getSteamIdObject, setNativeValue, getIdentifierType, getTimeSpan } from "../misc.js";
+import { shouldAbort, getElementWhenAppears, getLastServer, getStreamerModeName, getSteamIdObject, setNativeValue, getIdentifierType, getTimeSpan, getIdentifiers, cssAnchors, getHiddenTableRow } from "../misc.js";
 import { displaySettings } from "../settings.js";
 
 export async function displaySettingsButton(bmId) {
@@ -14,7 +14,9 @@ export async function displaySettingsButton(bmId) {
     if (!testElement) rconElement.before(button);
 }
 
-export async function displayAvatar(bmId, bmProfile, bmSteamData) {
+export async function displayAvatar(bmId, bmProfile, bmSteamData, loc) {
+    const avatar = document.getElementById("bme-avatar");
+    if (avatar) avatar.remove();
     bmProfile = await bmProfile;
 
     let avatarUrl = "";
@@ -37,7 +39,6 @@ export async function displayAvatar(bmId, bmProfile, bmSteamData) {
     if (location.href.split("/").length === 6) await getElementWhenAppears("RCONPlayerPage");
 
     const title = mainElement?.querySelector("div")?.firstChild;
-
     if (!title) return;
 
     const avatarElement = document.createElement("img");
@@ -46,9 +47,10 @@ export async function displayAvatar(bmId, bmProfile, bmSteamData) {
 
     if (shouldAbort(bmId, "bme-avatar")) return;
     title.insertAdjacentElement("afterbegin", avatarElement)
+    invokeRerender(title, bmId, loc, displayAvatar, [bmId, bmProfile, bmSteamData, loc])
 }
 
-export async function swapBattleEyeGuid(bmId, bmProfile) {
+export async function swapBattleEyeGuid(bmId, bmProfile, target) {
     bmProfile = await bmProfile;
 
     const steamIdObject = getSteamIdObject(bmProfile.included);
@@ -58,28 +60,36 @@ export async function swapBattleEyeGuid(bmId, bmProfile) {
     const smName = getStreamerModeName(steamId);
     if (!smName) return console.error("BM-EXTRA: Failed to get Streamer Mode name")
 
-    const identifierWrapper = (await getElementWhenAppears("css-11gv980", true));
-    const identifierTable = identifierWrapper?.lastChild?.children;
-    if (!identifierTable) return console.error("BM-EXTRA: identifierTable is missing!")
+    const identifiers = await getIdentifiers();
+    let battleEyeGuidElement = null;
+    for (const identifier of identifiers) {
 
-    for (const identifier of identifierTable) {
-        if (!identifier.innerText.includes("BattlEye GUID")) continue;
+        const { type, id } = getIdentifierType(identifier)
+        if (type === "SM Name") //Already present, just make sure it stays there
+            return invokeRerender(identifier, bmId, target, swapBattleEyeGuid, [bmId, bmProfile, target])
 
-        const type = identifier.children[1];
-        type.firstChild.innerText = "SM Name";
-        type.lastChild.remove(); //Remove org lister
-        type.lastChild.remove(); //Remove session button
-        type.lastChild.remove(); //Remove copy button
-        type.lastChild.remove(); //Remove empty p tag
-
-        identifier.title = smName;
-        identifier.children[0].firstChild.title = smName;
-        const smNameElement = identifier.children[0]?.firstChild?.firstChild;
-        smNameElement.innerText = smName;
-        smNameElement.title = smName
-
-        return;
+        if (type !== "BattlEye GUID") continue;
+        battleEyeGuidElement = identifier;
+        break;
     }
+    if (!battleEyeGuidElement) return console.error("BME-EXTRA: Failed to locate BattleEye GUID");
+
+    const infoElement = battleEyeGuidElement.children[1];
+    infoElement.firstChild.innerText = "SM Name";
+    infoElement.lastChild.remove(); //Remove org lister
+    infoElement.lastChild.remove(); //Remove session button
+    infoElement.lastChild.remove(); //Remove copy button
+    infoElement.lastChild.remove(); //Remove empty p tag
+
+    battleEyeGuidElement.title = smName;
+    battleEyeGuidElement.children[0].firstChild.title = smName;
+    const smNameElement = battleEyeGuidElement.children[0]?.firstChild?.firstChild;
+    smNameElement.innerText = smName;
+    smNameElement.title = smName;
+
+    const hiddenElement = getHiddenTableRow();
+    battleEyeGuidElement.parentNode.append(hiddenElement);
+    invokeRerender(hiddenElement, bmId, target, swapBattleEyeGuid, [bmId, bmProfile, target]);
 }
 
 export async function selectLastServer(bmId, bmProfile) {
@@ -107,7 +117,7 @@ export async function selectLastServer(bmId, bmProfile) {
 let currentRedactedElements = [] //key, originalValue
 let showIdentifiersTimeout = null;
 export async function redactIdentifiers(redactSteamId, redactIps, redactTime) {
-    const tables = Array.from(document.getElementsByClassName("css-11gv980"));
+    const tables = Array.from(document.getElementsByClassName(cssAnchors.identifierTable));
     tables.forEach(table => redactIdentifierTable(table, redactSteamId, redactIps));
 
     if (showIdentifiersTimeout) clearTimeout(showIdentifiersTimeout);
@@ -191,4 +201,46 @@ function revertItems(arr, buttons) {
         const buttons = Array.from(document.querySelectorAll(".bme-button-redacted"));
         for (const button of buttons) button.classList.remove("bme-button-redacted")
     }
+}
+
+
+
+
+const elements = new Set();
+export async function invokeRerender(target, bmId, loc, func, params, limit = 10000) {
+    const call = () => { func(...params) };
+    const item = { element: target, loc, bmId, call, start: Date.now(), limit }
+
+    if (!item.element.isConnected) return item.call();
+    elements.add(item)
+}
+checkMutations();
+function checkMutations() {
+    const observer = new MutationObserver(() => {
+        if (elements.size === 0) return;
+
+        const bmId = window.location.href.split("/")[5];
+        for (const item of elements) checkElement(item, bmId);
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+}
+function checkElement(item, bmId) {
+    if (!onLocation(item.loc)) return elements.delete(item); //swtiched page
+    if (Date.now() - item.start > item.limit) return elements.delete(item) //old
+    if (item.bmId !== bmId) return elements.delete(item); //switched page
+
+    if (item.element.isConnected) return; //Still on page
+
+    elements.delete(item); //Disappeared
+    item.call();
+}
+function onLocation(loc) {
+    if (loc === "overview") {
+        const arr = window.location.href.split("/");
+        if (arr.length !== 6) return false;
+        if (arr[4] !== "players") return false;
+    } else if (!window.location.href.includes(loc)) return false;
+
+    return true;
 }

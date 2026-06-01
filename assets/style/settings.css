@@ -801,14 +801,16 @@
     }
 }
 
-.bme-btn{
+.bme-btn {
     transition: all 400ms;
 }
-.bme-btn-red{
+
+.bme-btn-red {
     background: #ff000040 !important;
     border-color: #ff000080 !important;
 }
-.bme-btn-green{
+
+.bme-btn-green {
     background: #00ff0040 !important;
     border-color: #00ff0080 !important;
 }
