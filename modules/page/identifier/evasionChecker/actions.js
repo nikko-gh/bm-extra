@@ -28,9 +28,9 @@ export async function loadPlayersPressed(e, autoStart = false) {
     }
 
     if (autoStart) {
-        await new Promise(r => {setTimeout(r, 100);})
-        const checkButton = document.getElementById("bme-ec-check-button")   
-        const event = {target: checkButton};
+        await new Promise(r => { setTimeout(r, 100); })
+        const checkButton = document.getElementById("bme-ec-check-button")
+        const event = { target: checkButton };
         checkPlayersPressed(event);
     }
 }
@@ -50,7 +50,7 @@ async function loadPlayersHub(type) {
     if (type === "normal") return loadPlayers(bmId, authToken.external || authToken.internal, true);
     if (type === "inclusive") return loadPlayers(bmId, authToken.external || authToken.internal, false);
     if (type === "thorough") return loadPlayersThorough(bmId, authToken.external || authToken.internal, false);
-    
+
     return false
 }
 async function loadPlayers(bmId, authToken, ignoreVpns) {
@@ -99,43 +99,62 @@ async function loadPlayersThorough(bmId, authToken, ignoreVpns) {
 }
 
 const relatedPlayerCache = {};
-async function getRelatedPlayers(bmId, token, count = 0) {
+async function getRelatedPlayers(bmId, token) {
     if (relatedPlayerCache[bmId]) return relatedPlayerCache[bmId];
     //Return from short cache if stored
 
+    const data = await fetchRelatedPlayers(`https://api.battlemetrics.com/players/${bmId}/relationships/related-identifiers?&filter[matchIdentifiers]=ip&filter[identifiers]=ip&include=player&page[size]=100`, token);
+    if (data.status !== 200) {
+
+    }
+
+    const players = new Map();
+    data.included.forEach(item => {
+        if (item.type !== "player") return;
+
+        players.set(item.id, { id: item.id, name: item?.attributes?.name || item.id });
+    });
+
+    const identifiers = data.data.map(item => {
+        if (item.attributes?.type !== "ip") return null;
+        return {
+            meta: item.attributes?.metadata?.connectionInfo,
+            players: item.relationships?.relatedPlayers?.data.map(player => {
+                if (player.type !== "player") return null;
+                return player.id;
+            }).filter(player => player)
+        }
+    });
+
+    const returnObject = { status: 200, players, identifiers };
+    relatedPlayerCache[bmId] = returnObject; //Cache it for later use
+    return returnObject;
+}
+async function fetchRelatedPlayers(url, token, count = 0) {
     if (count > 2) return { status: null };
     try {
-        const resp = await fetch(`https://api.battlemetrics.com/players/${bmId}/relationships/related-identifiers?&filter[matchIdentifiers]=ip&filter[identifiers]=ip&include=player&page[size]=100&access_token=${token}`);
+        const resp = await fetch(`${url}&access_token=${token}`);
+        if (resp?.status === 429) {
+            await new Promise(r => { setTimeout(r, 10000) });
+            throw new Error(`Rate Limit reached while requesting related identifiers for ${bmId} | Status: ${resp.status}`);
+        }
         if (resp?.status !== 200) throw new Error(`Failed to fetch | Status : ${resp?.status || 0}`);
 
         const data = await resp.json();
-        const players = new Map();
-        data.included.forEach(item => {
-            if (item.type !== "player") return;
-            if (!item.attributes?.positiveMatch) return
+        data.status = resp.status;
+        if (data.links?.next) {
+            const nextPage = await fetchRelatedPlayers(data.links.next, token);
+            data.data.push(...nextPage.data);
+            data.included.push(...nextPage.included);
+        }
 
-            players.set(item.id, { id: item.id, name: item?.attributes?.name || item.id });
-        });
-
-        const identifiers = data.data.map(item => {
-            if (item.attributes?.type !== "ip") return null;
-            return {
-                meta: item.attributes?.metadata?.connectionInfo,
-                players: item.relationships?.relatedPlayers?.data.map(player => {
-                    if (player.type !== "player") return null;
-                    return player.id;
-                }).filter(player => player)
-            }
-        });
-
-        const returnObject = { status: resp.status, players, identifiers };
-        relatedPlayerCache[bmId] = returnObject; //Cache it for later use
-        return returnObject;
+        return data;
     } catch (error) {
-        sendMessage(`Failed to request related players (${count + 1}): ${error.message}`);
-        return getRelatedPlayers(bmId, token, count + 1);
+        sendMessage(`BM-EXTRA: ${error}`);
+        return fetchRelatedPlayers(url, token, count + 1);
     }
 }
+
 function setupPlayersForCheck(players) {
     const container = document.getElementById("bme-ec-players-container");
     const alreadyLoaded = Array.from(container.childNodes).map(item => item.dataset.id);
@@ -185,9 +204,9 @@ function getPlayerElement(player) {
 }
 
 export async function checkPlayersPressed(e) {
-    const btn = e.target    
+    const btn = e.target
     if (!isButtonUsable(btn)) return;
-    
+
     const buttons = [btn];
 
     const loadButton = document.getElementById("bme-ec-load-button");
@@ -202,7 +221,7 @@ export async function checkPlayersPressed(e) {
         item.classList.add("bme-ec-unchecked");
         colorPlayer(item, "unchecked")
     })
-    
+
     const orgChanger = document.getElementById("bme-ec-org-changer");
     orgChanger.disabled = true;
 
@@ -243,9 +262,10 @@ export function colorPlayer(player, color) {
     player.style.setProperty("--bg", `${colors[color]}7f`);
     player.style.setProperty("--border", colors[color]);
 }
-function isButtonUsable(btn) {
-    if (btn.classList.contains("bme-ec-used")) return false;
-    if (btn.classList.contains("bme-ec-inactive")) return false;
+function isButtonUseable(btn) {
+    if (!btn) return false;
+    if (btn.classList?.contains("bme-ec-used")) return false;
+    if (btn.classList?.contains("bme-ec-inactive")) return false;
 
     return true;
 }
@@ -255,16 +275,14 @@ function sendMessage(text) {
 }
 
 export async function autoStart(settings) {
-    
     const bmId = window.location.href.split("/")[5];
     const authToken = getAuthToken();
-    
+
     const limit = settings.core.autoStartLimit;
     const { status, identifiers } = await getRelatedPlayers(bmId, authToken);
-    if (status !== 200) return null;
-    
-    const uniquePlayers = [];
+    if (status !== 200) return sendMessage(`Failed to start the process automatically.`);
 
+    const uniquePlayers = [];
     identifiers.forEach(item => {
         item.players.forEach(player => {
             if (uniquePlayers.includes(player)) return;
@@ -273,9 +291,9 @@ export async function autoStart(settings) {
     })
 
     //Check if autoStart can happen;
-    if (uniquePlayers.length > limit) return; 
+    if (uniquePlayers.length > limit) return;
 
     const loadButton = document.getElementById("bme-ec-load-button");
-    const event = {target: loadButton}
+    const event = { target: loadButton }
     loadPlayersPressed(event, true);
 }

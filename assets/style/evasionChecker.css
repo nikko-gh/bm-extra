@@ -3,11 +3,6 @@
     --showcase-section-transition: 300ms;
 }
 
-td>div>div>ol>li {
-    height: 24px;
-    /* Overwriting default site CSS */
-}
-
 .bme-ec-panel {
     display: flex;
     flex-direction: column;

@@ -3,6 +3,9 @@ import { colorPlayer } from "./actions.js";
 import { getEcSettings } from "./panel.js";
 import { getShowCaseTimeString, showcaseDetails } from "./showcase.js";
 
+
+export const outcomeCollection =  new Map()
+
 let main = null;
 export async function checkPlayer(playerElement, settings, check) {
     try {
@@ -26,6 +29,8 @@ export async function checkPlayer(playerElement, settings, check) {
         playerElement.classList.remove("bme-ec-unchecked")
         playerElement.classList.add("bme-ec-active")
         playerElement.children[0].addEventListener("click", () => { showcaseDetails(main, player, outcome, settings) })
+
+        outcomeCollection.set(player.account.bmId, {element: playerElement, onClick: () => {showcaseDetails(main, player, outcome, settings)}});
 
         const links = getLinks(player.account.bmId);
         links.forEach(item => {
@@ -180,9 +185,9 @@ function countCommonAssociates(main, player) {
 }
 function getAssociatesFromPlayer(associatesObj) {
     const associates = [];
-    for (const key in associatesObj) {        
+    for (const key in associatesObj) {
         const associate = associatesObj[key];
-        associate.forEach(steamId => {            
+        associate.forEach(steamId => {
             if (associates.includes(steamId)) return;
 
             associates.push(steamId);
@@ -228,7 +233,7 @@ function setupStatLine(statLine, outcome, player, settings) {
     stats.push(getAssociateStat(outcome, settings));
     if (outcome.difference) stats.push(`D: ${outcome.difference}`.padEnd(7));
     stats.push(`F: ${getStatLineStr(`${getDaysSince(player.account.firstSeen)}d`, 5)}`);
-    
+
     const lastSeen = player.account.servers[0]?.lastSeen || null;
     if (lastSeen) stats.push(`L: ${getShowCaseTimeString(lastSeen, true)}`.padEnd(8))
 
@@ -271,14 +276,15 @@ function getBanReason(reason) {
     reason = reason.toLowerCase();
     for (const item of settings.core.reasons)
         if (reason.includes(item.key)) return item.display;
-    
+
     return "?"
 }
 function getLinks(bmId) {
-    const players = Array.from(document.querySelectorAll("ol > li > a[href]"));
+    const players = Array.from(document.body.querySelectorAll(".css-16howbp"));
+
     const matches = [];
     players.forEach(item => {
-        if (item.href !== `https://www.battlemetrics.com/rcon/players/${bmId}`) return;
+        if (item.href !== `https://beta.battlemetrics.com/rcon/players/${bmId}`) return;
 
         matches.push(item)
     })

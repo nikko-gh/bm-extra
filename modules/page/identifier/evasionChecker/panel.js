@@ -1,10 +1,18 @@
 import { checkPlayersPressed, loadPlayersPressed } from "./actions.js";
+import { outcomeCollection } from "./check.js";
 
+let firstCall = true;
 export function getEvasionCheckerPanel(settings) {
+    if (firstCall) {
+        firstCall = false;
+        startObserver();
+    }
+
     _settings = settings;
 
     const panel = document.createElement("div");
     panel.classList.add("bme-ec-panel")
+    panel.id = "bme-ec-panel";
 
     const header = getHeader();
 
@@ -126,10 +134,12 @@ function getOrgChanger() {
     return element;
 }
 function getOrgs() {
-    const bootstrap = document.getElementById("storeBootstrap");
-    const bootstrapJson = JSON.parse(bootstrap.innerText);
-
     const orgs = [{ id: "all", name: "Global" }];
+
+    const bootstrap = document.getElementById("storeBootstrap");
+    if (!bootstrap) return orgs;
+
+    const bootstrapJson = JSON.parse(bootstrap.innerText);
 
     for (const org of bootstrapJson.state.account.organizations || []) {
         const orgInfo = getOrgInfo(org);
@@ -164,4 +174,47 @@ function getPlayerContainer() {
     element.append(title, container);
 
     return element;
+}
+
+
+
+
+
+
+
+
+function startObserver() {
+    const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            for (const node of mutation.addedNodes) {
+                if (node.nodeName !== "OL") continue
+
+                checkList(node);
+            }
+        }
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+}
+function checkList(node) {
+    const children = Array.from(node.children);
+    for (const child of children) {
+        if (child.children.length !== 1) return; //Wrong list
+        if (child.children[0].nodeName !== "A") return //Wrong list
+    }
+
+    for (const child of children) {
+        const link = child.children[0];
+        const bmId = link.href.split("/")[5];
+
+        const outcome = outcomeCollection.get(bmId);
+        if (!outcome) return;
+
+        const clone = outcome.element.cloneNode(true);
+        clone.children[0].addEventListener("click", outcome.onClick)
+        link.replaceWith(clone)
+    }
 }
