@@ -262,7 +262,7 @@ export function colorPlayer(player, color) {
     player.style.setProperty("--bg", `${colors[color]}7f`);
     player.style.setProperty("--border", colors[color]);
 }
-function isButtonUseable(btn) {
+function isButtonUsable(btn) {
     if (!btn) return false;
     if (btn.classList?.contains("bme-ec-used")) return false;
     if (btn.classList?.contains("bme-ec-inactive")) return false;
