@@ -4,7 +4,7 @@ import { getEcSettings } from "./panel.js";
 import { getShowCaseTimeString, showcaseDetails } from "./showcase.js";
 
 
-export const outcomeCollection =  new Map()
+export const outcomeCollection = new Map()
 
 let main = null;
 export async function checkPlayer(playerElement, settings, check) {
@@ -30,7 +30,7 @@ export async function checkPlayer(playerElement, settings, check) {
         playerElement.classList.add("bme-ec-active")
         playerElement.children[0].addEventListener("click", () => { showcaseDetails(main, player, outcome, settings) })
 
-        outcomeCollection.set(player.account.bmId, {element: playerElement, onClick: () => {showcaseDetails(main, player, outcome, settings)}});
+        outcomeCollection.set(player.account.bmId, { element: playerElement, onClick: () => { showcaseDetails(main, player, outcome, settings) } });
 
         const links = getLinks(player.account.bmId);
         links.forEach(item => {
@@ -280,11 +280,11 @@ function getBanReason(reason) {
     return "?"
 }
 function getLinks(bmId) {
-    const players = Array.from(document.body.querySelectorAll(".css-16howbp"));
+    const players = Array.from(document.body.querySelectorAll("ol > li > a"));    
 
     const matches = [];
     players.forEach(item => {
-        if (item.href !== `https://beta.battlemetrics.com/rcon/players/${bmId}`) return;
+        if (item.href.split("/")[5] !== bmId) return;
 
         matches.push(item)
     })
