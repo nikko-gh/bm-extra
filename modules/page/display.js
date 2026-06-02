@@ -11,7 +11,10 @@ export async function displaySettingsButton(bmId) {
     button.addEventListener("click", displaySettings)
 
     const testElement = document.getElementById("bme-settings-button");
-    if (!testElement) rconElement.before(button);
+    if (testElement) return;
+        
+    rconElement.before(button);
+    invokeRerender(button, bmId, "overview", displaySettingsButton, [bmId]);
 }
 
 export async function displayAvatar(bmId, bmProfile, bmSteamData, loc) {
