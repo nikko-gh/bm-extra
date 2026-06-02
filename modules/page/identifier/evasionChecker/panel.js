@@ -1,12 +1,12 @@
 import { checkPlayersPressed, loadPlayersPressed } from "./actions.js";
 import { outcomeCollection } from "./check.js";
 
-let firstCall = true;
+//let firstCall = true;
 export function getEvasionCheckerPanel(settings) {
-    if (firstCall) {
+    /*if (firstCall) {
         firstCall = false;
         startObserver();
-    }
+    }*/
 
     _settings = settings;
 
@@ -15,9 +15,7 @@ export function getEvasionCheckerPanel(settings) {
     panel.id = "bme-ec-panel";
 
     const header = getHeader();
-
     const settingsPanel = getEvasionCheckerSettingsPanel();
-
     const playerContainer = getPlayerContainer();
 
     panel.append(header, settingsPanel, playerContainer);
@@ -182,7 +180,7 @@ function getPlayerContainer() {
 
 
 
-
+//Disabled as the patch was reverted.
 function startObserver() {
     const observer = new MutationObserver((mutations) => {
         for (const mutation of mutations) {

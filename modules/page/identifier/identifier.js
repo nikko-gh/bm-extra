@@ -491,18 +491,17 @@ export function displayDiscordData() {
     }
 }
 
-export async function displayEvasionCheckerPanel(bmId, settings) {
-    if (document.body.querySelector("#bme-ec-panel")) return;
-
+export async function displayEvasionCheckerPanel(bmId, settings) {    
     const panel = getEvasionCheckerPanel();
     const identifierTable = await getElementWhenAppears(cssAnchors.identifierTable, true);
-
+    
+    if (document.body.querySelector("#bme-ec-panel")) return;
     if (settings.panelPlacement === "top")
         identifierTable.insertAdjacentElement("beforebegin", panel)
     else
         identifierTable.insertAdjacentElement("afterend", panel)
-
     invokeRerender(panel, bmId, "identifiers", displayEvasionCheckerPanel, [bmId, settings]);
+
     for (let i = 0; i < 50; i++) { //Wait till shared identifiers load
         if (identifierTable.innerText.includes("Identifier shared with")) break;
         await new Promise(r => { setTimeout(r, 150 * (i / 10)) })

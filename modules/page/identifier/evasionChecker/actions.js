@@ -171,9 +171,9 @@ function setupPlayersForCheck(players) {
     const title = document.getElementById("bme-ec-players-title");
     title.innerText = `Loaded Players(${Array.from(container.childNodes).length})`;
 
-    const msg = document.getElementById("bme-ec-msg")
-    if (players.length === 0) msg.innerText = `Couldn't find any players.`
-    else msg.innerText = `${players.length} player(s) found, ${playerElements.length} of them are added.`
+    
+    if (players.length === 0) sendMessage(`Couldn't find any players.`);
+    else sendEcMessage(`${players.length} player(s) found, ${playerElements.length} of them are added.`);
 }
 function getPlayerElement(player) {
     const element = document.createElement("div");
@@ -232,8 +232,7 @@ export async function checkPlayersPressed(e) {
     const playerCount = playerPool.length;
     await checkPlayers(playerPool, check);
 
-    const msg = document.getElementById("bme-ec-msg");
-    msg.innerText = `${playerCount} player(s) have been checked.`;
+    sendEcMessage(`${playerCount} player(s) have been checked.`)
 
     buttons.forEach(button => button.classList.remove("bme-ec-inactive"));
     orgChanger.disabled = false;
@@ -262,7 +261,7 @@ export function colorPlayer(player, color) {
     player.style.setProperty("--bg", `${colors[color]}7f`);
     player.style.setProperty("--border", colors[color]);
 }
-function isButtonUsable(btn) {
+function isButtonUseable(btn) {
     if (!btn) return false;
     if (btn.classList?.contains("bme-ec-used")) return false;
     if (btn.classList?.contains("bme-ec-inactive")) return false;
@@ -296,4 +295,10 @@ export async function autoStart(settings) {
     const loadButton = document.getElementById("bme-ec-load-button");
     const event = { target: loadButton }
     loadPlayersPressed(event, true);
+}
+
+function sendEcMessage(msg) {
+    const paragraph = document.getElementById("bme-ec-msg");
+    if (!paragraph) console.error(`Failed to find message to display: ${msg}`)
+    paragraph.innerText = msg;
 }

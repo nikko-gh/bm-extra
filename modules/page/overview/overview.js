@@ -251,7 +251,7 @@ export async function advancedBans(bmId, banData) {
         banSection = section;
         break;
     }
-
+    
     const observer = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
             for (const node of mutation.addedNodes) {
@@ -262,6 +262,7 @@ export async function advancedBans(bmId, banData) {
         }
     });
 
+    
     observer.observe(banSection, {
         childList: true,
         subtree: true
@@ -274,8 +275,9 @@ export async function advancedBans(bmId, banData) {
     }, 2500);
 
     const banList = banSection.querySelector("ul");
+    if (!banList) return;
     const banElements = Array.from(banList.children);
-
+    
     processBanList(banElements, banData)
 }
 function processBanList(banElements, banData) {
@@ -309,7 +311,10 @@ function convertBanSpan(ban, span) {
         `${active === true ? "<b>Active</b>" : "Expired"}`,
         lengthString
     ]
-    span.innerHTML = `${stringArray.join("&nbsp;&nbsp;|&nbsp;&nbsp;")}`;
+    const middle = `&nbsp;&nbsp;|&nbsp;&nbsp;<b></b>&nbsp;&nbsp;|&nbsp;&nbsp;`
+    span.innerHTML = `${getTimeSpan(timestamp)} ago${middle}${active === true ? "<b>Active</b>" : "Expired"}${middle}${lengthString}`;
+    const reason = span.querySelector("b");
+    reason.innerText = banReason;
 }
 function getBanItem(banData, banId) {
     for (const ban of banData.data)
