@@ -1,4 +1,4 @@
-import { getCurrentFriends, getElementWhenAppears, getHistoricFriends, getLastServer, getTimeSpan, removeSidebars, setNativeValue } from "./misc.js";
+import { getCurrentFriends, getElementWhenAppears, getHistoricFriends, getLastServer, getLocale, getTimeSpan, removeSidebars, setNativeValue } from "./misc.js";
 
 export async function insertSidebars() {
     const mainElement = await getElementWhenAppears("main", true);
@@ -159,6 +159,7 @@ export async function insertFriendComparator() {
     const color = sidebarSettings.friendComparator.color;
 
     const element = document.createElement("div");
+    element.id = "bme-player-comparator"
     element.classList.add("bme-comparator-wrapper")
 
     const input = document.createElement("input");
@@ -195,6 +196,7 @@ export async function insertFriendComparator() {
     })
     element.append(input);
 
+    if (document.querySelector("#bme-player-comparator")) return;
     sidebarSlot.append(element);
 }
 
@@ -517,9 +519,10 @@ function getBanElement(ban) {
     element.classList.add("bme-sidebar-ban-element")
 
     const reason = document.createElement("p");
-    reason.classList.add("bme-sidebar-ban-reason")
+    reason.classList.add("bme-sidebar-ban-reason", "bme-bold")
     reason.title = ban.reason;
-    reason.innerHTML = `<span class="bme-bold">${ban.reason}</span>`;
+    reason.innerText = ban.reason;
+
     element.appendChild(reason);
 
     const innerDiv = document.createElement("div")
@@ -527,13 +530,9 @@ function getBanElement(ban) {
     element.appendChild(innerDiv)
 
     const org = document.createElement("p");
-    org.innerHTML = `<span class="bme-bold">Org:</span> ${ban?.org?.name}`;
+    org.innerHTML = `<span class="bme-bold">Org: </span>`;
+    org.innerText += ban?.org?.name ?? "N/A"
     innerDiv.appendChild(org);
-
-    /*const details = document.createElement("div");
-    details.classList.add("bme-sidebar-ban-details");
-    element.appendChild(details);*/
-
 
     const timestamp = document.createElement("p");
     const duration = ban.duration === "Perm" ? "Permanent" : ban.duration === "Unknown" ? "Unknown" : getTimeSpan(ban.duration * 1000, true);
@@ -632,7 +631,7 @@ async function banPresetButtonClicked(preset, bmProfile, pasteEvidence) {
         if (banDuration != -1) {
             const ONE_DAY = 24 * 60 * 60 * 1000;
             const timestamp = Date.now() + (ONE_DAY * Number(banDuration))
-            const locale = JSON.parse(document.getElementById("storeBootstrap").innerHTML)?.state?.account?.locale ?? "en-us";
+            const locale = getLocale();
             const timeString = getBanDurationString(timestamp, locale);
 
             setNativeValue(banDurationInput, timeString, true)

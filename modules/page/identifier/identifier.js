@@ -259,16 +259,24 @@ export async function displayAvatars(bmId, avatars, zoomable) {
 
     avatars.forEach(item => {
         const payload = `
-            <div title="${item.avatar}" class="${cssAnchors.identifierContentContainer} bme-avatar-container ${zoomable && "bme-zoomable-avatar"}">
+            <div class="${cssAnchors.identifierContentContainer} bme-avatar-container ${zoomable && "bme-zoomable-avatar"}">
                 <div class="bme-avatar-placeholder">
                     <div>
-                        <img src="https://avatars.fastly.steamstatic.com/${item.avatar}_full.jpg" class="bme-avatar-identifier">
+                        <img class="bme-avatar-identifier">
                     </div>
                 </div>
-                <span class="${cssAnchors.identifierContent}" title="${item.avatar}">${item.avatar}${item.avatarHits !== "N/A" ? ` | Seen on ${item.avatarHits < 101 ? item.avatarHits : "100+"} players` : ""}</span>
+                <span class="${cssAnchors.identifierContent}"></span>
             </div>
         `;
-        const avatarElement = getIdentifierTableElement("Avatar", payload, Number(item.lastSeen) * 1000)
+
+        const spanValue = `${item.avatar}${item.avatarHits !== "N/A" ? ` | Seen on ${item.avatarHits < 101 ? item.avatarHits : "100+"} players` : ""}`
+        const placeholders = [
+            { query: `div > div > img`, key: "src", value: `https://avatars.fastly.steamstatic.com/${item.avatar}_full.jpg` },
+            { query: `.${cssAnchors.identifierContentContainer}`, key: "title", value: item.avatar },
+            { query: `.${cssAnchors.identifierContent}`, key: "innerText", value: spanValue }
+
+        ];
+        const avatarElement = getIdentifierTableElement("Avatar", payload, Number(item.lastSeen) * 1000, [], placeholders)
         nameElement.before(avatarElement);
     })
 }
@@ -310,9 +318,9 @@ export async function displaySteamLinks(bmId, steamLinks, loadData, showInput) {
 function getSteamLinkElement(discordId, lastSeen, owners, attached) {
     let payload = `
         <div title="${discordId}" class="${cssAnchors.identifierContentContainer} bme-dc-title bme-unloaded-discord">
-            <p class="${cssAnchors.identifierContent} bme-discord-title" title="${discordId}">${discordId}</p>
+            <p class="${cssAnchors.identifierContent} bme-discord-title">PLACEHOLDER</p>
         </div>
-        <div class="bme-discord-wrapper bme-discord-unloaded" title="${discordId}"></div>
+        <div class="bme-discord-wrapper bme-discord-unloaded""></div>
     `;
 
     if (attached?.length > 0) payload += `
@@ -326,12 +334,28 @@ function getSteamLinkElement(discordId, lastSeen, owners, attached) {
             </div>
             <div class="bme-attached-container bme-body">
                 <ol>
-                    ${attached.map(steamId => `<li><a href="https://www.battlemetrics.com/rcon/players?filter%5Bsearch%5D=${steamId}&filter%5Bservers%5D=false&filter%5BplayerFlags%5D=&sort=score&showServers=false&method=quick&redirect=1">${steamId}</a></li>`).join("")}
+                    ${attached.map((steamId, idx) => `<li><a id="bme-dc-attached-${idx}">PLACEHOLDER</a></li>`).join("")}
                 </ol>
             </div>
         </div>
     `
-    const element = getIdentifierTableElement("Discord", payload, Number(lastSeen), { owners: owners })
+    const placeholders = [
+        { query: `.${cssAnchors.identifierContent}`, key: "title", value: discordId },
+        { query: `.${cssAnchors.identifierContent}`, key: "innerHTML", value: discordId },
+    ];
+    attached.forEach((steamId, idx) => {
+        placeholders.push({
+            query: `li > #bme-dc-attached-${idx}`,
+            key: "href",
+            value: `https://www.battlemetrics.com/rcon/players?filter%5Bsearch%5D=${steamId}&filter%5Bservers%5D=false&filter%5BplayerFlags%5D=&sort=score&showServers=false&method=quick&redirect=1`,
+        },
+            {
+                query: `li > #bme-dc-attached-${idx}`,
+                key: "innerHTML",
+                value: steamId,
+            })
+    })
+    const element = getIdentifierTableElement("Discord", payload, Number(lastSeen), { owners: owners }, placeholders);
 
     const header = element.querySelector(".bme-header");
     const body = element.querySelector(".bme-body")
@@ -400,7 +424,7 @@ function getIdentifierTableTitle(title, id = "") {
     return element;
 }
 let _locale = null;
-function getIdentifierTableElement(type, payload, lastSeen, meta) {
+function getIdentifierTableElement(type, payload, lastSeen, meta, placeholders = []) {
     const tr = document.createElement("tr");
     const locale = getLocale();
 
@@ -431,6 +455,11 @@ function getIdentifierTableElement(type, payload, lastSeen, meta) {
             <time class="${cssAnchors.identifierTableTime}">${getTimeSpan(lastSeen)} ago</time>
         </td>
     `;
+
+    placeholders.forEach(placeholder => {
+        const element = tr.querySelector(placeholder.query);
+        element[placeholder.key] = placeholder.value;
+    })
 
     const button = tr.querySelector("button");
     if (button) {
@@ -491,10 +520,10 @@ export function displayDiscordData() {
     }
 }
 
-export async function displayEvasionCheckerPanel(bmId, settings) {    
+export async function displayEvasionCheckerPanel(bmId, settings) {
     const panel = getEvasionCheckerPanel();
     const identifierTable = await getElementWhenAppears(cssAnchors.identifierTable, true);
-    
+
     if (document.body.querySelector("#bme-ec-panel")) return;
     if (settings.panelPlacement === "top")
         identifierTable.insertAdjacentElement("beforebegin", panel)

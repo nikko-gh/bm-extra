@@ -393,7 +393,9 @@ let _locale = null;
 export function getLocale() {
     if (_locale) return _locale;
 
-    const locale = JSON.parse(document.getElementById("storeBootstrap").innerHTML)?.state?.account?.locale ?? "en-us";
+    const locale = JSON.parse(document.getElementById("storeBootstrap").innerHTML)?.state?.account?.locale;
+    if (!locale) return "en-us";
+
     _locale = locale;
     return locale;
 }

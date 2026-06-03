@@ -171,7 +171,7 @@ function setupPlayersForCheck(players) {
     const title = document.getElementById("bme-ec-players-title");
     title.innerText = `Loaded Players(${Array.from(container.childNodes).length})`;
 
-    
+
     if (players.length === 0) sendMessage(`Couldn't find any players.`);
     else sendEcMessage(`${players.length} player(s) found, ${playerElements.length} of them are added.`);
 }
@@ -238,20 +238,29 @@ export async function checkPlayersPressed(e) {
     orgChanger.disabled = false;
     return true;
 }
+let running = false;
 async function checkPlayers(players, check, maxProcess = 5) {
-    let index = 0;
-    const settings = getEcSettings();
+    if (running) return false;
+    try {
+        running = true;
+        let index = 0;
+        const settings = getEcSettings();
 
-    async function worker() {
-        while (index < players.length) {
-            const player = players[index++];
-            await checkPlayer(player, settings, check);
+        async function worker() {
+            while (index < players.length) {
+                const player = players[index++];
+                await checkPlayer(player, settings, check);
+            }
         }
-    }
 
-    const workers = Array.from({ length: maxProcess }, () => worker());
-    await Promise.all(workers);
-    return true;
+        const workers = Array.from({ length: maxProcess }, () => worker());
+        await Promise.all(workers);
+        return true;
+    } catch (error) {
+        return false;
+    } finally {
+        running = false
+    }
 }
 
 export function colorPlayer(player, color) {

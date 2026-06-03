@@ -206,7 +206,7 @@ async function sendSteamPlayerBanSummaries(steamIds, API_KEY, sender, returnObje
         if (resp?.status !== 200) throw new Error(`Requesting Steam Ban Summaries Failed | steamId: ${steamId} | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
 
         const data = await resp.json();
-        returnObject.status === "OK";
+        returnObject.status = "OK";
         returnObject.value = data.players.map(item => {
             return {
                 steamId: item.SteamId,
@@ -422,4 +422,4 @@ async function bmRateLimitLock(current) {
     if (current < 75) await new Promise(r => { setTimeout(r, 10000) })
     if (current < 25) await new Promise(r => { setTimeout(r, 30000) })
     return;
-}
+}   

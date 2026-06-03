@@ -1,16 +1,14 @@
 console.log("EXTENSION: bm-extra loaded!")
 
-//"load" takes too long, fires on the start to request cache fields properly
-main(window.location.href)
-
-//Actual first page load
-window.addEventListener("__REACT_HYDRATED__", () => {main(window.location.href)});
 
 //Extension should fire/refresh on page change
-window.addEventListener("load", () => main(window.location.href))
+main(window.location.href) //Initial page load
 navigation.addEventListener("navigate", async (event) => {
     main(event.destination.url);
 });
+
+//React is done with building the DOM
+window.addEventListener("__REACT_HYDRATED__", () => {main(window.location.href)});
 //Extension should fire/refresh on page change
 
 async function main(urlString) {

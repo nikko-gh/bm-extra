@@ -279,10 +279,7 @@ async function requestNextPage(url, token, page) {
 async function getSteamFriends(bmProfile, type) {
     bmProfile = await bmProfile;
     const steamId = getSteamIdFromBmProfile(bmProfile)
-    if (!steamId) {
-        console.error(`BM-EXTRA: steamID wasn't found in identifiers, steam friends cannot be loaded!`);
-        return null;
-    }
+    if (!steamId) return null;
 
     if (type === "current") return getCurrentFriends(steamId);
     if (type === "historic") return getHistoricFriends(steamId);
@@ -438,6 +435,7 @@ async function getCurrentTeam(bmProfile, authToken) {
             return { teamId: -1, members: [], server: "", raw: "No server available!" };
 
         const steamId = getSteamIdFromBmProfile(bmProfile)
+        if (!steamId) return { teamId: -1, members: [], server: lastServer.name, raw: "Missing steamId" };
 
         let rawTeaminfo = "";
         for (const organization of organizations) {
@@ -492,6 +490,7 @@ async function getCurrentTeam(bmProfile, authToken) {
 async function getPublicBans(bmProfile) {
     bmProfile = await bmProfile;
     const steamId = getSteamIdFromBmProfile(bmProfile)
+    if (!steamId) return null;
 
     return requestPublicBansFor(steamId);
 }
@@ -514,6 +513,7 @@ async function requestPublicBansFor(steamId) {
 async function getSteamLinks(bmProfile) {
     try {
         const steamId = getSteamIdFromBmProfile(await bmProfile)
+        if (!steamId) return "MISSING_STEAM_ID";
 
         const piDetails = JSON.parse(localStorage.getItem("BME_PLAYER_INSIGHT_API"));
         const PLAYER_INSIGHT_KEY = piDetails?.apiKey || null;
@@ -522,7 +522,7 @@ async function getSteamLinks(bmProfile) {
         if (!piDetails?.perms.includes("steamLinks")) return "NO_PERMISSION";
 
         const links = await talkToBackgroundScript("BME_STEAM_LINKS", steamId, PLAYER_INSIGHT_KEY)
-        if (typeof (rawLinks) === "string") throw new Error(rawLinks);
+        if (typeof (links) === "string") throw new Error(links);
 
         return links;
     } catch (error) {
@@ -568,7 +568,7 @@ export async function getDiscordData(steamLinks) {
 
 function getSteamIdFromBmProfile(bmProfile) {
     const steamIdObject = bmProfile.included.find(identifier => identifier?.attributes?.type === "steamID");
-    return steamIdObject?.attributes?.identifier;
+    return steamIdObject?.attributes?.identifier ?? null;
 }
 
 
