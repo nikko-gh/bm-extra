@@ -3,7 +3,7 @@ import { checkAndSetupSettingsIfMissing } from "../settings.js";
 import { advancedBans, closeAdminLog, displayInfoPanel, displayServerActivity, limitItem, removeSteamInformation, displayAlertLink } from "./overview/overview.js";
 import { highlightVpnIdentifiers, showExtraDataOnIps, displayAvatars, displayEvasionCheckerPanel, displaySteamLinks } from "./identifier/identifier.js";
 import { convertTimestampsToDay, displayAvatar, displaySettingsButton, redactIdentifiers, selectLastServer, swapBattleEyeGuid } from "./display.js";
-import { insertBanPresets, insertFriendComparator, insertFriendsSidebarElement, insertHistoricFriendsSidebarElement, insertPublicBansSidebarElement, insertSidebars, insertTeaminfoSidebarElement } from "../sidebar.js";
+import { insertBanPresets, insertFriendComparator, insertFriendsSidebarElement, insertHistoricFriendsSidebarElement, insertRelatedPlayers, insertPublicBansSidebarElement, insertSidebars, insertTeaminfoSidebarElement } from "../sidebar.js";
 import { getElementWhenAppears, removeSidebars } from "../misc.js";
 
 let setup = false;
@@ -99,6 +99,7 @@ async function sidebar(bmId, playerCache, settings, page) {
     if (settings.historicFriends?.enabled) insertHistoricFriendsSidebarElement(playerCache.historicFriends, playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData, playerCache.serverPop, settings);
     if (settings.currentTeam?.enabled) insertTeaminfoSidebarElement(playerCache.team, cache.connectedPlayersData, cache.connectedPlayersBanData, settings);
     if (settings.publicBans?.enabled) insertPublicBansSidebarElement(playerCache.publicBans);
+    if (settings.relatedPlayers?.enabled) insertRelatedPlayers(playerCache.relatedPlayers, settings.relatedPlayers);
 
     if (settings.presets?.enabled) insertBanPresets(settings, playerCache.bmProfile);
 }

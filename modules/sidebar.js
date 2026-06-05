@@ -95,34 +95,22 @@ function getPlayerSteamData(steamId, playerData) {
 }
 function getHistoricSteamFriendsContainer(historicFriends, settings) {
     const element = document.createElement("div");
-    element.classList.add("bme-sidebar-historic-friends")
 
-    const header = getFriendlistHeader(`Historic Friends(${historicFriends.length}):`);
+    const header = getSidebarHeader(`Historic Friends(${historicFriends.length}):`);
     const body = getFriendlistBody(historicFriends, settings, true)
+    
     element.append(header, body);
     return element;
-
 }
 function getSteamFriendsContainer(steamFriends, settings) {
     const element = document.createElement("div");
-    element.classList.add("bme-sidebar-friends")
 
     const titleText = typeof (steamFriends) === "string" ? "Steam Friends:" : `Steam Friends(${steamFriends.length}):`;
-    const header = getFriendlistHeader(titleText);
+    const header = getSidebarHeader(titleText);
     const body = getFriendlistBody(steamFriends, settings)
 
     element.append(header, body);
     return element;
-}
-function getFriendlistHeader(titleText) {
-    const wrapper = document.createElement("div")
-    wrapper.classList.add("bme-friendlist-header");
-
-    const title = document.createElement("h1");
-    title.innerText = titleText;
-    wrapper.appendChild(title);
-
-    return wrapper;
 }
 function getFriendlistBody(friends, settings, isHistoric) {
     const container = document.createElement("div");
@@ -542,6 +530,73 @@ function getBanElement(ban) {
     return element
 }
 
+export async function insertRelatedPlayers(relatedPlayers, settings) {
+    relatedPlayers = await relatedPlayers;
+
+    if (typeof (relatedPlayers) !== "string")
+        relatedPlayers = relatedPlayers.slice(0, settings.max);
+    const element = document.createElement("div");
+    element.id = "bme-related-players";
+
+    const header = getSidebarHeader("Related Players:");
+    const body = getRelatedPlayersBody(relatedPlayers);
+    element.append(header, body)
+    const sidebarSlot = document.getElementById(`bme-sidebar-${settings.spot}`);
+    if (document.querySelector("#bme-related-players")) return; //Already exist;
+
+    sidebarSlot.append(element);
+}
+function getRelatedPlayersBody(relatedPlayers) {
+    const element = document.createElement("div");
+    if (relatedPlayers.length === 0 || typeof (relatedPlayers) === "string") {
+        element.classList.add("bme-sidebar-empty-body")
+        element.innerHTML = `<p>${typeof (relatedPlayers) === "string" ? relatedPlayers : `No related players to show.`}<p>`;
+        return element;
+    }
+
+    relatedPlayers.forEach(player => {
+        const playerElement = document.createElement("a");
+        playerElement.classList.add("bme-sb-rp-element");
+        playerElement.href = `https://www.battlemetrics.com/rcon/players/${player.bmId}`;
+        playerElement.target = "_blank";
+        playerElement.innerHTML = `<p></p><p></p>`;
+
+        playerElement.firstChild.innerText = player.name;
+        playerElement.lastChild.innerText = `${Math.floor(player.duration / 60 / 60)}h`;
+
+        element.append(playerElement);
+    })
+
+    return element;
+}
+
+
+
+
+
+function getSidebarHeader(content) {
+    const header = document.createElement("div");
+    header.classList.add("bme-sidebar-header")
+
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("bme-sidebar-bans-wrapper")
+    header.appendChild(wrapper)
+
+    const title = document.createElement("h1");
+    title.innerText = content;
+    wrapper.appendChild(title);
+
+    return header;
+}
+
+
+
+///////////////////////////
+//.......................//
+//....B.A.N...P.A.G.E....//
+//.......................//
+///////////////////////////
+
 export function insertBanPresets(settings, bmProfile) {
     const spot = settings.presets.spot;
     const sidebarSlot = document.getElementById(`bme-sidebar-${spot}`);
@@ -681,9 +736,9 @@ async function readClipboardRich() {
     return null;
 }
 function stripGyazoImgLink(html) {
-    const doc = document.createElement("div");
-    doc.innerHTML = html;
-    const childNodes = Array.from(doc.children);
+    const element = document.createElement("div");
+    element.innerHTML = html;
+    const childNodes = Array.from(element.children);
 
     let lastLink = "";
     for (let i = childNodes.length - 1; i >= 0; i--) {
@@ -694,7 +749,7 @@ function stripGyazoImgLink(html) {
             if (childNodes[i + 1]?.nodeName === "BR") childNodes[i + 1].remove()
         }
     }
-    return doc.innerHTML;
+    return element.innerHTML;
 }
 async function getBanHeaderElement(type) {
     const banForm = await getElementWhenAppears("ban-form", true);

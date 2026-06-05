@@ -224,8 +224,10 @@ export async function closeAdminLog(bmId) {
 }
 
 export async function limitItem(bmId, limit, item) {
+    
     const identifiers = await getIdentifiers();
-
+    if (window.location.href.split("/").length !== 6) return; //Not overview page
+    
     let count = 0;
     let removed = false;
     for (const identifier of identifiers) {

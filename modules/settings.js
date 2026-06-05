@@ -17,14 +17,14 @@ async function loadPiPerms() {
     if (!str) return;
 
     let obj = JSON.parse(str);
-    if (obj.timestamp < Date.now() - ONE_DAY || obj.perms.length === 0){
+    if (obj.timestamp < Date.now() - ONE_DAY || obj.perms.length === 0) {
         try {
             obj = {
                 apiKey: obj.apiKey,
                 perms: await talkToBackgroundScript("BME_PLAYER_INSIGHT_PERMS", "N/A", obj.apiKey),
             }
         } catch (error) {
-            obj = {apiKey: obj.apiKey, perms: []}
+            obj = { apiKey: obj.apiKey, perms: [] }
         }
         obj.timestamp = Date.now();
 
@@ -283,7 +283,7 @@ function getIdentifierSettings() {
 
     const linkSegment = document.createElement("div")
     linkSegment.classList.add("bme-settings-segment");
-    
+
     const showLinks = getSettingsElement(
         "toggle", "Show Links",
         `Display linked discord accounts`,
@@ -490,8 +490,8 @@ function getSidebarSettings() {
         { value: "left-slot-4", display: "LEFT 4" },
     ]
 
-    const settingsBucket = "BME_SIDEBAR_SETTINGS";
-    const settings = JSON.parse(localStorage.getItem(settingsBucket));
+    const bucket = "BME_SIDEBAR_SETTINGS";
+    const settings = JSON.parse(localStorage.getItem(bucket));
 
     const currentTeamSegment = document.createElement("div")
     currentTeamSegment.classList.add("bme-settings-segment");
@@ -499,36 +499,63 @@ function getSidebarSettings() {
     const currentTeamEnabled = getSettingsElement(
         "toggle", "Show Current Team",
         "Shows the current team of the player.",
-        null, settingsBucket, "currentTeam-enabled",
+        null, bucket, "currentTeam-enabled",
         settings.currentTeam.enabled, { segment: currentTeamSegment }
     )
 
     const currentTeamSpot = getSettingsElement(
         "switch", "Position:",
         "Choose which sidebar spot should the current team be present.",
-        null, settingsBucket, "currentTeam-spot", settings.currentTeam.spot, { options: allSidebarSlots }
+        null, bucket, "currentTeam-spot", settings.currentTeam.spot, { options: allSidebarSlots }
     )
     currentTeamSegment.append(currentTeamSpot)
 
-    const friendComparatorSegment = document.createElement("div")
+    
+    const relatedPlayersSegment = document.createElement("div");
+    relatedPlayersSegment.classList.add("bme-settings-segment");
+
+    const relatedPlayersEnabled = getSettingsElement(
+        "toggle", "Show Related Players",
+        "Shows you the players who spent the most time with your suspect on the same server in the last 30 days.",
+        null, bucket, "relatedPlayers-enabled", settings.relatedPlayers.enabled, {segment: relatedPlayersSegment}
+    )
+
+    const relatedPlayersMax = getSettingsElement(
+        "number", "Max profiles",
+        "Maximum number of profile to be shown.",
+        null, bucket, "relatedPlayers-max", settings.relatedPlayers.max, {max: 100, min: 0 }
+    )
+
+    const relatedPlayersSpot = getSettingsElement(
+        "switch", "Position:",
+        "Choose which sidebar spot should the related players be present.",
+        null, bucket, "relatedPlayers-spot", settings.relatedPlayers.spot, { options: allSidebarSlots }
+    )
+
+    relatedPlayersSegment.append(relatedPlayersMax, relatedPlayersSpot)
+
+
+
+
+    const friendComparatorSegment = document.createElement("div");
     friendComparatorSegment.classList.add("bme-settings-segment");
 
     const friendComparatorEnabled = getSettingsElement(
         "toggle", "Player Comparator",
         "Allows you to easily compare player's friendlist for common friends between them.",
-        null, settingsBucket, "friendComparator-enabled",
+        null, bucket, "friendComparator-enabled",
         settings.friendComparator.enabled, { segment: friendComparatorSegment }
     )
 
     const friendComparatorSpot = getSettingsElement(
         "switch", "Position:",
         "Choose which sidebar spot should the player comparator be present.",
-        null, settingsBucket, "friendComparator-spot", settings.friendComparator.spot, { options: allSidebarSlots }
+        null, bucket, "friendComparator-spot", settings.friendComparator.spot, { options: allSidebarSlots }
     )
     const comparatorColor = getSettingsElement(
         "color", "Active Color:",
         "This color will be used to highlight the result of the comparison.",
-        null, settingsBucket, "friendComparator-color", settings.friendComparator.color
+        null, bucket, "friendComparator-color", settings.friendComparator.color
     )
     friendComparatorSegment.append(friendComparatorSpot, comparatorColor)
 
@@ -538,24 +565,24 @@ function getSidebarSettings() {
     const steamFriendsEnabled = getSettingsElement(
         "toggle", "Show Friends",
         "Shows the current Steam Friends on the sidebar.",
-        ["STEAM API KEY"], settingsBucket, "friends-enabled",
+        ["STEAM API KEY"], bucket, "friends-enabled",
         settings.friends.enabled, { segment: steamFriendsSegment }
     )
 
     const steamFriendsSpot = getSettingsElement(
         "switch", "Position:",
         "Choose which sidebar spot should the Steam Friends be present.",
-        null, settingsBucket, "friends-spot", settings.friends.spot, { options: allSidebarSlots }
+        null, bucket, "friends-spot", settings.friends.spot, { options: allSidebarSlots }
     )
     const steamFriendsShowOnline = getSettingsElement(
         "toggle", "Highlight online friends",
         "Highlights the online friends that are on the same server.",
-        null, settingsBucket, "friends-showOnline", settings.friends.showOnline
+        null, bucket, "friends-showOnline", settings.friends.showOnline
     )
     const steamFriendsOnlineColor = getSettingsElement(
         "color", "Online friends border color:",
         "Choose the color the online friends supposed to be highlighted with.",
-        null, settingsBucket, "friends-onlineColor", settings.friends.onlineColor
+        null, bucket, "friends-onlineColor", settings.friends.onlineColor
     )
     steamFriendsSegment.append(steamFriendsSpot, steamFriendsShowOnline, steamFriendsOnlineColor)
 
@@ -565,24 +592,24 @@ function getSidebarSettings() {
     const historicFriendsEnabled = getSettingsElement(
         "toggle", "Show Historic Friends",
         "Show Historic Friends on the sidebar",
-        ["Player Insight - HF"], settingsBucket, "historicFriends-enabled",
+        ["Player Insight - HF"], bucket, "historicFriends-enabled",
         settings.historicFriends.enabled, { segment: historicFriendsSegment }
     )
 
     const historicFriendsSpot = getSettingsElement(
         "switch", "Position:",
         "Choose which sidebar spot should the Historic Friends be present.",
-        null, settingsBucket, "historicFriends-spot", settings.historicFriends.spot, { options: allSidebarSlots }
+        null, bucket, "historicFriends-spot", settings.historicFriends.spot, { options: allSidebarSlots }
     )
     const seenOnOrigin = getSettingsElement(
         "color", "Seen On Origin:",
         "Choose the background color of the friends who were seen on the origin",
-        null, settingsBucket, "historicFriends-seenOnOrigin", settings.historicFriends.seenOnOrigin
+        null, bucket, "historicFriends-seenOnOrigin", settings.historicFriends.seenOnOrigin
     )
     const seenOnFriend = getSettingsElement(
         "color", "Seen On Friend:",
         "Choose the background color of the friends who were seen on the friend alone",
-        null, settingsBucket, "historicFriends-seenOnFriend", settings.historicFriends.seenOnFriend
+        null, bucket, "historicFriends-seenOnFriend", settings.historicFriends.seenOnFriend
     )
     historicFriendsSegment.append(historicFriendsSpot, seenOnOrigin, seenOnFriend)
 
@@ -592,14 +619,14 @@ function getSidebarSettings() {
     const publicBansEnabled = getSettingsElement(
         "toggle", "Show Public bans",
         "Shows the Public Bans on the sidebar",
-        ["Player Insight - PB"], settingsBucket, "publicBans-enabled",
+        ["Player Insight - PB"], bucket, "publicBans-enabled",
         settings.publicBans.enabled, { segment: publicBansSegment }
     )
 
     const publicBansSpot = getSettingsElement(
         "switch", "Position:",
         "Choose which sidebar spot should the public bans be present.",
-        null, settingsBucket, "publicBans-spot", settings.publicBans.spot, { options: allSidebarSlots }
+        null, bucket, "publicBans-spot", settings.publicBans.spot, { options: allSidebarSlots }
     )
     publicBansSegment.append(publicBansSpot)
 
@@ -609,11 +636,11 @@ function getSidebarSettings() {
         friendComparatorEnabled, friendComparatorSegment,
         steamFriendsEnabled, steamFriendsSegment,
         historicFriendsEnabled, historicFriendsSegment,
+        relatedPlayersEnabled, relatedPlayersSegment,
         publicBansEnabled, publicBansSegment,
         resetButton
     )
     return element;
-
 }
 
 
@@ -647,7 +674,7 @@ function getBanPageSettings() {
         { value: "right-slot-2", display: "RIGHT 2" },
         { value: "left-slot-1", display: "LEFT 1" },
         { value: "left-slot-2", display: "LEFT 2" },
-    ]    
+    ]
     const banPresetSidebarSpot = getSettingsElement(
         "switch", "Position:",
         "Choose which sidebar spot should the ban presets be present",
@@ -1269,7 +1296,7 @@ function getEvasionCheckerSettings() {
     )
     const oldServerBan = getSettingsElement(
         "number", "Old Server Ban",
-        "Days until a server ban is marked as old. Use -1 for never", 
+        "Days until a server ban is marked as old. Use -1 for never",
         null, bucket, "core-oldServerBan", settings.core.oldServerBan
     )
 
@@ -1485,7 +1512,7 @@ function getApiKeysSettings() {
     return element;
 }
 function generatePlayerInsightSegment(segment) {
-    const perms = JSON.parse(localStorage.getItem("BME_PLAYER_INSIGHT_API"))?.perms || [];    
+    const perms = JSON.parse(localStorage.getItem("BME_PLAYER_INSIGHT_API"))?.perms || [];
     const p = document.createElement("p")
 
     p.innerHTML += `<span class="bme-settings-text-${perms.includes("steamFriends") ? "green" : "red"}">Historic Friends</span> | `;
@@ -1545,10 +1572,10 @@ function getApiKeyDiv(titleText, storageName, id, meta) {
         } else if (storageName === "BME_PLAYER_INSIGHT_API") {
             try {
                 if (!newKey) throw new Error("NO_KEY");
-                
+
                 const perms = await talkToBackgroundScript("BME_PLAYER_INSIGHT_PERMS", "N/A", newKey);
                 const piDetails = { apiKey: newKey, perms, timestamp: Date.now() }
-                
+
                 _playerInsight = piDetails; //UPDATE INTERNALLY SAVED PERMS
                 localStorage.setItem(storageName, JSON.stringify(piDetails));
                 changeButton("green", e.target)
@@ -2035,7 +2062,7 @@ function checkIdentifierSettings() {
         if (typeof (settings.vpnOpacity) !== "number") throw new Error("Settings error");
         if (typeof (settings.showLinks) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.loadDiscordData) !== "boolean") throw new Error("Settings error");
-        
+
 
     } catch (error) {
         const defaultSettings = getDefaultIdentifierSettings();
@@ -2137,6 +2164,10 @@ function checkSidebarSettings() {
         if (typeof (settings.publicBans) !== "object") throw new Error("Settings error");
         if (typeof (settings.publicBans.enabled) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.publicBans.spot) !== "string") throw new Error("Settings error");
+        if (typeof (settings.relatedPlayers) !== "object") throw new Error("Settings error");
+        if (typeof (settings.relatedPlayers.enabled) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.relatedPlayers.max) !== "number") throw new Error("Settings error");
+        if (typeof (settings.relatedPlayers.spot) !== "string") throw new Error("Settings error");
     } catch (error) {
         const defaultSettings = getDefaultSidebarSettings();
         localStorage.setItem("BME_SIDEBAR_SETTINGS", JSON.stringify(defaultSettings));
@@ -2167,7 +2198,12 @@ function getDefaultSidebarSettings() {
 
     settings.publicBans = {}
     settings.publicBans.enabled = false;
-    settings.publicBans.spot = "left-slot-2";
+    settings.publicBans.spot = "left-slot-3";
+
+    settings.relatedPlayers = {}
+    settings.relatedPlayers.enabled = false;
+    settings.relatedPlayers.max = 5;
+    settings.relatedPlayers.spot = "left-slot-2";
 
     return settings;
 }
@@ -2322,7 +2358,7 @@ function getDefaultEvasionCheckerSettings() {
     settings.core.matchMinNamePercentage = 70;
     settings.core.matchMinAssociate = 1;
     settings.core.matchMaxDifference = 86400000,
-    settings.core.requestFriendsFromSteam = false;
+        settings.core.requestFriendsFromSteam = false;
     settings.core.requestFriendsFromRustApi = false;
     settings.core.ignoreNames = [
         ".",

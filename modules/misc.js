@@ -262,10 +262,11 @@ export function getAuthToken(type) {
     if (type === "internal") return getInternalAuthToken();
 
     if (_lastResp) return _lastResp;
+
     const internal = getInternalAuthToken();
     const external = getExternalAuthToken();
 
-    _lastResp = external || internal;
+    if (external || internal) _lastResp = external || internal;
     return external || internal;
 }
 function getInternalAuthToken() {

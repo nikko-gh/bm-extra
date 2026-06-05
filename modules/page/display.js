@@ -164,7 +164,7 @@ function redactIdentifier(identifier, span, type) {
 
     //Store it for later if it changed
     if (span.innerHTML === originalValue) return
-    currentRedactedElements.push({ element: span, originalValue })
+    currentRedactedElements.push({ key: span, originalValue })
 
     if (type !== "IP") return;
     const button = identifier.querySelector(".bme-button");
@@ -226,7 +226,7 @@ function checkMutations() {
         for (const item of elements) checkElement(item, bmId);
     });
 
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document, { childList: true, subtree: true });
 }
 function checkElement(item, bmId) {
     if (!onLocation(item.loc)) return elements.delete(item); //swtiched page

@@ -57,6 +57,9 @@ function setupPlayerCache(bmId, authToken) {
     if (validate("steamFriends", settings, bmId))
         cache[bmId].steamFriends = getSteamFriends(cache[bmId].bmProfile, "current");
 
+    if (validate("relatedPlayers", settings, bmId))
+        cache[bmId].relatedPlayers = getRelatedPlayers(cache[bmId].bmProfile, authToken);
+
     if (validate("historicFriends", settings, bmId))
         cache[bmId].historicFriends = getSteamFriends(cache[bmId].bmProfile, "historic");
 
@@ -181,6 +184,11 @@ function validate(section, { overview, identifier, sidebar, banPage }, bmId) {
     } else if (section === "discordData") {
         const needed = identifier?.loadDiscordData
         if (needed) return true;
+    } else if (section === "relatedPlayers") {
+        if (cache[bmId]?.relatedPlayers !== undefined) return false;//Already Cached
+
+        const needed = sidebar?.relatedPlayers?.enabled;
+        if (needed) return true;
     }
 
     return false;
@@ -190,10 +198,9 @@ async function getSteamData(bmId) {
         const authToken = getAuthToken("internal"); //Can only be accessed via an internal token
         if (!authToken) return console.error(`BME-EXTRA: Missing auth token.`);
 
-        const resp = await fetch(`https://api.battlemetrics.com/players/${bmId}/relationships/steam-profile?version=^0.1.0&access_token=${authToken}`);
-        if (resp?.status !== 200) throw new Error(`Failed to request steam data. | Status: ${resp?.status}`);
+        const data = await fetchBmAPI(`https://api.battlemetrics.com/players/${bmId}/relationships/steam-profile?version=^0.1.0&access_token=${authToken}`);
+        if (typeof(data) === "string") throw new Error(`Failed to request steam data. | Status: ${data}`);
 
-        const data = await resp.json()
         return data;
     } catch (error) {
         console.error(`BM-EXTRA: ${error}`);
@@ -230,20 +237,37 @@ async function getRustPremiumStatusFromFacepunch(steamId) {
         return "ERROR";
     }
 }
-async function getBmRelations() {
+async function getRelatedPlayers(bmProfile, authToken) {
+    bmProfile = await bmProfile;
 
+    const servers = bmProfile.included.filter(item => item.type === "server").map(item => new Date(item.meta.lastSeen).getTime());
+    servers.sort((a, b) => b - a)
+
+    const lastPlayed = servers[0];
+    if (lastPlayed < Date.now() - 30 * 24 * 60 * 60 * 1000) return "Inactive for over 30 days"; //Hasn't played in a month
+
+    const now = Date.now();
+    const bmId = bmProfile.data.id;
+    const endPeriod = new Date(now).toISOString();
+    const startPeriod = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+
+    const data = await fetchBmAPI(`https://api.battlemetrics.com/players/${bmId}/relationships/coplay?page[size]=100&filter[period]=${startPeriod}:${endPeriod}&access_token=${authToken}`)
+    if (typeof (data) === "string") return data;
+
+    const players = data.data.map(player => {
+        return {
+            name: player.attributes.name,
+            bmId: player.id,
+            duration: player.attributes.duration,
+        }
+    })
+    players.sort((a, b) => { b.duration - a.duration });
+    return players;
 }
 async function getBmBanData(bmId, authToken) {
-    try {
-        const resp = await fetch(`https://api.battlemetrics.com/bans?version=^0.1.0&filter[player]=${bmId}&filter[expired]=true&access_token=${authToken}`);
-        if (resp?.status !== 200) throw new Error(`Failed to request player activity. | Status: ${resp?.status}`);
-
-        const data = await resp.json();
-        return data;
-    } catch (error) {
-        console.error(`BM-EXTRA: ${error}`);
-        return null;
-    }
+    const data = fetchBmAPI(`https://api.battlemetrics.com/bans?version=^0.1.0&filter[player]=${bmId}&filter[expired]=true&access_token=${authToken}`);
+    return data;
 }
 async function getBmActivity(bmId, authToken) {
     try {
@@ -266,10 +290,9 @@ async function getBmActivity(bmId, authToken) {
 }
 async function requestNextPage(url, token, page) {
     try {
-        const resp = await fetch(`${url}&access_token=${token}`);
-        if (resp?.status !== 200) return null;
+        const data = await fetchBmAPI(`${url}&access_token=${token}`);
+        if (typeof (data) === "string") return null;
 
-        const data = await resp.json();
         return data
     } catch (error) {
         console.error(`BM-EXTRA: ${error}`);
@@ -352,9 +375,8 @@ async function getCurrentServersPopulation(bmProfile, authToken) {
     const lastServer = await getLastServer(bmProfile)
     if (!lastServer?.online) return [];
 
-    const resp = await fetch(`https://api.battlemetrics.com/servers/${lastServer.id}?version=^0.1.0&include=identifier,player&access_token=${authToken}`)
-    if (resp?.status !== 200) return [];
-    const data = await resp.json();
+    const data = await fetchBmAPI(`https://api.battlemetrics.com/servers/${lastServer.id}?version=^0.1.0&include=identifier,player&access_token=${authToken}`);
+    if (typeof (data) === "string") return [];
 
     let players = data.included
         .filter(item => item.type === "player")
@@ -364,20 +386,20 @@ async function getCurrentServersPopulation(bmProfile, authToken) {
                 name: item.attributes.name,
             }
         });
-    const identifiers = data.included
-        .filter(item => item.attributes?.type === "steamID")
-        .map(item => {
-            return {
-                id: item.relationships?.player?.data?.id,
-                steamId: item.attributes.identifier
-            }
-        })
+
+    const steamIdMap = new Map();
+    data.included.forEach(item => {
+        if (item.attributes?.type !== "steamID") return;
+
+        steamIdMap.set(item.relationships?.player?.data?.id, item.attributes.identifier)
+    })
+
     return players.map(player => {
-        const identifier = identifiers.find(item => item.id === player.id);
+        const identifier = steamIdMap.get(player.id);
         return {
             id: player.id,
             name: player.name,
-            steamId: identifier ? identifier.steamId : "unknown",
+            steamId: identifier ? identifier : "unknown",
         }
     })
 }
@@ -721,4 +743,23 @@ function getImportantIpInfo(ip) {
     newIp.loc.cityName = ip.location.city_name;
 
     return newIp;
+}
+
+async function fetchBmAPI(url, count = 0) {
+    if (count > 2) return "Failed to fetch."
+    try {
+        const resp = await fetch(url);
+
+        if (resp?.status === 429) await new Promise(r => { setTimeout(r, 5000) });
+        if (resp?.status === 403) return `Forbidden`;
+        if (resp?.status === 400) return `Bad request`;
+        if (resp?.status !== 200) throw new Error(`Failed to fetch | Status: ${resp?.status}`);
+
+        const data = await resp.json();
+        return data;
+    } catch (error) {
+        console.log(`BME-EXTRA: ${error}`);
+        return fetchRelatedPlayers(url, count + 1);
+    }
+
 }

@@ -238,8 +238,9 @@ export async function checkPlayersPressed(e) {
     orgChanger.disabled = false;
     return true;
 }
+
 let running = false;
-async function checkPlayers(players, check, maxProcess = 5) {
+async function checkPlayers(players, check, maxProcess = 5) {    
     if (running) return false;
     try {
         running = true;
@@ -249,6 +250,8 @@ async function checkPlayers(players, check, maxProcess = 5) {
         async function worker() {
             while (index < players.length) {
                 const player = players[index++];
+                if (!player.isConnected) continue
+
                 await checkPlayer(player, settings, check);
             }
         }

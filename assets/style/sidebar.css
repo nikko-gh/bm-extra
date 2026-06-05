@@ -30,19 +30,6 @@ body {
     left: calc(50dvw + 600px);
 }
 
-
-
-.bme-friendlist-header {
-    display: flex;
-    padding: 15px 15px 5px 15px;
-}
-
-.bme-friendlist-header h1 {
-    font-size: 23px;
-    line-height: 1;
-    margin: 0;
-}
-
 .bme-friendlist-body {
     display: flex;
     flex-direction: column;
@@ -428,4 +415,66 @@ body {
 .bme-sidebar-preset-button:active {
     transform: scale(1.03);
     filter: brightness(130%);
+}
+
+
+#bme-related-players>div:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.bme-sb-rp-element p {
+    font-size: 16px;
+    transition: 120ms;
+}
+
+.bme-sb-rp-element p:first-child {
+    font-weight: 600;
+}
+
+.bme-sb-rp-element p {
+    margin: 0;
+    line-height: 1;
+}
+
+.bme-sb-rp-element {
+
+    display: flex;
+    height: 35px;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0px 10px;
+    outline: none !important;
+
+    background: #151515;
+    cursor: pointer;
+    transition: 120ms;
+}
+
+.bme-sb-rp-element:hover {
+    background: #181818;
+}
+
+.bme-sb-rp-element:active {
+    background: #222222;
+    transform: scale(1.03);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+.bme-sidebar-empty-body>p {
+    font-size: 18px;
+    line-height: 1;
+    padding: 5px 25px;
+    margin: 0px;
 }
