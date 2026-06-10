@@ -1,5 +1,5 @@
 import { shouldAbort, getElementWhenAppears, getLastServer, getStreamerModeName, getSteamIdObject, setNativeValue, getIdentifierType, getTimeSpan, getIdentifiers, cssAnchors, getHiddenTableRow } from "../misc.js";
-import { displaySettings } from "../settings.js";
+import { displaySettings } from "../settings/settings.js";
 
 export async function displaySettingsButton(bmId) {
     const rconElement = await getElementWhenAppears("RCONPlayerPage");
