@@ -39,7 +39,7 @@ async function loadPlayersHub(type) {
 
     const authToken = {};
     authToken.external = localStorage.getItem("BME_BATTLEMETRICS_API_KEY");
-    authToken.internal = getAuthToken();
+    authToken.internal = await getAuthToken();
 
     if (!authToken.external && !authToken.internal) {
         sendMessage("Missing authToken!")
@@ -104,9 +104,10 @@ async function getRelatedPlayers(bmId, token) {
     //Return from short cache if stored
 
     const data = await fetchRelatedPlayers(`https://api.battlemetrics.com/players/${bmId}/relationships/related-identifiers?&filter[matchIdentifiers]=ip&filter[identifiers]=ip&include=player&page[size]=100`, token);
-    if (data.status !== 200) {
-
-    }
+    if (data.status !== 200){
+        sendMessage("Failed to fetch related players.")
+        return console.error(`BM-EXTRA: Failed to fetch related players. | ${bmId} | ${data.status}`);
+    } 
 
     const players = new Map();
     data.included.forEach(item => {
@@ -287,7 +288,7 @@ function sendMessage(text) {
 
 export async function autoStart(settings) {
     const bmId = window.location.href.split("/")[5];
-    const authToken = getAuthToken();
+    const authToken = await getAuthToken();
 
     const limit = settings.core.autoStartLimit;
     const { status, identifiers } = await getRelatedPlayers(bmId, authToken);

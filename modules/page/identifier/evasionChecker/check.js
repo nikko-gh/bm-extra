@@ -7,9 +7,10 @@ import { getShowCaseTimeString, showcaseDetails } from "./showcase.js";
 export const outcomeCollection = new Map()
 
 let main = null;
+navigation.addEventListener("navigate", () => { main = null });
 export async function checkPlayer(playerElement, settings, check) {
     try {
-        const authToken = getAuthToken();
+        const authToken = await getAuthToken();
 
         if (main === null) {
             main = undefined;
@@ -280,7 +281,7 @@ function getBanReason(reason) {
     return "?"
 }
 function getLinks(bmId) {
-    const players = Array.from(document.body.querySelectorAll("ol > li > a"));    
+    const players = Array.from(document.body.querySelectorAll("ol > li > a"));
 
     const matches = [];
     players.forEach(item => {
@@ -302,7 +303,7 @@ async function getAccountData(bmId, token) {
     const cached = playerCache.get(bmId);
     if (cached && cached["account"]) return cached["account"];
 
-    const data = await talkToBackgroundScript("BME_BM_ACCOUNT", bmId, token, 60000)
+    const data = await talkToBackgroundScript("BME_BM_ACCOUNT", bmId, 60000, token)
 
     const servers = data.included
         .filter(item => item.type === "server")
@@ -389,12 +390,12 @@ async function getAccountData(bmId, token) {
     saveCache(bmId, player, "account");
     return player;
 }
-async function getBanData(bmId, token, count = 0) {
+async function getBanData(bmId, token) {
     const cached = playerCache.get(bmId);
     if (cached && cached["bans"]) return cached["bans"];
 
-    const data = await talkToBackgroundScript("BME_BM_BANS", bmId, token, 60000)
-
+    const data = await talkToBackgroundScript("BME_BM_BANS", bmId, 60000, token)
+    
     const bans = data.data.map(ban => {
         return {
             id: ban.id,

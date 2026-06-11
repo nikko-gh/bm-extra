@@ -9,15 +9,47 @@ class Atlas {
         organizations.push(new this());
     }
 
-    async getTeamInfo(steamId, serverId, token) {
-        const data = await talkToBackgroundScript("BME_ATLAS_TEAMINFO", `${steamId}-${serverId}`, token);
-        const result = data?.data?.attributes?.result[0]?.children[1]?.children[0]?.children[0]?.reference.result;
-        if (!result) {
-            console.error(`Failed to request teaminfo | Status: ${resp.status} | Result: ${result}`);
-            return "error";
-        }
+    async getTeamInfo(steamId, serverId, token, count = 0) {
+        if (count > 2) return "error";
+        try {
 
-        return result;
+            const resp = await fetch(`https://api.battlemetrics.com/servers/${serverId}/command`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                    "Accept-Version": "^0.1.0"
+                },
+                body: JSON.stringify({
+                    data: {
+                        attributes: {
+                            command: "c46e957a-54d8-497c-81ec-c2dcef2cd7e2",
+                            options: {
+                                player: steamId,
+                            }
+                        },
+                        type: "rconCommand"
+                    }
+                })
+            })
+            if (resp?.status === 202) throw new Error("Re-try! Not ready yet. | S: 202");
+            if (resp?.status !== 200) {
+                console.error(`Failed to fetch | S: ${resp?.status}`);
+                return "error";
+            }
+
+            const data = await resp.json();
+            const result = data?.data?.attributes?.result[0]?.children[1]?.children[0]?.children[0]?.reference.result;
+            if (!result) {
+                console.error(`Failed to request teaminfo | Status: ${resp.status} | Result: ${result}`);
+                return "error";
+            }
+
+            return result;
+        } catch (error) {
+            console.error(`Failed to request teaminfo: ${error}`);
+            await this.getTeamInfo(steamId, serverId, token, count + 1)
+        }
     }
 }
 
@@ -589,7 +621,7 @@ class Pinnacle {
 
 // class ExampleOrganization {
 //     id = "1234";
-// 
+//
 //     static {
 //        organizations.push(new this());
 //     }

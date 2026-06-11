@@ -1,9 +1,10 @@
-import { cssAnchors, getElementWhenAppears, getHiddenTableRow, getIdentifiers, getIdentifierType, getTimeSpan, highlightElement, makeDropDownMenu, shouldAbort, talkToBackgroundScript } from "../../misc.js";
+import { cssAnchors, getElementWhenAppears, getHiddenTableRow, getIdentifiers, getIdentifierType, getLocale, getTimeSpan, highlightElement, makeDropDownMenu, shouldAbort, talkToBackgroundScript } from "../../misc.js";
 import { fillDiscordUserElement } from "./discord/discordUserElement.js";
 import { cache, getDiscordData, getProxyCheckIpInfo } from "../cache/cache.js";
 import { autoStart } from "./evasionChecker/actions.js";
 import { getEvasionCheckerPanel } from "./evasionChecker/panel.js";
 import { invokeRerender } from "../display.js";
+import { getKey } from "../../settings/apiKeys/page.js";
 
 export async function showExtraDataOnIps(bmId, bmProfile, requestProxyCheck) {
     bmProfile = await bmProfile;
@@ -74,9 +75,11 @@ function convertIdentifier(identifier, ipObject, padEndValues, requestProxyCheck
     }
 
     if (!ipObject.proxyCheck) return;
-    const pcDataElement = getPcDataElement(ipObject.proxyCheck);
+    const pcDataElement = getPcDataElement(ipObject);
     ipElement.classList.add("bme-pc-ip-main")
-    ipElement.after(pcDataElement)
+
+    if (!document.querySelector(`#bme-ip-nest-${ipObject.id}`))
+        ipElement.after(pcDataElement)
 
     ipElement.addEventListener("click", e => {
         if (pcDataElement.classList.contains("bme-pc-open"))
@@ -106,8 +109,11 @@ function getPcButton(identifier, ipObject, padEndValues, requestProxyCheck) {
 
     return button;
 }
-function getPcDataElement(pc) {
+function getPcDataElement(ip) {
+    const pc = ip.proxyCheck;
+
     const element = document.createElement("div");
+    element.id = `bme-ip-nest-${ip.id}`;
     element.classList.add("bme-ip-nest")
 
     const table = document.createElement("div");
@@ -469,21 +475,15 @@ function getIdentifierTableElement(type, payload, lastSeen, meta, placeholders =
     }
 
     return tr;
-    function getLocale() {
-        if (_locale) return _locale;
-
-        const locale = JSON.parse(document.getElementById("storeBootstrap")?.innerText || null)?.state?.account?.locale || "en-gb";
-        _locale = locale;
-        return locale;
-    }
 }
 
 
-export function displayDiscordData() {
-    const token = JSON.parse(localStorage.getItem("BME_PLAYER_INSIGHT_API")).apiKey;
+export async function displayDiscordData() {
+    const token = await getKey("BME_PLAYER_INSIGHT_API_KEY")
 
     const unloadedDiscords = Array.from(document.querySelectorAll(".bme-unloaded-discord"));
     const discordData = cache.discordUserData;
+        
     if (discordData.length === 0) return;
 
 

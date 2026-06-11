@@ -12,7 +12,7 @@ import { getKeybindsSettings } from "./keybinds/page.js";
 import { checkKeybindsSettings, getDefaultKeybindsSettings } from "./keybinds/check.js";
 import { getEvasionCheckerSettings } from "./evasionChecker/page.js";
 import { checkEvasionCheckerSettings, getDefaultEvasionCheckerSettings } from "./evasionChecker/check.js";
-import { getApiKeysSettings } from "./apiKeys/page.js";
+import { getApiKeysSettings, getKey } from "./apiKeys/page.js";
 import { checkProxyCheckSettings } from "./apiKeys/check.js";
 import { talkToBackgroundScript } from "../misc.js";
 
@@ -259,34 +259,42 @@ function getRequirementsElement(requirements) {
         const span = document.createElement("span");
         span.innerText = requirement;
 
-        const validity = validateRequirement(requirement);
-        if (validity) span.classList.add("bme-settings-text-green");
-        else span.classList.add("bme-settings-text-red");
+        colorBasedOnValidity(span, requirement)
         element.append(span);
     }
-
+    
     return element
 }
-function validateRequirement(requirement) {
-    if (requirement === "STEAM API KEY") {
-        const key = localStorage.getItem("BME_STEAM_API_KEY");
-        if (!key) return false;
-        if (key.length !== 32) return false;
+/*if (validity) span.classList.add("bme-settings-text-green");
+else span.classList.add("bme-settings-text-red");*/
+async function colorBasedOnValidity(span, requirement) {
+    try {
+        
+        if (requirement === "STEAM API KEY") {
+            const key = await getKey("BME_STEAM_API_KEY");
+            if (!key) throw new Error("Not valid");
+            if (key.length !== 32) throw new Error("Not valid");
 
-        return true;
-    } else if (requirement === "SM Names") {
-        const key = localStorage.getItem("BME_SM_NAMES");
-        if (!key) return false;
-        return true;
-    } else if (requirement === "PROXYCHECK") {
-        const settings = JSON.parse(localStorage.getItem("BME_PROXY_CHECK_SETTINGS"));
-        if (settings.apiKey) return true;
-    } else if (requirement.startsWith("Player Insight - ")) {
-        const type = requirement.split(" - ")[1];
-        return validatePlayerInsightPermission(type)
+        } else if (requirement === "SM Names") {
+            const smData = localStorage.getItem("BME_SM_NAMES");
+            if (!smData) throw new Error("Not valid");
+
+        } else if (requirement === "PROXYCHECK") {
+            const key = await getKey("BME_PROXY_CHECK_API_KEY");
+            if (!key) throw new Error("Not valid");
+
+        } else if (requirement.startsWith("Player Insight - ")) {
+            const key = await getKey("BME_PLAYER_INSIGHT_API_KEY");
+            if(key.length !== 64) throw new Error("Not valid");
+
+            const type = requirement.split(" - ")[1];
+            if (!validatePlayerInsightPermission(type)) throw new Error("Not valid");
+        }
+     
+        span.classList.add("bme-settings-text-green");
+    } catch (error) {
+        span.classList.add("bme-settings-text-red");
     }
-
-    return false
 }
 function getHotkeyInputElement(type, bucket, key, value, meta) {
     const input = document.createElement("input");
@@ -394,28 +402,22 @@ export let _playerInsight = null;
 const ONE_DAY = 24 * 60 * 60 * 1000;
 loadPiPerms()
 export async function loadPiPerms() {
-    const str = localStorage.getItem("BME_PLAYER_INSIGHT_API");
-    if (!str) return;
+    let obj = JSON.parse(localStorage.getItem("BME_PLAYER_INSIGHT_PERMS"))
 
-    let obj = JSON.parse(str);
-    if (obj.timestamp < Date.now() - ONE_DAY || obj.perms.length === 0) {
-        try {
-            obj = {
-                apiKey: obj.apiKey,
-                perms: await talkToBackgroundScript("BME_PLAYER_INSIGHT_PERMS", "N/A", obj.apiKey),
-            }
-        } catch (error) {
-            obj = { apiKey: obj.apiKey, perms: [] }
-        }
-        obj.timestamp = Date.now();
+    const key = await getKey("BME_PLAYER_INSIGHT_API_KEY");
+    if (!key) return localStorage.setItem("BME_PLAYER_INSIGHT_PERMS", JSON.stringify({ timestamp: Date.now(), perms: [] }));
 
-        _playerInsight = obj;
-        localStorage.setItem("BME_PLAYER_INSIGHT_API", JSON.stringify(obj));
+    if (!obj || obj.timestamp < Date.now() - ONE_DAY || obj.perms.length === 0) {
+        let perms = await talkToBackgroundScript("BME_PLAYER_INSIGHT_PERMS", "N/A")
+        if (typeof (perms) === "string") perms = [];
+
+        obj = { timestamp: Date.now(), perms };
+        localStorage.setItem("BME_PLAYER_INSIGHT_PERMS", JSON.stringify(obj));
     }
     _playerInsight = obj;
 }
 function validatePlayerInsightPermission(perm) {
-    if (_playerInsight === null) return false;
+    if (!_playerInsight) return false;
 
     const perms = _playerInsight.perms;
     if (perms.length === 0) return false;

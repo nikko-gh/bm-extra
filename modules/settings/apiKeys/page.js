@@ -21,14 +21,14 @@ export function getApiKeysSettings() {
     });
     const piPermsSegment = document.createElement("div");
     piPermsSegment.classList.add("bme-settings-segment");
-    const playerInsightApiKeyElement = getApiKeyDiv("Player Insight API Key:", "BME_PLAYER_INSIGHT_API", "pi-api", {
+    const playerInsightApiKeyElement = getApiKeyDiv("Player Insight API Key:", "BME_PLAYER_INSIGHT_API_KEY", "pi-api", {
         segment: piPermsSegment,
     });
     generatePlayerInsightSegment(piPermsSegment);
 
     const proxyCheckSegment = document.createElement("div")
     proxyCheckSegment.classList.add("bme-settings-segment");
-    const proxyCheckApiKeyElement = getApiKeyDiv("Proxycheck API Key:", "BME_PROXY_CHECK_SETTINGS", "proxy-check", {
+    const proxyCheckApiKeyElement = getApiKeyDiv("Proxycheck API Key:", "BME_PROXY_CHECK_API_KEY", "proxy-check", {
         segment: proxyCheckSegment,
         detail: `Key can be generated at <a href="https://proxycheck.io/" target="_blank">proxycheck.io</a>.`
     });
@@ -84,7 +84,7 @@ export function getApiKeysSettings() {
     return element;
 }
 function generatePlayerInsightSegment(segment) {
-    const perms = JSON.parse(localStorage.getItem("BME_PLAYER_INSIGHT_API"))?.perms || [];
+    const perms = JSON.parse(localStorage.getItem("BME_PLAYER_INSIGHT_PERMS"))?.perms || [];
     const p = document.createElement("p")
 
     p.innerHTML += `<span class="bme-settings-text-${perms.includes("steamFriends") ? "green" : "red"}">Historic Friends</span> | `;
@@ -96,17 +96,10 @@ function generatePlayerInsightSegment(segment) {
     segment.innerHTML = "";
     segment.append(p);
 }
+//segment 
 function getApiKeyDiv(titleText, storageName, id, meta) {
     const container = document.createElement("div");
     container.classList.add("bme-settings-key-container")
-    const currentKey =
-        storageName === "BME_PROXY_CHECK_SETTINGS" ?
-            JSON.parse(localStorage.getItem(storageName))?.apiKey :
-            storageName === "BME_PLAYER_INSIGHT_API" ?
-                JSON.parse(localStorage.getItem(storageName))?.apiKey :
-                localStorage.getItem(storageName);
-
-    if (meta?.segment && !currentKey) meta.segment.classList.add("bme-inactive-segment");
 
     const title = document.createElement("h3")
     title.innerText = titleText;
@@ -115,7 +108,8 @@ function getApiKeyDiv(titleText, storageName, id, meta) {
     const detail = document.createElement("p");
     detail.id = `${id}-key-detail`;
     detail.classList.add("bme-key-settings-detail");
-    detail.innerText = getKeyDetailContent(currentKey);
+    detail.innerText = "Loading...";
+    insertKey(detail, storageName, meta);
     container.appendChild(detail);
 
     const wrapper = document.createElement("div");
@@ -135,40 +129,16 @@ function getApiKeyDiv(titleText, storageName, id, meta) {
         let newKey = input.value;
         input.value = "";
 
-        let success = true;
+        chrome.storage.local.set({ [storageName]: newKey });
+        _keys[storageName] = newKey;
 
-        if (storageName === "BME_PROXY_CHECK_SETTINGS") {
-            const currentSettings = JSON.parse(localStorage.getItem(storageName));
-            currentSettings.apiKey = newKey;
-            localStorage.setItem(storageName, JSON.stringify(currentSettings));
-        } else if (storageName === "BME_PLAYER_INSIGHT_API") {
-            try {
-                if (!newKey) throw new Error("NO_KEY");
-                
-                const piDetails = { apiKey: newKey, perms: [], timestamp: Date.now() }
-                localStorage.setItem(storageName, JSON.stringify(piDetails));
-
-                await loadPiPerms();
-
-                changeButton("green", e.target)
-            } catch (error) {
-                console.log(error);
-                
-                localStorage.removeItem(storageName)
-                changeButton("red", e.target)
-                newKey = "";
-                success = false;
-            }
+        if (storageName === "BME_PLAYER_INSIGHT_API_KEY") {
+            await loadPiPerms();
             generatePlayerInsightSegment(meta.segment)
-        } else {
-            localStorage.setItem(storageName, newKey);
         }
-        const detailItem = document.getElementById(`${id}-key-detail`);
-        if (success || !newKey) detailItem.innerText = getKeyDetailContent(newKey);
 
-        if (!meta?.segment) return;
-        if (newKey) meta.segment.classList.remove("bme-inactive-segment");
-        else meta.segment.classList.add("bme-inactive-segment");
+        const detailItem = document.getElementById(`${id}-key-detail`);
+        insertKey(detailItem, "N/A", meta, newKey);
     })
 
     if (meta?.detail) {
@@ -180,7 +150,7 @@ function getApiKeyDiv(titleText, storageName, id, meta) {
 
     return container;
 }
-function changeButton(color, btn, time = 400) { 
+function changeButton(color, btn, time = 400) {
     btn.classList.add("bm-btn");
 
     btn.classList.add(`bme-btn-${color}`);
@@ -188,9 +158,16 @@ function changeButton(color, btn, time = 400) {
         btn.classList.remove(`bme-btn-${color}`);
     }, time);
 }
-function getKeyDetailContent(key) {
-    return key ? `Your key starts with: ${key.substring(0, 10)}` : "You have no key saved yet.";
+async function insertKey(detail, storageName, meta, key) {
+    if (key === undefined) key = await getKey(storageName)
+
+    detail.innerText = key ? `Your key starts with: ${key.substring(0, 10)}...` : "You have no key saved yet.";
+
+    if (!meta?.segment) return;
+    if (key) meta.segment.classList.remove("bme-inactive-segment");
+    else meta.segment.classList.add("bme-inactive-segment");
 }
+
 function getSmUpdater() {
     const element = document.createElement("div");
     element.classList.add("bme-sm-settings-updater")
@@ -295,4 +272,25 @@ function invokeChange(type) {
     const settingsPage = document.getElementById("bme-sm-input-wrapper");
     settingsPage.classList.add(`bme-sm-${type}`);
     setTimeout(() => { settingsPage.classList.remove(`bme-sm-${type}`); }, 900);
+}
+
+
+
+
+const _keys = {};
+export async function getKey(storageName) {    
+    try {
+        if (_keys[storageName] !== undefined) return _keys[storageName];
+
+        let key = await loadKey(storageName);
+        _keys[storageName] = key ?? "";
+        return key ?? null;
+    } catch (error) {        
+        return await loadKey(storageName);
+    }
+}
+async function loadKey(storageName) {
+    let key = await chrome.storage.local.get(storageName);
+    key = key[storageName];
+    return key;
 }

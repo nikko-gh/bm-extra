@@ -236,7 +236,7 @@ async function getMessagesAndFillContainer(container, page, guild, userId, token
         const messages = guild.lastMessages[page];
         if (messages) return messages;
 
-        const requestedMessages = await talkToBackgroundScript("BME_DISCORD_MESSAGES", `last/${guild.id}/${userId}/${page}`, token)
+        const requestedMessages = await talkToBackgroundScript("BME_DISCORD_MESSAGES", `last/${guild.id}/${userId}/${page}`)
 
         guild.lastMessages[page] = requestedMessages;
         return requestedMessages;

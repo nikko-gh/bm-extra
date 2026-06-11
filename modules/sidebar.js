@@ -121,7 +121,7 @@ function getFriendlistBody(friends, settings, isHistoric) {
         p.innerText = "There are no historic friends recorded!";
         if (friends === "ERROR") p.innerText = "Something went wrong!";
         if (friends === "NO_API_KEY") p.innerText = "Missing API Key";
-        if (friends === "Private") p.innerText = "Friend list is private";
+        if (friends === "PRIVATE") p.innerText = "Friend list is private";
 
         if (isHistoric && friends.length === 0) p.innerText = "No friends were recorded";
         if (!isHistoric && friends.length === 0) p.innerText = "Empty friends list";

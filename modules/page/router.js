@@ -7,7 +7,7 @@ import { getElementWhenAppears, removeSidebars } from "../misc.js";
 import { checkAndSetupSettingsIfMissing } from "../settings/settings.js";
 
 let setup = false;
-export function router(url) {
+export async function router(url) {
     if (!setup) {
         setup = true;
         checkAndSetupSettingsIfMissing();
@@ -22,7 +22,7 @@ export function router(url) {
         const bmId = path[2];
         if (isNaN(Number(bmId))) return;
 
-        setupCacheFor(bmId, "RCON_PROFILE");
+        await setupCacheFor(bmId, "RCON_PROFILE");
 
         if (path[3] === undefined) return onOverviewPage(bmId);
         if (path[3] === "identifiers") return onIdentifierPage(bmId);
@@ -33,7 +33,7 @@ export function router(url) {
         const bmId = url.searchParams.get("player");
         if (!bmId || isNaN(Number(bmId))) return;
 
-        setupCacheFor(bmId, "BAN_PAGE");
+        await setupCacheFor(bmId, "BAN_PAGE");
 
         return onAddBanPage(bmId);
     }

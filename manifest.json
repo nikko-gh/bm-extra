@@ -22,7 +22,7 @@
         }
     ],
     "background": {
-        "service_worker": "bg/bg.js",
+        "service_worker": "./bg/bg.js",
         "type": "module"
     },
     "web_accessible_resources": [
@@ -45,6 +45,7 @@
         "https://proxycheck.io/*"
     ],
     "permissions": [
+        "storage",
         "downloads"
     ]
 }
