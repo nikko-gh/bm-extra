@@ -1,13 +1,13 @@
 import { setupCacheFor, cache } from "../page/cache/cache.js";
-import { checkAndSetupSettingsIfMissing } from "../settings.js";
 import { advancedBans, closeAdminLog, displayInfoPanel, displayServerActivity, limitItem, removeSteamInformation, displayAlertLink } from "./overview/overview.js";
 import { highlightVpnIdentifiers, showExtraDataOnIps, displayAvatars, displayEvasionCheckerPanel, displaySteamLinks } from "./identifier/identifier.js";
 import { convertTimestampsToDay, displayAvatar, displaySettingsButton, redactIdentifiers, selectLastServer, swapBattleEyeGuid } from "./display.js";
-import { insertBanPresets, insertFriendComparator, insertFriendsSidebarElement, insertHistoricFriendsSidebarElement, insertPublicBansSidebarElement, insertSidebars, insertTeaminfoSidebarElement } from "../sidebar.js";
+import { insertBanPresets, insertFriendComparator, insertFriendsSidebarElement, insertHistoricFriendsSidebarElement, insertRelatedPlayers, insertPublicBansSidebarElement, insertSidebars, insertTeaminfoSidebarElement } from "../sidebar.js";
 import { getElementWhenAppears, removeSidebars } from "../misc.js";
+import { checkAndSetupSettingsIfMissing } from "../settings/settings.js";
 
 let setup = false;
-export function router(url) {
+export async function router(url) {
     if (!setup) {
         setup = true;
         checkAndSetupSettingsIfMissing();
@@ -22,7 +22,7 @@ export function router(url) {
         const bmId = path[2];
         if (isNaN(Number(bmId))) return;
 
-        setupCacheFor(bmId, "RCON_PROFILE");
+        await setupCacheFor(bmId, "RCON_PROFILE");
 
         if (path[3] === undefined) return onOverviewPage(bmId);
         if (path[3] === "identifiers") return onIdentifierPage(bmId);
@@ -33,7 +33,7 @@ export function router(url) {
         const bmId = url.searchParams.get("player");
         if (!bmId || isNaN(Number(bmId))) return;
 
-        setupCacheFor(bmId, "BAN_PAGE");
+        await setupCacheFor(bmId, "BAN_PAGE");
 
         return onAddBanPage(bmId);
     }
@@ -92,13 +92,14 @@ async function onAddBanPage(bmId) {
     if (settings.selectLastServer) selectLastServer(bmId, playerCache.bmProfile);
 }
 async function sidebar(bmId, playerCache, settings, page) {
-    await insertSidebars(page);
+    const sidebar = await insertSidebars(page);
 
     if (settings.friendComparator?.enabled) insertFriendComparator();
-    if (settings.friends?.enabled) insertFriendsSidebarElement(playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData, playerCache.serverPop, settings);
-    if (settings.historicFriends?.enabled) insertHistoricFriendsSidebarElement(playerCache.historicFriends, playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData, playerCache.serverPop, settings);
-    if (settings.currentTeam?.enabled) insertTeaminfoSidebarElement(playerCache.team, cache.connectedPlayersData, cache.connectedPlayersBanData, settings);
-    if (settings.publicBans?.enabled) insertPublicBansSidebarElement(playerCache.publicBans);
+    if (settings.friends?.enabled) insertFriendsSidebarElement(sidebar, playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData, playerCache.serverPop, settings);
+    if (settings.historicFriends?.enabled) insertHistoricFriendsSidebarElement(sidebar, playerCache.historicFriends, playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData, playerCache.serverPop, settings);
+    if (settings.currentTeam?.enabled) insertTeaminfoSidebarElement(sidebar, playerCache.team, cache.connectedPlayersData, cache.connectedPlayersBanData, settings);
+    if (settings.publicBans?.enabled) insertPublicBansSidebarElement(sidebar, playerCache.publicBans);
+    if (settings.relatedPlayers?.enabled) insertRelatedPlayers(sidebar, playerCache.relatedPlayers, settings.relatedPlayers);
 
     if (settings.presets?.enabled) insertBanPresets(settings, playerCache.bmProfile);
 }

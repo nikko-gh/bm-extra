@@ -77,9 +77,9 @@ function getHeader(main, player) {
         const html = `
         <div class="bme-header-profile"> 
             <div class="bme-showcase-first-line">
-                <img src="${avatarUrl}">
+                <img id="bme-sc-avatar">
                 <div>
-                    <p>${name}</p>
+                    <p id="bme-sc-name">NAME_PLACEHOLDER</p>
                     <div>
                         <a target="_blank" href="${`https://www.battlemetrics.com/rcon/players/${bmId}`}">BM Profile</a>
                         ${steamId ?
@@ -106,8 +106,14 @@ function getHeader(main, player) {
             </div>
         </div>
         `
-
         profile.innerHTML = html;
+        
+        const nameElement = profile.querySelector("#bme-sc-name");
+        nameElement.innerText = name;
+
+        const avatarElement = profile.querySelector("#bme-sc-avatar");
+        avatarElement.src = avatarUrl;
+        
         return profile;
 
         function getBmHours(servers) {

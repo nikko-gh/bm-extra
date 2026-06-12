@@ -59,7 +59,7 @@ function getEmptyMessageStr() {
         </div>
     `
 }
-function loadMoreButton(group, type, message, token) {    
+function loadMoreButton(group, type, message, token) {
     const button = document.createElement("button");
     button.classList.add("bme-showcase-load-more")
 
@@ -85,12 +85,9 @@ const discordCache = {
 async function requestAndCacheData(group, focusMsgId, type, token, baseMsg) {
     const id = `${group[0]}-${group[1]}-${group[2]}`;
     if (type === "around" && discordCache.data[id])
-        return requestAnimationFrame(() => {
-            return requestAndFillShowcase(group, token, focusMsgId);
-        })
+        return requestAnimationFrame(() => { return requestAndFillShowcase(group, token, focusMsgId) })
 
-
-    const data = await talkToBackgroundScript("BME_DISCORD_MESSAGES", `${type}/${group[0]}/${group[1]}/${focusMsgId}`, token);
+    const data = await talkToBackgroundScript("BME_DISCORD_MESSAGES", `${type}/${group[0]}/${group[1]}/${focusMsgId}`);
 
     if (!discordCache.data[id]) discordCache.data[id] = {};
     discordCache.data[id].channel = data.channel;
@@ -102,17 +99,17 @@ async function requestAndCacheData(group, focusMsgId, type, token, baseMsg) {
 
 
     if (!discordCache.data[id].messages) discordCache.data[id].messages = [];
-    if (baseMsg){
+    if (baseMsg) {
         discordCache.data[id].messages.push({ guildId: group[0], channelId: group[1], messageId: group[2], content: baseMsg.content, author: baseMsg.author })
 
-        const item = cache.discordUserData.find(item => item.user.id === baseMsg.author);        
+        const item = cache.discordUserData.find(item => item.user.id === baseMsg.author);
         discordCache.users.set(item.user.id, {
             avatar: item.user.avatar,
             name: item.user.name,
             displayName: item.user.displayName,
             id: item.user.id,
         })
-    } 
+    }
     for (const message of data.messages) discordCache.data[id].messages.push(message);
 
     discordCache.data[id].messages.sort((a, b) => {
@@ -164,7 +161,7 @@ function requestAndFillShowcase(group, token, focusMsgId) {
 
         prevMsgs = [msg];
     }
-    messageContainer.appendChild(loadMoreButton(group, "after", data.messages[data.messages.length - 1], token) );
+    messageContainer.appendChild(loadMoreButton(group, "after", data.messages[data.messages.length - 1], token));
 
     if (focus) focusOnMessage(focus);
 }

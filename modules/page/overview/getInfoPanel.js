@@ -37,7 +37,6 @@ export function getInfoPanel(bmSteamData, bmData, rustPremium) {
     return element;
 }
 
-
 function getSteamInfoPanel(steam, rustPremium) {
     const settings = JSON.parse(localStorage.getItem("BME_BM_INFO_SETTINGS"))
     const element = document.createElement("div");
@@ -209,8 +208,6 @@ function getHistoricTimestampElements(steam, settings) {
     value.classList.add("bme-highlight");
     return [title, value];
 }
-
-
 
 function getBmInfoPanel(bm) {
     const settings = JSON.parse(localStorage.getItem("BME_BM_INFO_SETTINGS"))
@@ -386,8 +383,6 @@ function createHtmlElement(node, innerText, classList = []) {
     element.innerHTML = innerText;
     return element;
 }
-
-
 
 const ONE_SECOND = 1000;
 const ONE_MINUTE = 60 * ONE_SECOND;

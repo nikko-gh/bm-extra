@@ -1,3 +1,5 @@
+import { getKey } from "./settings/apiKeys/page.js";
+
 export const rustApiKeyPermissionBits = {
     historicFriends: 54,
     historicAvatars: 56,
@@ -5,15 +7,14 @@ export const rustApiKeyPermissionBits = {
 };
 
 export const cssAnchors = {
-    identifierTable: "css-11gv980",
-    identifierContentContainer: "css-8uhtka",
-    identifierContent: "css-q39y9k",
+    identifierTable: "css-1clz4cn",
+    identifierContentContainer: "css-1h52dri",
+    identifierContent: "css-1n6n1f5",
     identifierArrowIcon: "css-1c83ua",
     identifierTableTitleContainer: "css-147tpna",
-    identifierTableType: "css-18s4qom",
-    identifierTableTypeButton: "css-p43owu",
-    identifierTableTime: "css-18s4qom",
-
+    identifierTableType: "css-1d6fayl",
+    identifierTableTypeButton: "css-dz605m",
+    identifierTableTime: "css-1d6fayl",
 }
 
 
@@ -111,31 +112,10 @@ function plural(value, unit) {
 }
 
 export async function getCurrentFriends(steamId) {
-    try {
-        const STEAM_API_KEY = localStorage.getItem("BME_STEAM_API_KEY");
-        if (!STEAM_API_KEY) return "NO_API_KEY";
-
-        return await talkToBackgroundScript("BME_CURRENT_FRIENDS", steamId, STEAM_API_KEY)
-    } catch (error) {
-        console.error(error);
-        if (error.message === "TIMEOUT") return error.message;
-        return "ERROR";
-    }
+    return await talkToBackgroundScript("BME_CURRENT_FRIENDS", steamId);
 }
 export async function getHistoricFriends(steamId) {
-    try {
-        const piDetails = JSON.parse(localStorage.getItem("BME_PLAYER_INSIGHT_API"));
-        const PLAYER_INSIGHT_KEY = piDetails?.apiKey || null;
-        if (!PLAYER_INSIGHT_KEY) return "NO_API_KEY";
-        if (PLAYER_INSIGHT_KEY.length !== 64) return "INVALID_API_KEY";
-        if (!piDetails?.perms.includes("steamFriends")) return "NO_PERMISSION";
-
-        return await talkToBackgroundScript("BME_HISTORIC_FRIENDS", steamId, PLAYER_INSIGHT_KEY);
-    } catch (error) {
-        console.error(error);
-        if (error.message === "TIMEOUT") return "TIMEOUT";
-        return "ERROR";
-    }
+    return await talkToBackgroundScript("BME_HISTORIC_FRIENDS", steamId);
 }
 
 export function getStreamerModeName(steamId) {
@@ -203,7 +183,7 @@ export async function getLastServer(bmProfile, onlyMyServer) {
     return lastServer
 }
 export async function getMyServers(onlyIds) {
-    const token = getAuthToken();
+    const token = await getAuthToken();
 
     let myServers = JSON.parse(localStorage.getItem("BME_MY_SERVER_CACHE"));
     if (myServers && myServers.timestamp > Date.now() - 24 * 60 * 60 * 1000) {
@@ -258,15 +238,20 @@ async function requestMyServers(url, token, count = 0) {
 }
 
 let _lastResp = null;
-export function getAuthToken(type) {
-    if (type === "internal") return getInternalAuthToken();
+export async function getAuthToken(type) {
+    try {
+        if (type === "internal") return getInternalAuthToken();
 
-    if (_lastResp) return _lastResp;
-    const internal = getInternalAuthToken();
-    const external = getExternalAuthToken();
+        if (_lastResp) return _lastResp;
 
-    _lastResp = external || internal;
-    return external || internal;
+        const internal = getInternalAuthToken();
+        const external = await getKey("BME_BATTLEMETRICS_API_KEY");        
+
+        if (external || internal) _lastResp = external || internal;
+        return external || internal;
+    } catch (error) {
+        return getInternalAuthToken();
+    }
 }
 function getInternalAuthToken() {
     const authElement = document.getElementById("oauthToken");
@@ -281,9 +266,6 @@ function getInternalAuthToken() {
     }
 
     return authToken;
-}
-function getExternalAuthToken() {
-    return localStorage.getItem("BME_BATTLEMETRICS_API_KEY") || null;
 }
 
 export function setNativeValue(select, value, highlight) {
@@ -326,7 +308,7 @@ export function getIdentifierType(identifier) {
     return { type, id }
 }
 
-export function talkToBackgroundScript(type, subject, apiKey, rejectTime = 10000) {
+export function talkToBackgroundScript(type, subject, rejectTime = 10000, token) {
     const requestId = Math.floor(Math.random() * 1000000);
     type = `${type}_${requestId}`;
 
@@ -337,17 +319,16 @@ export function talkToBackgroundScript(type, subject, apiKey, rejectTime = 10000
             clearTimeout(timer);
             chrome.runtime.onMessage.removeListener(handler);
 
-            if (response.status === "ERROR") reject(new Error(response.message || "ERROR"));
-            else resolve(response.value);
+            resolve(response.value);
         }
 
         const timer = setTimeout(() => {
             chrome.runtime.onMessage.removeListener(handler);
-            reject(new Error(`TIMEOUT`));
+            resolve("TIMEOUT");
         }, rejectTime);
 
         chrome.runtime.onMessage.addListener(handler);
-        chrome.runtime.sendMessage({ type, subject, apiKey });
+        chrome.runtime.sendMessage({ type, subject, token});
     });
 }
 
@@ -393,7 +374,9 @@ let _locale = null;
 export function getLocale() {
     if (_locale) return _locale;
 
-    const locale = JSON.parse(document.getElementById("storeBootstrap").innerHTML)?.state?.account?.locale ?? "en-us";
+    const locale = JSON.parse(document.getElementById("storeBootstrap").innerHTML)?.state?.account?.locale;
+    if (!locale) return "en-us";
+
     _locale = locale;
     return locale;
 }

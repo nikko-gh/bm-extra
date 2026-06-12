@@ -11,7 +11,8 @@ export function fillDiscordUserElement(element, data, token) {
 
     element.classList.remove("bme-discord-unloaded");
 
-    element.innerHTML = `<p>Discord ID: ${data.user.id}</p>`
+    element.innerHTML = `<p></p>`
+    element.lastChild.innerText += `Discord ID: ${data.user.id}`;
 
     const accountAge = getDiscordTimestamp(data.user.id);
     element.innerHTML += `<p>Account Age: ${getTimeSpan(accountAge)}</p>`;
@@ -24,26 +25,44 @@ export function fillDiscordUserElement(element, data, token) {
     data.guilds.forEach(guild => { if (guild.lastSeen > lastSeen) lastSeen = guild.lastSeen })
     element.innerHTML += `<p>Last Seen: ${getTimeSpan(lastSeen)}</p>`;
 
-    element.innerHTML += `<h3>Avatars(${data.user.historicAvatars.length}):</h3>
-    <div class="bme-discord-avatar-container">
-    ${data.user.historicAvatars.map(item => `
-        <div class="avatar" style="--avatar:url('${item.avatar}?token=${token}')">
-            <img src="${item.avatar}?token=${token}" />
-        </div>
-    `).join("")}
-    </div>`
+    element.innerHTML += `<h3>Avatars(X):</h3>`;
+    element.lastChild.innerText = `Avatars(${data.user.historicAvatars.length}):`;
+    element.innerHTML += `<div class="bme-discord-avatar-container">     </div>`;
 
-    element.innerHTML += `<h3>Names(${data.user.historicNames.length}):</h3><div class="bme-discord-name-container"></div>`
+    const avatarContainer = element.lastChild;
+    data.user.historicAvatars.forEach(item => {
+        const url = `${item.avatar}?token=${token}`;
+
+        const avatar = document.createElement("div");
+        avatar.classList.add("avatar");
+        avatar.style.setProperty("--avatar", `url('${url}')`);
+
+        const img = document.createElement("img");
+        img.src = url;
+        avatar.append(img);
+
+        avatarContainer.append(avatar);
+    })
+
+    element.innerHTML += `<h3>Names(X):</h3>`;
+    element.lastChild.innerText = `Names(${data.user.historicNames.length}):`;
+
+    element.innerHTML += `<div class="bme-discord-name-container"></div>`;
+
     const nameContainer = element.querySelector(".bme-discord-name-container");
     for (const item of data.user.historicNames) {
-        const nameElement = document.createElement("p");
-        nameElement.innerText = `${item.name}`.padEnd(32).replaceAll(" ", "\u00A0");
-        nameElement.innerHTML += ` | Last seen: ${getTimeSpan(item.lastSeen)} ago`;
+        const nameWrapper = document.createElement("div");
+        nameWrapper.classList.add("bme-discord-name-wrapper")
+        nameWrapper.innerHTML = `<p></p><p></p>`
 
-        nameContainer.append(nameElement);
+        nameWrapper.firstChild.innerText = item.name;
+        nameWrapper.lastChild.innerHTML = `| LS: ${getTimeSpan(item.lastSeen)} ago`;
+
+        nameContainer.append(nameWrapper);
     }
 
-    element.innerHTML += `<h3>Guilds(${data.guilds.length}):</h3>`;
+    element.innerHTML += `<h3>Guilds(X):</h3>`;
+    element.lastChild.innerText = `Guilds(${data.guilds.length}):`;
 
     for (const guild of data.guilds) {
         const guildElement = document.createElement("div");
@@ -61,11 +80,17 @@ export function fillDiscordUserElement(element, data, token) {
             `LS: ${getTimeSpan(guild.lastSeen)} ago`
         ]
         header.innerHTML = `
-            <img src="${guild.avatar}">
+            <img>
             <div>
-                <h4>${guild.name}</h4>
+                <h4>GUILD_NAME_PLACEHOLDER</h4>
                 <p>${guildDetails.join(" | ")}</p>
             </div>`;
+
+        const guildAvatar = header.querySelector("img");
+        guildAvatar.src = guild.avatar;
+
+        const guildName = header.querySelector("h4");
+        guildName.innerText = guild.name;
 
         const body = document.createElement("div");
         body.classList.add("bme-dc-guild-body")
@@ -89,20 +114,16 @@ export function fillDiscordUserElement(element, data, token) {
         }
 
         for (const item of guild.roles) {
-            const role = document.createElement("p");
+            const role = document.createElement("div");
+            role.innerHTML = `<p></p><p></p><p></p>`
+            
+            role.firstChild.style.setProperty("--width", `${longestTs+1}ch`);
+            role.firstChild.innerHTML = `${getTimeSpan(item.lastSeen)} ago`;
+            
+            role.children[1].style.setProperty("--width", `${longestRole+3}ch`);
+            role.children[1].innerText = `| ${item.role}`;
 
-            role.innerHTML += `${getTimeSpan(item.lastSeen)} ago`;
-            if (role.innerText.length < longestTs) {
-                role.innerHTML += '&nbsp;'.repeat(longestTs - role.innerText.length);
-            }
-
-            role.innerHTML += ` |&nbsp;&nbsp;&nbsp;`;
-            role.innerText += `${item.role}`;
-            if (item.role.length < longestRole) {
-                role.innerHTML += '&nbsp;'.repeat(longestRole - item.role.length);
-            }
-
-            role.innerHTML += `&nbsp;&nbsp;&nbsp;| ${item.count}x seen`;
+            role.lastChild.innerText = `| ${item.count}x seen`;
             roles.append(role);
         }
 
@@ -130,7 +151,9 @@ export function getMessageElement(username, timestamp, avatar, contents, token) 
     const messageWrapper = document.createElement("div");
     messageWrapper.classList.add("bme-dc-message-element", "bme-dc-padding-left")
 
-    messageWrapper.innerHTML = `<img src="${avatar ? `${avatar}?token=${token}` : `https://cdn.discordapp.com/embed/avatars/3.png`}">`
+    messageWrapper.innerHTML = `<img>`;
+    messageWrapper.firstChild.src = avatar ? `${avatar}?token=${token}` : `https://cdn.discordapp.com/embed/avatars/3.png`;
+
     const txtContainer = document.createElement("div");
 
     const locale = getLocale();
@@ -213,7 +236,7 @@ async function getMessagesAndFillContainer(container, page, guild, userId, token
         const messages = guild.lastMessages[page];
         if (messages) return messages;
 
-        const requestedMessages = await talkToBackgroundScript("BME_DISCORD_MESSAGES", `last/${guild.id}/${userId}/${page}`, token)
+        const requestedMessages = await talkToBackgroundScript("BME_DISCORD_MESSAGES", `last/${guild.id}/${userId}/${page}`)
 
         guild.lastMessages[page] = requestedMessages;
         return requestedMessages;
@@ -244,9 +267,6 @@ function fillMessageContainer(container, messages, guildId, userId) {
         container.append(messageWrapper);
     }
 }
-
-
-
 
 export function getDiscordTimestamp(snowflake) {
     const DISCORD_EPOCH = 1420070400000n;

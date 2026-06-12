@@ -39,7 +39,7 @@ async function loadPlayersHub(type) {
 
     const authToken = {};
     authToken.external = localStorage.getItem("BME_BATTLEMETRICS_API_KEY");
-    authToken.internal = getAuthToken();
+    authToken.internal = await getAuthToken();
 
     if (!authToken.external && !authToken.internal) {
         sendMessage("Missing authToken!")
@@ -104,9 +104,10 @@ async function getRelatedPlayers(bmId, token) {
     //Return from short cache if stored
 
     const data = await fetchRelatedPlayers(`https://api.battlemetrics.com/players/${bmId}/relationships/related-identifiers?&filter[matchIdentifiers]=ip&filter[identifiers]=ip&include=player&page[size]=100`, token);
-    if (data.status !== 200) {
-
-    }
+    if (data.status !== 200){
+        sendMessage("Failed to fetch related players.")
+        return console.error(`BM-EXTRA: Failed to fetch related players. | ${bmId} | ${data.status}`);
+    } 
 
     const players = new Map();
     data.included.forEach(item => {
@@ -171,7 +172,7 @@ function setupPlayersForCheck(players) {
     const title = document.getElementById("bme-ec-players-title");
     title.innerText = `Loaded Players(${Array.from(container.childNodes).length})`;
 
-    
+
     if (players.length === 0) sendMessage(`Couldn't find any players.`);
     else sendEcMessage(`${players.length} player(s) found, ${playerElements.length} of them are added.`);
 }
@@ -238,20 +239,32 @@ export async function checkPlayersPressed(e) {
     orgChanger.disabled = false;
     return true;
 }
-async function checkPlayers(players, check, maxProcess = 5) {
-    let index = 0;
-    const settings = getEcSettings();
 
-    async function worker() {
-        while (index < players.length) {
-            const player = players[index++];
-            await checkPlayer(player, settings, check);
+let running = false;
+async function checkPlayers(players, check, maxProcess = 5) {    
+    if (running) return false;
+    try {
+        running = true;
+        let index = 0;
+        const settings = getEcSettings();
+
+        async function worker() {
+            while (index < players.length) {
+                const player = players[index++];
+                if (!player.isConnected) continue
+
+                await checkPlayer(player, settings, check);
+            }
         }
-    }
 
-    const workers = Array.from({ length: maxProcess }, () => worker());
-    await Promise.all(workers);
-    return true;
+        const workers = Array.from({ length: maxProcess }, () => worker());
+        await Promise.all(workers);
+        return true;
+    } catch (error) {
+        return false;
+    } finally {
+        running = false
+    }
 }
 
 export function colorPlayer(player, color) {
@@ -275,7 +288,7 @@ function sendMessage(text) {
 
 export async function autoStart(settings) {
     const bmId = window.location.href.split("/")[5];
-    const authToken = getAuthToken();
+    const authToken = await getAuthToken();
 
     const limit = settings.core.autoStartLimit;
     const { status, identifiers } = await getRelatedPlayers(bmId, authToken);

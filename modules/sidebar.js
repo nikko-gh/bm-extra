@@ -1,4 +1,4 @@
-import { getCurrentFriends, getElementWhenAppears, getHistoricFriends, getLastServer, getTimeSpan, removeSidebars, setNativeValue } from "./misc.js";
+import { getCurrentFriends, getElementWhenAppears, getHistoricFriends, getLastServer, getLocale, getTimeSpan, removeSidebars, setNativeValue } from "./misc.js";
 
 export async function insertSidebars() {
     const mainElement = await getElementWhenAppears("main", true);
@@ -9,6 +9,8 @@ export async function insertSidebars() {
     const left = getSidebarElement("left");
     const right = getSidebarElement("right");
     mainElement.after(left, right)
+
+    return {left, right};
 }
 function getSidebarElement(side) {
     const element = document.createElement("div");
@@ -22,7 +24,7 @@ function getSidebarElement(side) {
     return element;
 }
 
-export async function insertFriendsSidebarElement(steamFriends, connectedPlayersData, connectedPlayersBanData, server, settings) {
+export async function insertFriendsSidebarElement(sidebar, steamFriends, connectedPlayersData, connectedPlayersBanData, server, settings) {
     steamFriends = await steamFriends;
     server = await server;
 
@@ -45,14 +47,12 @@ export async function insertFriendsSidebarElement(steamFriends, connectedPlayers
         })
     }
 
-    const spot = settings.friends.spot
-    const sidebarSlot = document.getElementById(`bme-sidebar-${spot}`);
-    if (!sidebarSlot) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
-
+    const spot = settings.friends.spot;
     const steamFriendsContainer = getSteamFriendsContainer(steamFriends, settings);
-    if (!sidebarSlot.hasChildNodes()) sidebarSlot.append(steamFriendsContainer);
+
+    return insertIntoSidebar(sidebar, spot, steamFriendsContainer);
 }
-export async function insertHistoricFriendsSidebarElement(historicFriends, steamFriends, connectedPlayersData, connectedPlayersBanData, server, settings) {
+export async function insertHistoricFriendsSidebarElement(sidebar, historicFriends, steamFriends, connectedPlayersData, connectedPlayersBanData, server, settings) {
     steamFriends = await steamFriends;
     historicFriends = await historicFriends;
     server = await server;
@@ -82,12 +82,9 @@ export async function insertHistoricFriendsSidebarElement(historicFriends, steam
             });
 
     const spot = settings.historicFriends.spot;
-    const sidebarSlot = document.getElementById(`bme-sidebar-${spot}`);
-    if (!sidebarSlot) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
-
     const steamFriendsContainer = getHistoricSteamFriendsContainer(historicFriends, settings);
-    if (!sidebarSlot.hasChildNodes()) sidebarSlot.append(steamFriendsContainer);
 
+    insertIntoSidebar(sidebar, spot, steamFriendsContainer);
 }
 function getPlayerSteamData(steamId, playerData) {
     for (const item of playerData) if (item.steamId === steamId) return item;
@@ -95,34 +92,22 @@ function getPlayerSteamData(steamId, playerData) {
 }
 function getHistoricSteamFriendsContainer(historicFriends, settings) {
     const element = document.createElement("div");
-    element.classList.add("bme-sidebar-historic-friends")
 
-    const header = getFriendlistHeader(`Historic Friends(${historicFriends.length}):`);
+    const header = getSidebarHeader(`Historic Friends(${historicFriends.length}):`);
     const body = getFriendlistBody(historicFriends, settings, true)
+    
     element.append(header, body);
     return element;
-
 }
 function getSteamFriendsContainer(steamFriends, settings) {
     const element = document.createElement("div");
-    element.classList.add("bme-sidebar-friends")
 
     const titleText = typeof (steamFriends) === "string" ? "Steam Friends:" : `Steam Friends(${steamFriends.length}):`;
-    const header = getFriendlistHeader(titleText);
+    const header = getSidebarHeader(titleText);
     const body = getFriendlistBody(steamFriends, settings)
 
     element.append(header, body);
     return element;
-}
-function getFriendlistHeader(titleText) {
-    const wrapper = document.createElement("div")
-    wrapper.classList.add("bme-friendlist-header");
-
-    const title = document.createElement("h1");
-    title.innerText = titleText;
-    wrapper.appendChild(title);
-
-    return wrapper;
 }
 function getFriendlistBody(friends, settings, isHistoric) {
     const container = document.createElement("div");
@@ -133,7 +118,7 @@ function getFriendlistBody(friends, settings, isHistoric) {
         p.innerText = "There are no historic friends recorded!";
         if (friends === "ERROR") p.innerText = "Something went wrong!";
         if (friends === "NO_API_KEY") p.innerText = "Missing API Key";
-        if (friends === "Private") p.innerText = "Friend list is private";
+        if (friends === "PRIVATE") p.innerText = "Friend list is private";
 
         if (isHistoric && friends.length === 0) p.innerText = "No friends were recorded";
         if (!isHistoric && friends.length === 0) p.innerText = "Empty friends list";
@@ -159,6 +144,7 @@ export async function insertFriendComparator() {
     const color = sidebarSettings.friendComparator.color;
 
     const element = document.createElement("div");
+    element.id = "bme-player-comparator"
     element.classList.add("bme-comparator-wrapper")
 
     const input = document.createElement("input");
@@ -195,10 +181,11 @@ export async function insertFriendComparator() {
     })
     element.append(input);
 
+    if (document.querySelector("#bme-player-comparator")) return;
     sidebarSlot.append(element);
 }
 
-export async function insertTeaminfoSidebarElement(team, connectedPlayersData, connectedPlayersBanData, settings) {
+export async function insertTeaminfoSidebarElement(sidebar, team, connectedPlayersData, connectedPlayersBanData, settings) {
     team = await team;
 
     const teamMembers = team.members.map(member => {
@@ -209,11 +196,8 @@ export async function insertTeaminfoSidebarElement(team, connectedPlayersData, c
     })
 
     const spot = settings.currentTeam.spot
-    const sidebarSlot = document.getElementById(`bme-sidebar-${spot}`);
-    if (!sidebarSlot) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
-
     const element = getTeamInfoElement(team.teamId, teamMembers, team.server, team.raw, settings);
-    if (!sidebarSlot.hasChildNodes()) sidebarSlot.append(element);
+    insertIntoSidebar(sidebar, spot, element)
 }
 function getTeamInfoElement(teamId, teamMembers, server, raw, settings) {
     const element = document.createElement("div");
@@ -454,18 +438,15 @@ function getBmButton(steamId) {
     return element;
 }
 
-export async function insertPublicBansSidebarElement(publicBans) {
+export async function insertPublicBansSidebarElement(sidebar, publicBans) {
     publicBans = await publicBans;
 
     const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
     if (!sidebarSettings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
 
     const spot = sidebarSettings.publicBans.spot
-    const sidebarSlot = document.getElementById(`bme-sidebar-${spot}`);
-    if (!sidebarSlot) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
-
     const publicBansElement = getPublicBansElement(publicBans);
-    if (!sidebarSlot.hasChildNodes()) sidebarSlot.appendChild(publicBansElement);
+    insertIntoSidebar(sidebar, spot, publicBansElement);
 }
 function getPublicBansElement(publicBans) {
     const element = document.createElement("div");
@@ -517,9 +498,10 @@ function getBanElement(ban) {
     element.classList.add("bme-sidebar-ban-element")
 
     const reason = document.createElement("p");
-    reason.classList.add("bme-sidebar-ban-reason")
+    reason.classList.add("bme-sidebar-ban-reason", "bme-bold")
     reason.title = ban.reason;
-    reason.innerHTML = `<span class="bme-bold">${ban.reason}</span>`;
+    reason.innerText = ban.reason;
+
     element.appendChild(reason);
 
     const innerDiv = document.createElement("div")
@@ -527,13 +509,9 @@ function getBanElement(ban) {
     element.appendChild(innerDiv)
 
     const org = document.createElement("p");
-    org.innerHTML = `<span class="bme-bold">Org:</span> ${ban?.org?.name}`;
+    org.innerHTML = `<span class="bme-bold">Org: </span>`;
+    org.innerText += ban?.org?.name ?? "N/A"
     innerDiv.appendChild(org);
-
-    /*const details = document.createElement("div");
-    details.classList.add("bme-sidebar-ban-details");
-    element.appendChild(details);*/
-
 
     const timestamp = document.createElement("p");
     const duration = ban.duration === "Perm" ? "Permanent" : ban.duration === "Unknown" ? "Unknown" : getTimeSpan(ban.duration * 1000, true);
@@ -542,6 +520,71 @@ function getBanElement(ban) {
 
     return element
 }
+
+export async function insertRelatedPlayers(sidebar, relatedPlayers, settings) {
+    relatedPlayers = await relatedPlayers;
+
+    if (typeof (relatedPlayers) !== "string")
+        relatedPlayers = relatedPlayers.slice(0, settings.max);
+    const element = document.createElement("div");
+    element.id = "bme-related-players";
+
+    const header = getSidebarHeader("Related Players:");
+    const body = getRelatedPlayersBody(relatedPlayers);
+    element.append(header, body)
+    
+    insertIntoSidebar(sidebar, settings.spot, element);
+}
+function getRelatedPlayersBody(relatedPlayers) {
+    const element = document.createElement("div");
+    if (relatedPlayers.length === 0 || typeof (relatedPlayers) === "string") {
+        element.classList.add("bme-sidebar-empty-body")
+        element.innerHTML = `<p>${typeof (relatedPlayers) === "string" ? relatedPlayers : `No related players to show.`}<p>`;
+        return element;
+    }
+
+    relatedPlayers.forEach(player => {
+        const playerElement = document.createElement("a");
+        playerElement.classList.add("bme-sb-rp-element");
+        playerElement.href = `https://www.battlemetrics.com/rcon/players/${player.bmId}`;
+        playerElement.target = "_blank";
+        playerElement.innerHTML = `<p></p><p></p>`;
+
+        playerElement.firstChild.innerText = player.name;
+        playerElement.lastChild.innerText = `${Math.floor(player.duration / 60 / 60)}h`;
+
+        element.append(playerElement);
+    })
+
+    return element;
+}
+
+
+
+
+
+function getSidebarHeader(content) {
+    const header = document.createElement("div");
+    header.classList.add("bme-sidebar-header")
+
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("bme-sidebar-bans-wrapper")
+    header.appendChild(wrapper)
+
+    const title = document.createElement("h1");
+    title.innerText = content;
+    wrapper.appendChild(title);
+
+    return header;
+}
+
+
+
+///////////////////////////
+//.......................//
+//....B.A.N...P.A.G.E....//
+//.......................//
+///////////////////////////
 
 export function insertBanPresets(settings, bmProfile) {
     const spot = settings.presets.spot;
@@ -632,7 +675,7 @@ async function banPresetButtonClicked(preset, bmProfile, pasteEvidence) {
         if (banDuration != -1) {
             const ONE_DAY = 24 * 60 * 60 * 1000;
             const timestamp = Date.now() + (ONE_DAY * Number(banDuration))
-            const locale = JSON.parse(document.getElementById("storeBootstrap").innerHTML)?.state?.account?.locale ?? "en-us";
+            const locale = getLocale();
             const timeString = getBanDurationString(timestamp, locale);
 
             setNativeValue(banDurationInput, timeString, true)
@@ -682,9 +725,9 @@ async function readClipboardRich() {
     return null;
 }
 function stripGyazoImgLink(html) {
-    const doc = document.createElement("div");
-    doc.innerHTML = html;
-    const childNodes = Array.from(doc.children);
+    const element = document.createElement("div");
+    element.innerHTML = html;
+    const childNodes = Array.from(element.children);
 
     let lastLink = "";
     for (let i = childNodes.length - 1; i >= 0; i--) {
@@ -695,7 +738,7 @@ function stripGyazoImgLink(html) {
             if (childNodes[i + 1]?.nodeName === "BR") childNodes[i + 1].remove()
         }
     }
-    return doc.innerHTML;
+    return element.innerHTML;
 }
 async function getBanHeaderElement(type) {
     const banForm = await getElementWhenAppears("ban-form", true);
@@ -718,4 +761,16 @@ function getBanDurationString(timestamp, locale = "en-us") {
         hour: "numeric",
         minute: "2-digit",
     }).format(new Date(timestamp));
+}
+
+
+function insertIntoSidebar(sidebar, spot, element) {
+    let target = null;
+    if (spot.includes("left")) target = sidebar.left;
+    else target = sidebar.right;
+
+    const container = target.querySelector(`#bme-sidebar-${spot}`);
+    if (container.hasChildNodes()) return console.error(`BME-EXTRA: Spot(${spot}), already occupied!`);
+    
+    container.append(element);
 }

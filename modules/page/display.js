@@ -1,5 +1,5 @@
 import { shouldAbort, getElementWhenAppears, getLastServer, getStreamerModeName, getSteamIdObject, setNativeValue, getIdentifierType, getTimeSpan, getIdentifiers, cssAnchors, getHiddenTableRow } from "../misc.js";
-import { displaySettings } from "../settings.js";
+import { displaySettings } from "../settings/settings.js";
 
 export async function displaySettingsButton(bmId) {
     const rconElement = await getElementWhenAppears("RCONPlayerPage");
@@ -164,7 +164,7 @@ function redactIdentifier(identifier, span, type) {
 
     //Store it for later if it changed
     if (span.innerHTML === originalValue) return
-    currentRedactedElements.push({ element: span, originalValue })
+    currentRedactedElements.push({ key: span, originalValue })
 
     if (type !== "IP") return;
     const button = identifier.querySelector(".bme-button");
@@ -226,7 +226,7 @@ function checkMutations() {
         for (const item of elements) checkElement(item, bmId);
     });
 
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document, { childList: true, subtree: true });
 }
 function checkElement(item, bmId) {
     if (!onLocation(item.loc)) return elements.delete(item); //swtiched page

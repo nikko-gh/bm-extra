@@ -8,6 +8,7 @@ body::-webkit-scrollbar {
 
 .main {
     min-height: 100dvh;
+    
 }
 
 .bme-scroll-lock {
@@ -15,8 +16,9 @@ body::-webkit-scrollbar {
 }
 
 #bme-server-panel p {
+    
     line-height: 1;
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 500;
     margin-bottom: 5px;
     margin-top: 5px;
@@ -459,6 +461,12 @@ body::-webkit-scrollbar {
 .bme-discord-name-container {
     padding-left: 20px;
 }
+.bme-discord-name-wrapper{
+    display: flex;
+}
+.bme-discord-name-wrapper >p:first-child{
+    min-width: 32ch;
+}
 
 .bme-dc-guild-header {
     display: flex;
@@ -581,6 +589,13 @@ body::-webkit-scrollbar {
 .bme-dc-roles-container:empty::before {
     content: "No roles recorded.";
     background: #00000060;
+}
+
+.bme-dc-roles-container>div{
+    display: flex;
+}
+.bme-dc-roles-container p{
+    min-width: var(--width);
 }
 
 /* Identifier table overwrite */
