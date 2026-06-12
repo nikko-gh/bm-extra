@@ -29,7 +29,7 @@ async function invokePlayerProfileUpdates() {
 const discordUserData = new Proxy(cache.discordUserData, {
     set(target, prop, value) {
         target[prop] = value;
-        if (prop === "length") displayDiscordData();        
+        if (prop === "length") displayDiscordData();
         return true;
     }
 });
@@ -88,7 +88,8 @@ async function setupPlayerCache(bmId, authToken) {
     if (validate("steamLinks", settings, bmId))
         cache[bmId].steamLinks = getSteamLinks(cache[bmId].bmProfile)
 
-    if (validate("discordData", settings, bmId)) getDiscordData(cache[bmId].steamLinks)
+    if (validate("discordData", settings, bmId)) getDiscordData(cache[bmId].steamLinks);
+
     loadPlayerData(cache[bmId].steamFriends, cache[bmId].historicFriends, cache[bmId].team);
 }
 function setupBanCache(bmId, authToken) {
@@ -300,7 +301,7 @@ async function getSteamFriends(bmProfile, type) {
     return undefined;
 }
 let _awaitingPlayerData = false;
-async function loadPlayerData(friends, historicFriends, team) {
+async function loadPlayerData(friends, historicFriends, team,) {
     if (_awaitingPlayerData) return;
     try {
         _awaitingPlayerData = true;
@@ -313,6 +314,7 @@ async function loadPlayerData(friends, historicFriends, team) {
 
         if (typeof (friends) === "object" && friends)
             friends.forEach(friend => { if (!uniqueSteamIds.includes(friend.steamId)) uniqueSteamIds.push(friend.steamId) });
+
         if (typeof (historicFriends) === "object" && historicFriends)
             historicFriends.forEach(friend => { if (!uniqueSteamIds.includes(friend.steamId)) uniqueSteamIds.push(friend.steamId) });
 
@@ -333,7 +335,7 @@ async function loadPlayerData(friends, historicFriends, team) {
     } catch (error) {
         throw error;
     } finally {
-        _awaitingPlayerData = true;
+        _awaitingPlayerData = false;
     }
 }
 async function requestAndProcessPlayerData(players) {
@@ -442,7 +444,7 @@ async function getCurrentTeam(bmProfile, authToken) {
         }
 
         //No support
-        if (rawTeaminfo === "") return {teamId: -1, members: [], server: lastServer.name, raw: "Not supported organization!"};
+        if (rawTeaminfo === "") return { teamId: -1, members: [], server: lastServer.name, raw: "Not supported organization!" };
 
         //Something failed
         if (!rawTeaminfo || rawTeaminfo === "error") return { teamId: "error", members: [], server: "", raw: "" }
@@ -523,9 +525,15 @@ export async function getDiscordData(steamLinks) {
 
         if (discordIds.length === 0) return; //There is no new item
 
-        const promises = discordIds.map(discordId => talkToBackgroundScript("BME_DISCORD_DATA", discordId));
-        discordUserData.push(...await Promise.all(promises))
-        
+        let promises = discordIds.map(discordId => talkToBackgroundScript("BME_DISCORD_DATA", discordId));
+        await Promise.all(promises)
+
+        for (const promise of promises) {
+            const account = await promise
+            if (typeof (account) === "string") continue;
+
+            discordUserData.push(account);
+        }
     } catch (error) {
         return [];
     } finally {
@@ -541,7 +549,24 @@ function getSteamIdFromBmProfile(bmProfile) {
     const steamIdObject = bmProfile.included.find(identifier => identifier?.attributes?.type === "steamID");
     return steamIdObject?.attributes?.identifier ?? null;
 }
+async function fetchBmAPI(url, count = 0) {
+    if (count > 2) return "Failed to fetch."
+    try {
+        const resp = await fetch(url);
 
+        if (resp?.status === 429) await new Promise(r => { setTimeout(r, 5000) });
+        if (resp?.status === 403) return `Forbidden`;
+        if (resp?.status === 400) return `Bad request`;
+        if (resp?.status !== 200) throw new Error(`Failed to fetch | Status: ${resp?.status}`);
+
+        const data = await resp.json();
+        return data;
+    } catch (error) {
+        console.log(`BME-EXTRA: ${error}`);
+        return fetchRelatedPlayers(url, count + 1);
+    }
+
+}
 
 
 
@@ -688,23 +713,4 @@ function getImportantIpInfo(ip) {
     newIp.loc.cityName = ip.location.city_name;
 
     return newIp;
-}
-
-async function fetchBmAPI(url, count = 0) {
-    if (count > 2) return "Failed to fetch."
-    try {
-        const resp = await fetch(url);
-
-        if (resp?.status === 429) await new Promise(r => { setTimeout(r, 5000) });
-        if (resp?.status === 403) return `Forbidden`;
-        if (resp?.status === 400) return `Bad request`;
-        if (resp?.status !== 200) throw new Error(`Failed to fetch | Status: ${resp?.status}`);
-
-        const data = await resp.json();
-        return data;
-    } catch (error) {
-        console.log(`BME-EXTRA: ${error}`);
-        return fetchRelatedPlayers(url, count + 1);
-    }
-
 }
