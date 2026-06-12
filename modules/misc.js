@@ -7,15 +7,14 @@ export const rustApiKeyPermissionBits = {
 };
 
 export const cssAnchors = {
-    identifierTable: "css-11gv980",
-    identifierContentContainer: "css-8uhtka",
-    identifierContent: "css-q39y9k",
+    identifierTable: "css-1clz4cn",
+    identifierContentContainer: "css-1h52dri",
+    identifierContent: "css-1n6n1f5",
     identifierArrowIcon: "css-1c83ua",
     identifierTableTitleContainer: "css-147tpna",
-    identifierTableType: "css-18s4qom",
-    identifierTableTypeButton: "css-p43owu",
-    identifierTableTime: "css-18s4qom",
-
+    identifierTableType: "css-1d6fayl",
+    identifierTableTypeButton: "css-dz605m",
+    identifierTableTime: "css-1d6fayl",
 }
 
 
@@ -184,7 +183,7 @@ export async function getLastServer(bmProfile, onlyMyServer) {
     return lastServer
 }
 export async function getMyServers(onlyIds) {
-    const token = getAuthToken();
+    const token = await getAuthToken();
 
     let myServers = JSON.parse(localStorage.getItem("BME_MY_SERVER_CACHE"));
     if (myServers && myServers.timestamp > Date.now() - 24 * 60 * 60 * 1000) {

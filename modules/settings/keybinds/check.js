@@ -22,14 +22,14 @@ export function getDefaultKeybindsSettings() {
     const settings = {};
 
     settings.privacy = {};
-    settings.privacy.enabled = false;
+    settings.privacy.enabled = true;
     settings.privacy.hotkey = "control+shift";
     settings.privacy.redactIps = true;
     settings.privacy.redactSteamId = true;
     settings.privacy.redactTime = 5000;
 
     settings.showDays = {};
-    settings.showDays.enabled = false;
+    settings.showDays.enabled = true;
     settings.showDays.hotkey = "control";
     settings.showDays.duration = 10000;
 

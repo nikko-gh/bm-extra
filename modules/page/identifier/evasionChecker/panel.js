@@ -1,12 +1,12 @@
 import { checkPlayersPressed, loadPlayersPressed } from "./actions.js";
 import { outcomeCollection } from "./check.js";
 
-//let firstCall = true;
+let firstCall = true;
 export function getEvasionCheckerPanel(settings) {
-    /*if (firstCall) {
+    if (firstCall) {
         firstCall = false;
         startObserver();
-    }*/
+    }
 
     _settings = settings;
 
@@ -185,7 +185,8 @@ function startObserver() {
     const observer = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
             for (const node of mutation.addedNodes) {
-                if (node.nodeName !== "OL") continue
+                if (!window.location.href.includes("identifiers")) continue;
+                if (node.nodeName !== "OL") continue;
 
                 checkList(node);
             }

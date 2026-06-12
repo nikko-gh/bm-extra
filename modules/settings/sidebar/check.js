@@ -39,7 +39,7 @@ export function getDefaultSidebarSettings() {
     settings.friendComparator.color = "#ffffff"
 
     settings.friends = {}
-    settings.friends.enabled = true;
+    settings.friends.enabled = false;
     settings.friends.spot = "right-slot-2"
     settings.friends.showOnline = true;
     settings.friends.onlineColor = "#00ffff";
@@ -51,7 +51,7 @@ export function getDefaultSidebarSettings() {
     settings.historicFriends.seenOnFriend = "#343426"
 
     settings.currentTeam = {};
-    settings.currentTeam.enabled = false;
+    settings.currentTeam.enabled = true;
     settings.currentTeam.spot = "left-slot-1";
 
     settings.relatedPlayers = {}

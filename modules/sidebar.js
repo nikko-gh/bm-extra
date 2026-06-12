@@ -9,6 +9,8 @@ export async function insertSidebars() {
     const left = getSidebarElement("left");
     const right = getSidebarElement("right");
     mainElement.after(left, right)
+
+    return {left, right};
 }
 function getSidebarElement(side) {
     const element = document.createElement("div");
@@ -22,7 +24,7 @@ function getSidebarElement(side) {
     return element;
 }
 
-export async function insertFriendsSidebarElement(steamFriends, connectedPlayersData, connectedPlayersBanData, server, settings) {
+export async function insertFriendsSidebarElement(sidebar, steamFriends, connectedPlayersData, connectedPlayersBanData, server, settings) {
     steamFriends = await steamFriends;
     server = await server;
 
@@ -45,14 +47,12 @@ export async function insertFriendsSidebarElement(steamFriends, connectedPlayers
         })
     }
 
-    const spot = settings.friends.spot
-    const sidebarSlot = document.getElementById(`bme-sidebar-${spot}`);
-    if (!sidebarSlot) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
-
+    const spot = settings.friends.spot;
     const steamFriendsContainer = getSteamFriendsContainer(steamFriends, settings);
-    if (!sidebarSlot.hasChildNodes()) sidebarSlot.append(steamFriendsContainer);
+
+    return insertIntoSidebar(sidebar, spot, steamFriendsContainer);
 }
-export async function insertHistoricFriendsSidebarElement(historicFriends, steamFriends, connectedPlayersData, connectedPlayersBanData, server, settings) {
+export async function insertHistoricFriendsSidebarElement(sidebar, historicFriends, steamFriends, connectedPlayersData, connectedPlayersBanData, server, settings) {
     steamFriends = await steamFriends;
     historicFriends = await historicFriends;
     server = await server;
@@ -82,12 +82,9 @@ export async function insertHistoricFriendsSidebarElement(historicFriends, steam
             });
 
     const spot = settings.historicFriends.spot;
-    const sidebarSlot = document.getElementById(`bme-sidebar-${spot}`);
-    if (!sidebarSlot) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
-
     const steamFriendsContainer = getHistoricSteamFriendsContainer(historicFriends, settings);
-    if (!sidebarSlot.hasChildNodes()) sidebarSlot.append(steamFriendsContainer);
 
+    insertIntoSidebar(sidebar, spot, steamFriendsContainer);
 }
 function getPlayerSteamData(steamId, playerData) {
     for (const item of playerData) if (item.steamId === steamId) return item;
@@ -188,7 +185,7 @@ export async function insertFriendComparator() {
     sidebarSlot.append(element);
 }
 
-export async function insertTeaminfoSidebarElement(team, connectedPlayersData, connectedPlayersBanData, settings) {
+export async function insertTeaminfoSidebarElement(sidebar, team, connectedPlayersData, connectedPlayersBanData, settings) {
     team = await team;
 
     const teamMembers = team.members.map(member => {
@@ -199,11 +196,8 @@ export async function insertTeaminfoSidebarElement(team, connectedPlayersData, c
     })
 
     const spot = settings.currentTeam.spot
-    const sidebarSlot = document.getElementById(`bme-sidebar-${spot}`);
-    if (!sidebarSlot) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
-
     const element = getTeamInfoElement(team.teamId, teamMembers, team.server, team.raw, settings);
-    if (!sidebarSlot.hasChildNodes()) sidebarSlot.append(element);
+    insertIntoSidebar(sidebar, spot, element)
 }
 function getTeamInfoElement(teamId, teamMembers, server, raw, settings) {
     const element = document.createElement("div");
@@ -444,18 +438,15 @@ function getBmButton(steamId) {
     return element;
 }
 
-export async function insertPublicBansSidebarElement(publicBans) {
+export async function insertPublicBansSidebarElement(sidebar, publicBans) {
     publicBans = await publicBans;
 
     const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
     if (!sidebarSettings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
 
     const spot = sidebarSettings.publicBans.spot
-    const sidebarSlot = document.getElementById(`bme-sidebar-${spot}`);
-    if (!sidebarSlot) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
-
     const publicBansElement = getPublicBansElement(publicBans);
-    if (!sidebarSlot.hasChildNodes()) sidebarSlot.appendChild(publicBansElement);
+    insertIntoSidebar(sidebar, spot, publicBansElement);
 }
 function getPublicBansElement(publicBans) {
     const element = document.createElement("div");
@@ -530,7 +521,7 @@ function getBanElement(ban) {
     return element
 }
 
-export async function insertRelatedPlayers(relatedPlayers, settings) {
+export async function insertRelatedPlayers(sidebar, relatedPlayers, settings) {
     relatedPlayers = await relatedPlayers;
 
     if (typeof (relatedPlayers) !== "string")
@@ -541,10 +532,8 @@ export async function insertRelatedPlayers(relatedPlayers, settings) {
     const header = getSidebarHeader("Related Players:");
     const body = getRelatedPlayersBody(relatedPlayers);
     element.append(header, body)
-    const sidebarSlot = document.getElementById(`bme-sidebar-${settings.spot}`);
-    if (document.querySelector("#bme-related-players")) return; //Already exist;
-
-    sidebarSlot.append(element);
+    
+    insertIntoSidebar(sidebar, settings.spot, element);
 }
 function getRelatedPlayersBody(relatedPlayers) {
     const element = document.createElement("div");
@@ -772,4 +761,16 @@ function getBanDurationString(timestamp, locale = "en-us") {
         hour: "numeric",
         minute: "2-digit",
     }).format(new Date(timestamp));
+}
+
+
+function insertIntoSidebar(sidebar, spot, element) {
+    let target = null;
+    if (spot.includes("left")) target = sidebar.left;
+    else target = sidebar.right;
+
+    const container = target.querySelector(`#bme-sidebar-${spot}`);
+    if (container.hasChildNodes()) return console.error(`BME-EXTRA: Spot(${spot}), already occupied!`);
+    
+    container.append(element);
 }

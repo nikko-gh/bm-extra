@@ -92,14 +92,14 @@ async function onAddBanPage(bmId) {
     if (settings.selectLastServer) selectLastServer(bmId, playerCache.bmProfile);
 }
 async function sidebar(bmId, playerCache, settings, page) {
-    await insertSidebars(page);
+    const sidebar = await insertSidebars(page);
 
     if (settings.friendComparator?.enabled) insertFriendComparator();
-    if (settings.friends?.enabled) insertFriendsSidebarElement(playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData, playerCache.serverPop, settings);
-    if (settings.historicFriends?.enabled) insertHistoricFriendsSidebarElement(playerCache.historicFriends, playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData, playerCache.serverPop, settings);
-    if (settings.currentTeam?.enabled) insertTeaminfoSidebarElement(playerCache.team, cache.connectedPlayersData, cache.connectedPlayersBanData, settings);
-    if (settings.publicBans?.enabled) insertPublicBansSidebarElement(playerCache.publicBans);
-    if (settings.relatedPlayers?.enabled) insertRelatedPlayers(playerCache.relatedPlayers, settings.relatedPlayers);
+    if (settings.friends?.enabled) insertFriendsSidebarElement(sidebar, playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData, playerCache.serverPop, settings);
+    if (settings.historicFriends?.enabled) insertHistoricFriendsSidebarElement(sidebar, playerCache.historicFriends, playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData, playerCache.serverPop, settings);
+    if (settings.currentTeam?.enabled) insertTeaminfoSidebarElement(sidebar, playerCache.team, cache.connectedPlayersData, cache.connectedPlayersBanData, settings);
+    if (settings.publicBans?.enabled) insertPublicBansSidebarElement(sidebar, playerCache.publicBans);
+    if (settings.relatedPlayers?.enabled) insertRelatedPlayers(sidebar, playerCache.relatedPlayers, settings.relatedPlayers);
 
     if (settings.presets?.enabled) insertBanPresets(settings, playerCache.bmProfile);
 }
