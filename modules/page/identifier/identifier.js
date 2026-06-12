@@ -262,6 +262,7 @@ export async function displayAvatars(bmId, avatars, zoomable) {
 
     if (document.body.querySelector("#bme-avatars-title")) return;
     nameElement.before(avatarTitle);
+    invokeRerender(avatarTitle, bmId, "identifiers", displayAvatars, [bmId, avatars, zoomable])
 
     avatars.forEach(item => {
         const payload = `
@@ -482,8 +483,7 @@ export async function displayDiscordData() {
     const token = await getKey("BME_PLAYER_INSIGHT_API_KEY")
 
     const unloadedDiscords = Array.from(document.querySelectorAll(".bme-unloaded-discord"));
-    const discordData = cache.discordUserData;
-        
+    const discordData = cache.discordUserData;    
     if (discordData.length === 0) return;
 
 

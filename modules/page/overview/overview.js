@@ -345,8 +345,9 @@ export async function displayAlertLink(bmId) {
         navElement.before(link);
         break;
     }
+    
     const item = document.querySelector("#bme-alert-link");
-    if (!item) return console.error(`BM-EXTRA: Failed to display alert link.`);
+    if (!item) return; //Already there
 
     invokeRerender(item, bmId, "overview", displayAlertLink, [bmId], 20);
 }

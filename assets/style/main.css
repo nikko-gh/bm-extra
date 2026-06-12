@@ -680,7 +680,7 @@ body::-webkit-scrollbar {
     align-items: center;
     font-family: "Menlo", "Monaco", "Consolas", "Courier New", monospace;
 
-    padding: 8px 3px;
+    padding: 6px;
 }
 
 #bme-discord-input input:hover,
