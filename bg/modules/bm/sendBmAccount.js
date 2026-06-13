@@ -8,7 +8,7 @@ export async function sendBmAccount(bmId, tabId, returnObject, token) {
 }
 
 async function getPlayerData(bmId, token, count = 0) {
-    if (count > 2) return null;
+    if (count > 2) throw new Error("Failed to fetch!");    
     try {
         const resp = await fetch(`https://api.battlemetrics.com/players/${bmId}?version=^0.1.0&include=identifier,server,playerFlag&access_token=${token}`)
         if (resp?.status === 429) await new Promise(r => { setTimeout(r, 5000); })
