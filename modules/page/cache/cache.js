@@ -444,7 +444,7 @@ async function getCurrentTeam(bmProfile, authToken) {
         }
 
         //No support
-        if (rawTeaminfo === "") return { teamId: -1, members: [], server: lastServer.name, raw: "Not supported organization!" };
+        if (rawTeaminfo === "") return { teamId: -1, members: [], server: lastServer.name, raw: "Unsupported organization!" };
 
         //Something failed
         if (!rawTeaminfo || rawTeaminfo === "error") return { teamId: "error", members: [], server: "", raw: "" }
