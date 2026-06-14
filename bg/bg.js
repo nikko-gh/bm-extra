@@ -37,20 +37,25 @@ chrome.runtime.onMessage.addListener(async (req, sender) => {
      * value: the outcome of the request or the error string
      */
     const returnObject = { type: `${req.type}_RESOLVED` }
-    if (req.type.startsWith("BME_CURRENT_FRIENDS")) return sendSteamFriends(req.subject, sender.tab.id, returnObject);
-    if (req.type.startsWith("BME_HISTORIC_FRIENDS")) return sendHistoricFriends(req.subject, sender.tab.id, returnObject);
-    if (req.type.startsWith("BME_PREMIUM_STATUS")) return sendPremiumStatus(req.subject, sender.tab.id, returnObject);
-    if (req.type.startsWith("BME_PLAYER_SUMMARIES")) return sendPlayerSummaries(req.subject, sender.tab.id, returnObject);
-    if (req.type.startsWith("BME_BAN_SUMMARIES")) return sendPlayerBanSummaries(req.subject, sender.tab.id, returnObject);
-    if (req.type.startsWith("BME_HISTORIC_AVATARS")) return sendHistoricAvatars(req.subject, sender.tab.id, returnObject);
-    if (req.type.startsWith("BME_PLAYER_INSIGHT_PERMS")) return sendPiPermissions(sender.tab.id, returnObject);
-    if (req.type.startsWith("BME_PROXYCHECK")) return sendProxyCheckData(req.subject, sender.tab.id, returnObject)
-    if (req.type.startsWith("BME_PUBLIC_BANS")) return sendPublicBans(req.subject, sender.tab.id, returnObject);
-    if (req.type.startsWith("BME_STEAM_LINKS")) return sendSteamLinks(req.subject, sender.tab.id, returnObject);
-    if (req.type.startsWith("BME_DISCORD_DATA")) return sendDiscordData(req.subject, sender.tab.id, returnObject);
-    if (req.type.startsWith("BME_DISCORD_MESSAGES")) return sendDiscordMessages(req.subject, sender.tab.id, returnObject);
-    if (req.type.startsWith("BME_BM_ACCOUNT")) return sendBmAccount(req.subject, sender.tab.id, returnObject, req.token);
-    if (req.type.startsWith("BME_BM_BANS")) return sendBmBans(req.subject, sender.tab.id, returnObject, req.token);
+    try {
+        if (req.type.startsWith("BME_CURRENT_FRIENDS")) return await sendSteamFriends(req.subject, sender.tab.id, returnObject);
+        if (req.type.startsWith("BME_HISTORIC_FRIENDS")) return await sendHistoricFriends(req.subject, sender.tab.id, returnObject);
+        if (req.type.startsWith("BME_PREMIUM_STATUS")) return await sendPremiumStatus(req.subject, sender.tab.id, returnObject);
+        if (req.type.startsWith("BME_PLAYER_SUMMARIES")) return await sendPlayerSummaries(req.subject, sender.tab.id, returnObject);
+        if (req.type.startsWith("BME_BAN_SUMMARIES")) return await sendPlayerBanSummaries(req.subject, sender.tab.id, returnObject);
+        if (req.type.startsWith("BME_HISTORIC_AVATARS")) return await sendHistoricAvatars(req.subject, sender.tab.id, returnObject);
+        if (req.type.startsWith("BME_PLAYER_INSIGHT_PERMS")) return await sendPiPermissions(sender.tab.id, returnObject);
+        if (req.type.startsWith("BME_PROXYCHECK")) return await sendProxyCheckData(req.subject, sender.tab.id, returnObject)
+        if (req.type.startsWith("BME_PUBLIC_BANS")) return await sendPublicBans(req.subject, sender.tab.id, returnObject);
+        if (req.type.startsWith("BME_STEAM_LINKS")) return await sendSteamLinks(req.subject, sender.tab.id, returnObject);
+        if (req.type.startsWith("BME_DISCORD_DATA")) return await sendDiscordData(req.subject, sender.tab.id, returnObject);
+        if (req.type.startsWith("BME_DISCORD_MESSAGES")) return await sendDiscordMessages(req.subject, sender.tab.id, returnObject);
+        if (req.type.startsWith("BME_BM_ACCOUNT")) return await sendBmAccount(req.subject, sender.tab.id, returnObject, req.token);
+        if (req.type.startsWith("BME_BM_BANS")) return await sendBmBans(req.subject, sender.tab.id, returnObject, req.token);
+    } catch (error) {
+        console.error(`Failed to fetch the response for ${req.type}: ${error}`);
+        return chrome.tabs.sendMessage(sender.tab.id, {...returnObject, value: errorString.failedToFetch});
+    }
 })
 
 export function sendResponse(tabId, returnObject, value) {

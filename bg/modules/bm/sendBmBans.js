@@ -8,7 +8,7 @@ export async function sendBmBans(bmId, tabId, returnObject, token) {
 }
 
 async function getBmBansData(bmId, token, count = 0) {
-    if (count > 2) return null;
+    if (count > 2) throw new Error("Failed to fetch!");
     try {
         const resp = await fetch(`https://api.battlemetrics.com/bans?version=^0.1.0&sort=-timestamp&filter[player]=${bmId}&filter[expired]=false&access_token=${token}`)
         if (resp?.status === 429) await new Promise(r => { setTimeout(r, 5000); })
