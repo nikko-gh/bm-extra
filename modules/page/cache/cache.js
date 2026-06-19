@@ -550,7 +550,7 @@ function getSteamIdFromBmProfile(bmProfile) {
     return steamIdObject?.attributes?.identifier ?? null;
 }
 async function fetchBmAPI(url, count = 0) {
-    if (count > 2) return "Failed to fetch."
+    if (count > 2) return "FAILED_TO_FETCH"
     try {
         const resp = await fetch(url);
 
@@ -563,7 +563,7 @@ async function fetchBmAPI(url, count = 0) {
         return data;
     } catch (error) {
         console.log(`BME-EXTRA: ${error}`);
-        return fetchRelatedPlayers(url, count + 1);
+        return fetchBmAPI(url, count + 1);
     }
 
 }
