@@ -12,16 +12,13 @@ export async function checkPlayer(playerElement, settings, check) {
     try {
         const authToken = await getAuthToken();
 
-        if (main === null) {
-            main = undefined;
-            setUpMain(authToken, settings)
-        };
+        const bmId = playerElement.dataset.id;
+        if (main === null) main = getPlayerProfile(window.location.href.split("/")[5], authToken, settings);
 
         colorPlayer(playerElement, "checking")
 
-        const bmId = playerElement.dataset.id;
         const player = await getPlayerProfile(bmId, authToken, settings)
-        await lockTillMain();
+        if (main instanceof Promise) main = await main;
 
         const outcome = getOutcome(main, player, settings.core, check);
         setupPlayerElement(playerElement, outcome, player, settings);
@@ -62,15 +59,6 @@ async function getPlayerProfile(bmId, authToken, settings) {
     if (settings.core.checkType === "deep") player.sessions = null;
 
     return player;
-}
-async function setUpMain(authToken, settings) {
-    const bmId = window.location.href.split("/")[5];
-    main = await getPlayerProfile(bmId, authToken, settings);
-}
-async function lockTillMain() {
-    while (!main) {
-        await new Promise(r => { setTimeout(r, 150) })
-    }
 }
 function getOutcome(main, player, settings, check) {
     let isMatch = false;
@@ -395,7 +383,7 @@ async function getBanData(bmId, token) {
     if (cached && cached["bans"]) return cached["bans"];
 
     const data = await talkToBackgroundScript("BME_BM_BANS", bmId, 60000, token)
-    
+
     const bans = data.data.map(ban => {
         return {
             id: ban.id,
