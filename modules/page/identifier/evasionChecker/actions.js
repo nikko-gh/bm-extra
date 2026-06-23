@@ -205,7 +205,7 @@ function getPlayerElement(player) {
 }
 
 export async function checkPlayersPressed(e) {
-    const btn = e.target
+    const btn = e.target;    
     if (!isButtonUseable(btn)) return;
 
     const buttons = [btn];
@@ -230,7 +230,7 @@ export async function checkPlayersPressed(e) {
 
     const check = { org: orgChanger.value }
     const playerPool = Array.from(document.getElementsByClassName("bme-ec-unchecked"));
-    const playerCount = playerPool.length;
+    const playerCount = playerPool.length;    
     await checkPlayers(playerPool, check);
 
     sendEcMessage(`${playerCount} player(s) have been checked.`)
@@ -241,17 +241,17 @@ export async function checkPlayersPressed(e) {
 }
 
 let running = false;
-async function checkPlayers(players, check, maxProcess = 5) {    
+async function checkPlayers(players, check, maxProcess = 5) {
     if (running) return false;
     try {
         running = true;
-        let index = 0;
         const settings = getEcSettings();
-
+        
+        let index = 0;
         async function worker() {
             while (index < players.length) {
                 const player = players[index++];
-                if (!player.isConnected) continue
+                if (!player || !player.isConnected) return;
 
                 await checkPlayer(player, settings, check);
             }
@@ -263,7 +263,7 @@ async function checkPlayers(players, check, maxProcess = 5) {
     } catch (error) {
         return false;
     } finally {
-        running = false
+        running = false;
     }
 }
 

@@ -19,7 +19,7 @@ export async function sendSteamLinks(steamId, tabId, returnObject) {
     const data = await resp.json();
     data.data.links.forEach(item => rawLinks.push(item));
 
-    const orgLinks = await getOrgSteamLinks();
+    const orgLinks = await getOrgSteamLinks(steamId);
     orgLinks.forEach(item => rawLinks.push(item));
 
     const links = [];
