@@ -69,9 +69,8 @@ export function fillDiscordUserElement(element, data, token) {
         guildElement.classList.add("bme-dc-guild-container")
 
         const header = document.createElement("div");
-        if (guild.tags.includes("cc"))
-            header.classList.add("bme-red-text")
         header.classList.add("bme-dc-guild-header")
+        if (guild.tags.includes("cc")) header.classList.add("bme-red-text")
 
         const guildDetails = [
             `${guild.userCount} users`.padEnd(12).replaceAll(" ", "\u00A0"),
@@ -84,7 +83,34 @@ export function fillDiscordUserElement(element, data, token) {
             <div>
                 <h4>GUILD_NAME_PLACEHOLDER</h4>
                 <p>${guildDetails.join(" | ")}</p>
-            </div>`;
+            </div>
+            <button>
+                <img>
+                Copy Invite
+            </button>
+            `;
+
+        const btn = header.querySelector("button");
+        if (guild.vanity) {
+            btn.classList.add("bme-btn-active");
+
+            btn.addEventListener("click", async (e) => {
+                e.stopPropagation();
+
+                try {
+                    await navigator.clipboard.writeText(`https://discord.gg/${guild.vanity}`);
+                    btn.classList.add("bme-button-copied");
+                    setTimeout(() => { btn.classList.remove("bme-button-copied"); }, 400);
+                } catch (err) {
+                    console.error("Failed to copy:", err);
+                }
+            })
+        } else
+            btn.classList.add("bme-btn-inactive");
+
+        const img = btn.querySelector("img");
+        if (guild.tags.includes("cc")) img.src = chrome.runtime.getURL('assets/img/copy-red.png');
+        else img.src = chrome.runtime.getURL('assets/img/copy-white.png');
 
         const guildAvatar = header.querySelector("img");
         guildAvatar.src = guild.avatar;
@@ -116,11 +142,11 @@ export function fillDiscordUserElement(element, data, token) {
         for (const item of guild.roles) {
             const role = document.createElement("div");
             role.innerHTML = `<p></p><p></p><p></p>`
-            
-            role.firstChild.style.setProperty("--width", `${longestTs+1}ch`);
+
+            role.firstChild.style.setProperty("--width", `${longestTs + 1}ch`);
             role.firstChild.innerHTML = `${getTimeSpan(item.lastSeen)} ago`;
-            
-            role.children[1].style.setProperty("--width", `${longestRole+3}ch`);
+
+            role.children[1].style.setProperty("--width", `${longestRole + 3}ch`);
             role.children[1].innerText = `| ${item.role}`;
 
             role.lastChild.innerText = `| ${item.count}x seen`;
