@@ -241,7 +241,6 @@ let _lastResp = null;
 export async function getAuthToken(type) {
     try {
         if (type === "internal") return getInternalAuthToken();
-
         if (_lastResp) return _lastResp;
 
         const internal = getInternalAuthToken();
