@@ -1,4 +1,4 @@
-import { getMyServers, setNativeValue } from "../../misc.js";
+import { getBootstrap, getMyServers, setNativeValue } from "../../misc.js";
 import { getResetButton, getSettingsElement } from "../settings.js";
 
 
@@ -59,9 +59,9 @@ export function getBanPageSettings() {
 
     banPresetsSegment.append(banPresetSidebarSpot, setupBansAfterFirst, copyEvidence,);
 
-    const bootstrap = document.getElementById("storeBootstrap");
+    const bootstrap = getBootstrap();
     if (bootstrap && myServers) {
-        const rawOrgData = JSON.parse(bootstrap.innerText).state.account.organizations
+        const rawOrgData = bootstrap.state.account.organizations
         const orgData = rawOrgData.map(item => getOrgData(item))
 
         const newPresetCreator = getNewPresetCreatorElement(orgData);
