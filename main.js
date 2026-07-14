@@ -9,7 +9,7 @@ navigation.addEventListener("navigate", async (event) => {
 });
 
 //React is done with building the DOM
-window.addEventListener("__REACT_HYDRATED__", () => {main(window.location.href)});
+window.addEventListener("__REACT_HYDRATED__", () => { main(window.location.href) });
 //Extension should fire/refresh on page change
 
 async function main(urlString) {

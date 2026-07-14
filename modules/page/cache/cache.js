@@ -196,13 +196,17 @@ function validate(section, { overview, identifier, sidebar, banPage }, bmId) {
 }
 async function getSteamData(bmId) {
     try {
+        return null;
+        /*
+        Disabled for the moment, will need to look into in the future if it's worth keeping in.
+        
         const authToken = await getAuthToken("internal"); //Can only be accessed via an internal token
         if (!authToken) return console.error(`BME-EXTRA: Missing auth token.`);
 
         const data = await fetchBmAPI(`https://api.battlemetrics.com/players/${bmId}/relationships/steam-profile?version=^0.1.0&access_token=${authToken}`);
         if (typeof (data) === "string") throw new Error(`Failed to request steam data. | Status: ${data}`);
 
-        return data;
+        return data;*/
     } catch (error) {
         console.error(`BM-EXTRA: ${error}`);
         return null;
@@ -210,11 +214,9 @@ async function getSteamData(bmId) {
 }
 async function getBmProfileData(bmId, authToken) {
     try {
-        const resp = await fetch(`https://api.battlemetrics.com/players/${bmId}?version=^0.1.0&include=server,identifier&access_token=${authToken}`);
+        const data = await fetchBmAPI(`https://api.battlemetrics.com/players/${bmId}?version=^0.1.0&include=server,identifier&access_token=${authToken}`);
+        if (typeof (data) === "string") throw new Error(`Failed to request BM profile. | Status: ${data}`);
 
-        if (resp?.status !== 200) throw new Error(`Failed to request profile information. | Status: ${resp?.status}`);
-
-        const data = resp.json()
         return data;
     } catch (error) {
         console.error(`BM-EXTRA: ${error}`);
@@ -263,10 +265,9 @@ async function getBmBanData(bmId, authToken) {
 }
 async function getBmActivity(bmId, authToken) {
     try {
-        const resp = await fetch(`https://api.battlemetrics.com/activity?version=^0.1.0&tagTypeMode=and&filter[tags][blacklist]=2ff49080-f925-47e4-ab9b-9cdb75575695&filter[types][whitelist]=rustLog:playerReport,rustLog:playerDeath:PVP&filter[players]=${bmId}&include=organization,user&page[size]=1000&access_token=${authToken}`);
-        if (resp?.status !== 200) throw new Error(`Failed to request player activity. | Status: ${resp?.status}`);
+        const data = await fetchBmAPI(`https://api.battlemetrics.com/activity?version=^0.1.0&tagTypeMode=and&filter[tags][blacklist]=2ff49080-f925-47e4-ab9b-9cdb75575695&filter[types][whitelist]=rustLog:playerReport,rustLog:playerDeath:PVP&filter[players]=${bmId}&include=organization,user&page[size]=1000&access_token=${authToken}`);
+        if (typeof (data) === "string") throw new Error(`Failed to request activity for ${bmId} | Status: ${data}`);
 
-        const data = await resp.json()
         if (data?.links?.next) {
             const nextData = await requestNextPage(data.links.next, authToken, 1);
             if (!nextData) return data;

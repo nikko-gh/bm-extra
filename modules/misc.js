@@ -237,35 +237,11 @@ async function requestMyServers(url, token, count = 0) {
     }
 }
 
-let _lastResp = null;
-export async function getAuthToken(type) {
-    try {
-        if (type === "internal") return getInternalAuthToken();
+export async function getAuthToken() {
+    const key = await getKey("BME_BATTLEMETRICS_API_KEY");
+    if (!key) console.error(`BME-EXTRA: Missing battlemetrics API key.`)
 
-        if (_lastResp) return _lastResp;
-
-        const internal = getInternalAuthToken();
-        const external = await getKey("BME_BATTLEMETRICS_API_KEY");        
-
-        if (external || internal) _lastResp = external || internal;
-        return external || internal;
-    } catch (error) {
-        return getInternalAuthToken();
-    }
-}
-function getInternalAuthToken() {
-    const authElement = document.getElementById("oauthToken");
-    if (!authElement) {
-        console.error("BM-EXTRA: Auth element wasn't found.")
-        return null;
-    }
-    const authToken = authElement.innerText;
-    if (!authToken) {
-        console.error("BM-EXTRA: Auth Token is missing.")
-        return null;
-    }
-
-    return authToken;
+    return key;
 }
 
 export function setNativeValue(select, value, highlight) {
@@ -328,7 +304,7 @@ export function talkToBackgroundScript(type, subject, rejectTime = 10000, token)
         }, rejectTime);
 
         chrome.runtime.onMessage.addListener(handler);
-        chrome.runtime.sendMessage({ type, subject, token});
+        chrome.runtime.sendMessage({ type, subject, token });
     });
 }
 
@@ -374,7 +350,9 @@ let _locale = null;
 export function getLocale() {
     if (_locale) return _locale;
 
-    const locale = JSON.parse(document.getElementById("storeBootstrap").innerHTML)?.state?.account?.locale;
+    const bootstrap = getBootstrap();
+    const locale = bootstrap.state?.account?.locale;
+
     if (!locale) return "en-us";
 
     _locale = locale;
@@ -388,3 +366,97 @@ export function getHiddenTableRow() {
 
     return element;
 }
+
+
+
+function normalizePath(path) {
+    if (!path) return "/";
+
+    let cleanPath = path.split("?")[0].split("#")[0];
+    if (cleanPath.length > 1 && cleanPath.endsWith("/")) {
+        cleanPath = cleanPath.slice(0, -1);
+    }
+
+    return cleanPath.toLowerCase();
+}
+
+
+
+
+
+// Temporary solution, based on BattleMetric's content scripts.
+/////////////////////////////////////////////////////////////////////////////
+let _bootstrap = null;
+export function getBootstrap() {
+    return _bootstrap;
+}
+
+loadBootstrap();
+async function loadBootstrap(count = 0) {
+    if (count > 4) return console.error(`BM-EXTRA: Failed to load bootstrap!`)
+    try {
+        const bootstrapElement = document.getElementById("storeBootstrap");
+        if (!bootstrapElement) throw new Error("Bootstrap element wasn't found.");
+        
+        const encryptedData = (bootstrapElement.textContent || bootstrapElement.innerHTML).trim();
+        if (!encryptedData) throw new Error("Bootstap element wasn't found.");
+
+        const instanceElement = document.getElementById("instanceId");
+        if (!instanceElement) throw new Error("instanceElement wasn't found.");
+
+        const instanceId = instanceElement?.innerText.trim() || "";
+        const pathname = window.location.pathname;
+
+        const bootstrap = await decryptBootstrap(encryptedData, instanceId, pathname);
+        _bootstrap = bootstrap;
+        console.log(`BM-EXTRA: bootstrap loaded!`);
+
+    } catch (error) {
+        console.error(`BM-EXTRA: Failed to load bootstrap: ${error.message}`);
+        await new Promise(r => { setTimeout(() => { r() }, 250) });
+        loadBootstrap(count + 1);
+    }
+
+    //support functions
+    async function getCrypto() {
+        if (window.crypto?.subtle) return window.crypto;
+        if (globalThis.crypto?.subtle) return globalThis.crypto;
+
+        const cryptoModule = await import("crypto");
+        return cryptoModule.webcrypto || cryptoModule.default?.webcrypto || cryptoModule;
+    }
+
+    async function createDecryptKey(subtle, instanceId, pathname) {
+        const route = normalizePath(pathname);
+        const keyString = `${instanceId}_${route}_1ef3fd088443fc1f1909e6994e6c68ae7760b5f6`;
+
+        const hash = await subtle.digest("SHA-256", new TextEncoder().encode(keyString));
+        return subtle.importKey("raw", hash, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+    }
+
+    function decodeBase64(data) {
+        const binary = atob(data);
+        const bytes = new Uint8Array(binary.length);
+
+        for (let i = 0; i < binary.length; i++)
+            bytes[i] = binary.charCodeAt(i);
+
+        return bytes;
+    }
+
+    async function decryptBootstrap(encryptedData, instanceId, pathname) {
+        const crypto = await getCrypto();
+        const bytes = decodeBase64(encryptedData);
+        if (bytes.length < 12) throw new Error("Payload is too short");
+
+        const inVect = bytes.slice(0, 12);
+        const payload = bytes.slice(12);
+        const key = await createDecryptKey(crypto.subtle, instanceId, pathname);
+        const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: inVect }, key, payload);
+
+        const stream = new Response(new Uint8Array(decrypted)).body.pipeThrough(new DecompressionStream("gzip"));
+        const decompressed = await new Response(stream).arrayBuffer();;
+        return JSON.parse(new TextDecoder().decode(decompressed));
+    }
+}
+/////////////////////////////////////////////////////////////////////////////
