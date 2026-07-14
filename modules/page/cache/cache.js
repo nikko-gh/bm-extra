@@ -196,13 +196,17 @@ function validate(section, { overview, identifier, sidebar, banPage }, bmId) {
 }
 async function getSteamData(bmId) {
     try {
+        return null;
+        /*
+        Disabled for the moment, will need to look into in the future if it's worth keeping in.
+        
         const authToken = await getAuthToken("internal"); //Can only be accessed via an internal token
         if (!authToken) return console.error(`BME-EXTRA: Missing auth token.`);
 
         const data = await fetchBmAPI(`https://api.battlemetrics.com/players/${bmId}/relationships/steam-profile?version=^0.1.0&access_token=${authToken}`);
         if (typeof (data) === "string") throw new Error(`Failed to request steam data. | Status: ${data}`);
 
-        return data;
+        return data;*/
     } catch (error) {
         console.error(`BM-EXTRA: ${error}`);
         return null;

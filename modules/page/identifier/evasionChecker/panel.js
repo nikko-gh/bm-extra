@@ -1,3 +1,4 @@
+import { getBootstrap } from "../../../misc.js";
 import { checkPlayersPressed, loadPlayersPressed } from "./actions.js";
 import { outcomeCollection } from "./check.js";
 
@@ -134,12 +135,11 @@ function getOrgChanger() {
 function getOrgs() {
     const orgs = [{ id: "all", name: "Global" }];
 
-    const bootstrap = document.getElementById("storeBootstrap");
-    if (!bootstrap) return orgs;
+    const bootstrapJson = getBootstrap();
+    
+    const bsAccOrgs = bootstrapJson?.state?.account?.organizations || [];
 
-    const bootstrapJson = JSON.parse(bootstrap.innerText);
-
-    for (const org of bootstrapJson.state.account.organizations || []) {
+    for (const org of bsAccOrgs) {
         const orgInfo = getOrgInfo(org);
         orgs.push(orgInfo)
     }
