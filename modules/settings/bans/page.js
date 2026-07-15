@@ -24,13 +24,14 @@ export function getBanPageSettings() {
     )
 
     const banPresetsSegment = document.createElement("div")
-    banPresetsSegment.classList.add("bme-settings-segment");
+    banPresetsSegment.classList.add("bme-settings-segment", "bme-inactive-segment");
 
     const banPresetsEnabled = getSettingsElement(
         "toggle", "Enable Ban Presets",
-        "Allows you to create ban presets that you can activate with one click on the sidebar.",
+        "Ban presets are disabled. If you had previously setup presets, you can use those until they work, but you cannot setup new ones.",
+        /*"Allows you to create ban presets that you can activate with one click on the sidebar.",*/
         null, settingsBucket, "presets-enabled",
-        settings.presets.enabled, { segment: banPresetsSegment }
+        settings.presets.enabled
     )
 
     const banSidebarSlots = [
@@ -75,6 +76,7 @@ export function getBanPageSettings() {
         const banPresetsImportExport = getImportExport()
         banPresetsSegment.append(banPresetsImportExport)
     }
+
 
     const resetButton = getResetButton("bm-bans")
     element.append(
