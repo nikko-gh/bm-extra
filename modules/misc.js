@@ -351,7 +351,7 @@ export function getLocale() {
     if (_locale) return _locale;
 
     const bootstrap = getBootstrap();
-    const locale = bootstrap.state?.account?.locale;
+    const locale = bootstrap?.state?.account?.locale;
 
     if (!locale) return "en-us";
 
@@ -390,6 +390,8 @@ let _bootstrap = null;
 export function getBootstrap() {
     return _bootstrap;
 }
+/*
+Disabled as key appears to be swapped, and it would not be a good solution to swap the key with every change on their side.
 
 loadBootstrap();
 async function loadBootstrap(count = 0) {
@@ -410,7 +412,6 @@ async function loadBootstrap(count = 0) {
         const bootstrap = await decryptBootstrap(encryptedData, instanceId, pathname);
         _bootstrap = bootstrap;
         console.log(`BM-EXTRA: bootstrap loaded!`);
-
     } catch (error) {
         console.error(`BM-EXTRA: Failed to load bootstrap: ${error.message}`);
         await new Promise(r => { setTimeout(() => { r() }, 250) });
@@ -459,4 +460,5 @@ async function loadBootstrap(count = 0) {
         return JSON.parse(new TextDecoder().decode(decompressed));
     }
 }
+*/
 /////////////////////////////////////////////////////////////////////////////

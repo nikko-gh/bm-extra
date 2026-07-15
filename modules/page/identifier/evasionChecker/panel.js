@@ -135,8 +135,7 @@ function getOrgChanger() {
 function getOrgs() {
     const orgs = [{ id: "all", name: "Global" }];
 
-    const bootstrapJson = getBootstrap();
-    
+    const bootstrapJson = getBootstrap();    
     const bsAccOrgs = bootstrapJson?.state?.account?.organizations || [];
 
     for (const org of bsAccOrgs) {
