@@ -94,7 +94,7 @@ async function onAddBanPage(bmId) {
 async function sidebar(bmId, playerCache, settings, page) {
     const sidebar = await insertSidebars(page);
 
-    if (settings.friendComparator?.enabled) insertFriendComparator();
+    if (settings.friendComparator?.enabled) insertFriendComparator(sidebar);
     if (settings.friends?.enabled) insertFriendsSidebarElement(sidebar, playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData, playerCache.serverPop, settings);
     if (settings.historicFriends?.enabled) insertHistoricFriendsSidebarElement(sidebar, playerCache.historicFriends, playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData, playerCache.serverPop, settings);
     if (settings.currentTeam?.enabled) insertTeaminfoSidebarElement(sidebar, playerCache.team, cache.connectedPlayersData, cache.connectedPlayersBanData, settings);

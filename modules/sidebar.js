@@ -134,13 +134,11 @@ function getFriendlistBody(friends, settings, isHistoric) {
     return container;
 }
 
-export async function insertFriendComparator() {
+export async function insertFriendComparator(sidebar) {
     const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
     if (!sidebarSettings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
 
     const spot = sidebarSettings.friendComparator.spot;
-    const sidebarSlot = document.getElementById(`bme-sidebar-${spot}`);
-    if (!sidebarSlot) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
     const color = sidebarSettings.friendComparator.color;
 
     const element = document.createElement("div");
@@ -182,7 +180,7 @@ export async function insertFriendComparator() {
     element.append(input);
 
     if (document.querySelector("#bme-player-comparator")) return;
-    sidebarSlot.append(element);
+    insertIntoSidebar(sidebar, spot, element);
 }
 
 export async function insertTeaminfoSidebarElement(sidebar, team, connectedPlayersData, connectedPlayersBanData, settings) {
