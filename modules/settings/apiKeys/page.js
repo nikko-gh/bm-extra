@@ -17,7 +17,7 @@ export function getApiKeysSettings() {
         detail: `Key can be generated at <a href="https://steamcommunity.com/dev/apikey" target="_blank">Steam Web API</a>.`
     });
     const battleMetricsKeyElements = getApiKeyDiv("BattleMetrics API Key:", "BME_BATTLEMETRICS_API_KEY", "bm-api", {
-        detail: "OPTIONAL: Provided key will take priority, but it isn't necessary."
+        detail: `REQUIRED: Without this key the extension cannot request anything.`
     });
     const piPermsSegment = document.createElement("div");
     piPermsSegment.classList.add("bme-settings-segment");
