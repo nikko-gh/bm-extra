@@ -53,8 +53,8 @@ async function onOverviewPage(bmId) {
     displaySettingsButton();
     if (settings.showAlert) displayAlertLink(bmId);
     if (settings.showServer) displayServerActivity(bmId, playerCache.bmProfile);
-    if (settings.showInfoPanel) displayInfoPanel(bmId, playerCache.bmProfile, playerCache.steamData, playerCache.bmActivity, playerCache.rustPremium);
-    if (settings.showAvatar) displayAvatar(bmId, playerCache.bmProfile, playerCache.steamData, "overview");
+    if (settings.showInfoPanel) displayInfoPanel(bmId, playerCache.bmProfile, playerCache.bmActivity, playerCache.rustPremium);
+    if (settings.showAvatar) displayAvatar(bmId, playerCache.bmProfile, "overview");
     if (settings.removeSteamInfo) removeSteamInformation(bmId);
     if (settings.advancedBans) advancedBans(bmId, playerCache.bmBanData);
     if (settings.closeAdminLog) closeAdminLog(bmId);
@@ -70,7 +70,7 @@ async function onIdentifierPage(bmId) {
     const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
     sidebar(bmId, playerCache, sidebarSettings, "identifier")
 
-    if (settings.showAvatar) displayAvatar(bmId, playerCache.bmProfile, playerCache.steamData, "identifiers");
+    if (settings.showAvatar) displayAvatar(bmId, playerCache.bmProfile, "identifiers");
     if (settings.showIspAndAsnData) showExtraDataOnIps(bmId, playerCache.bmProfile, settings.requestProxyCheck)
     if (settings.highlightVpn) highlightVpnIdentifiers(bmId, { label: settings.removeVpnLabel, threshold: settings.vpnAbove, background: settings.vpnBgColor, opacity: settings.vpnOpacity })
     if (settings.displayAvatars) displayAvatars(bmId, playerCache.identifiers.avatars, settings.zoomableAvatars)

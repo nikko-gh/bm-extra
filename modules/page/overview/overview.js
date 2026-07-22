@@ -77,14 +77,13 @@ function getCurrentServersElement(servers) {
     return element;
 }
 
-export async function displayInfoPanel(bmId, bmProfile, steamData, bmActivity, rustPremium) {
+export async function displayInfoPanel(bmId, bmProfile, bmActivity, rustPremium) {
     bmProfile = await bmProfile;
-    steamData = await steamData;
     bmActivity = await bmActivity;
     rustPremium = await rustPremium;
 
     const steamIdObject = getSteamIdObject(bmProfile.included);
-    const bmSteamData = getSteamData(steamIdObject, steamData);
+    const bmSteamData = getSteamData(steamIdObject);
     const bmData = getBmData(bmId, bmProfile, bmActivity);
 
     const rconElement = await getElementWhenAppears("RCONPlayerPage");
@@ -105,7 +104,7 @@ export async function displayInfoPanel(bmId, bmProfile, steamData, bmActivity, r
     if (shouldAbort(bmId, "bme-info-panel")) return;
     identifierDiv.insertAdjacentElement("afterend", infoPanel)
 }
-function getSteamData(steamIdObject, steamData) {
+function getSteamData(steamIdObject) {
     if (!steamIdObject) return null;
     const returnData = {}
     returnData.steamId = steamIdObject.attributes?.identifier;
@@ -139,9 +138,7 @@ function getSteamData(steamIdObject, steamData) {
     returnData.visibility = metadata?.profile ? metadata.profile.communityvisibilitystate : null;
     returnData.limitedAccount = typeof (metadata?.profile?.isLimitedAccount) === "boolean" ? metadata.profile.isLimitedAccount : null;
     returnData.isSetup = metadata?.profile ? metadata.profile.profilestate ? true : false : null;
-    returnData.accountAge = steamData ? steamData.data.memberSince ?
-        new Date(steamData.data.attributes.memberSince).getTime() :
-        new Date(steamData.data.attributes.memberSinceAprox).getTime() : null;
+    returnData.accountAge = metadata?.profile?.timecreated ? metadata.profile.timecreated * 1000 : null;
 
     return returnData;
 }
