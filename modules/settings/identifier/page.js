@@ -32,7 +32,7 @@ export function getIdentifierSettings() {
     const showMore = getSettingsElement(
         "toggle", "Show Proxycheck Info",
         "Shows extra information related to the IP Address from proxycheck.io",
-        ["PROXYCHECK"], bucket, "requestProxyCheck", settings.requestProxyCheck
+        null, bucket, "requestProxyCheck", settings.requestProxyCheck
     )
     showExtraInfoSegment.append(showMore);
 
