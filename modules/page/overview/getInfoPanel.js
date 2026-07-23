@@ -119,9 +119,9 @@ function getLimitedAccountElements(steam) {
 function getGameBanCountElements(steam) {
     const title = createHtmlElement("dt", "Game Bans:");
 
-    const valueString = !steam || steam.vacBanCount === null ? "Unknown" : `${steam.vacBanCount}`;
+    const valueString = !steam || steam.gameBanCount === null ? "Unknown" : `${steam.gameBanCount}`;
 
-    const currentClass = steam && (steam.vacBanCount > 0 && steam.daysSinceLastBan < 180) ? "bme-red-text" : "";
+    const currentClass = steam && (steam.gameBanCount > 0 && steam.daysSinceLastBan < 180) ? "bme-red-text" : "";
     const value = createHtmlElement("dd", valueString, currentClass ? [currentClass] : []);
     return [title, value];
 
