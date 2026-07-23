@@ -282,10 +282,6 @@ async function colorBasedOnValidity(span, requirement) {
             const smData = localStorage.getItem("BME_SM_NAMES");
             if (!smData) throw new Error("Not valid");
 
-        } else if (requirement === "PROXYCHECK") {
-            const key = await getKey("BME_PROXY_CHECK_API_KEY");
-            if (!key) throw new Error("Not valid");
-
         } else if (requirement.startsWith("Player Insight - ")) {
             const key = await getKey("BME_PLAYER_INSIGHT_API_KEY");
             if(key.length !== 64) throw new Error("Not valid");
