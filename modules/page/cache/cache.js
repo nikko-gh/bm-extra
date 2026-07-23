@@ -227,7 +227,7 @@ async function getRelatedPlayers(bmProfile, authToken) {
             duration: player.attributes.duration,
         }
     })
-    players.sort((a, b) => { b.duration - a.duration });
+    players.sort((a, b) => b.duration - a.duration);
     return players;
 }
 async function getBmBanData(bmId, authToken) {
