@@ -159,12 +159,12 @@ export function getEvasionCheckerSettings() {
     )
     const serverBannedMatch = getSettingsElement(
         "color", "Server banned match:",
-        "Color of a server banned match.",
+        "Color of a server banned matched row.",
         null, bucket, "color-serverBannedMatch", settings.color.serverBannedMatch,
     )
     const serverBannedOldMatch = getSettingsElement(
         "color", "Old server banned match:",
-        "Color of an old server banned match.",
+        "Color of an old server banned matched row.",
         null, bucket, "color-serverBannedOldMatch", settings.color.serverBannedOldMatch,
     )
 
