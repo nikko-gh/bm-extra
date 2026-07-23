@@ -261,6 +261,7 @@ function getServerCountElements(bm, settings) {
 }
 function getReportElements(bm, settings, recent) {
     const title = createHtmlElement("dt", "Reports:");
+    if (bm.activityFailed) return getUnknownRow(title);
 
     const reportCount = bm.allReports.length
     let valueString = "" + reportCount;
@@ -278,6 +279,7 @@ function getReportElements(bm, settings, recent) {
 }
 function getCheatReportElements(bm, settings, recent) {
     const title = createHtmlElement("dt", "Cheat Reports:");
+    if (bm.activityFailed) return getUnknownRow(title);
 
     const reportCount = bm.cheatReports.length
     let valueString = "" + reportCount;
@@ -309,6 +311,7 @@ function getAimTrainingElements(bm, settings) {
 }
 function getKillCountElements(bm, settings, recent) {
     const title = createHtmlElement("dt", "Kills:");
+    if (bm.activityFailed) return getUnknownRow(title);
 
     const killCount = bm.kills.length
     let killValueString = "" + killCount;
@@ -326,6 +329,7 @@ function getKillCountElements(bm, settings, recent) {
 }
 function getDeathElements(bm, settings, recent) {
     const title = createHtmlElement("dt", "Deaths:");
+    if (bm.activityFailed) return getUnknownRow(title);
 
     const deathCount = bm.deaths.length
     let deathValueString = "" + deathCount;
@@ -342,6 +346,7 @@ function getDeathElements(bm, settings, recent) {
 }
 function getKdElements(bm, settings, recent) {
     const title = createHtmlElement("dt", "K/D:");
+    if (bm.activityFailed) return getUnknownRow(title);
 
     const kd = bm.kills.length / Math.max(bm.deaths.length, 1);
     let kdValueString = kd.toFixed(2);
@@ -382,6 +387,9 @@ function createHtmlElement(node, innerText, classList = []) {
     if (classList.length > 0) element.classList.add(...classList)
     element.innerHTML = innerText;
     return element;
+}
+function getUnknownRow(title) {
+    return [title, createHtmlElement("dd", "Unknown")];
 }
 
 const ONE_SECOND = 1000;

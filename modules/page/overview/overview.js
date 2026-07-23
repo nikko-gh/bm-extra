@@ -163,6 +163,7 @@ function getBmData(bmId, bmData, bmActivity) {
     returnData.combinedPlaytime = Math.floor(returnData.combinedPlaytime / 60 / 60);
     returnData.aimTrainPlaytime = Math.floor(returnData.aimTrainPlaytime / 60 / 60);
 
+    returnData.activityFailed = !bmActivity;
     returnData.allReports = [];
     returnData.cheatReports = [];
     returnData.kills = [];
