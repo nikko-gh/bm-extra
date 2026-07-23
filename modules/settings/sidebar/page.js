@@ -32,7 +32,7 @@ export function getSidebarSettings() {
 
     const currentTeamSpot = getSettingsElement(
         "switch", "Position:",
-        "Choose which sidebar spot should the current team be present.",
+        "Choose which sidebar spot the current team should appear in.",
         null, bucket, "currentTeam-spot", settings.currentTeam.spot, { options: allSidebarSlots }
     )
     currentTeamSegment.append(currentTeamSpot)
@@ -49,13 +49,13 @@ export function getSidebarSettings() {
 
     const relatedPlayersMax = getSettingsElement(
         "number", "Max profiles",
-        "Maximum number of profile to be shown.",
+        "Maximum number of profiles to be shown.",
         null, bucket, "relatedPlayers-max", settings.relatedPlayers.max, {max: 100, min: 0 }
     )
 
     const relatedPlayersSpot = getSettingsElement(
         "switch", "Position:",
-        "Choose which sidebar spot should the related players be present.",
+        "Choose which sidebar spot the related players should appear in.",
         null, bucket, "relatedPlayers-spot", settings.relatedPlayers.spot, { options: allSidebarSlots }
     )
 
@@ -76,7 +76,7 @@ export function getSidebarSettings() {
 
     const friendComparatorSpot = getSettingsElement(
         "switch", "Position:",
-        "Choose which sidebar spot should the player comparator be present.",
+        "Choose which sidebar spot the player comparator should appear in.",
         null, bucket, "friendComparator-spot", settings.friendComparator.spot, { options: allSidebarSlots }
     )
     const comparatorColor = getSettingsElement(
@@ -98,7 +98,7 @@ export function getSidebarSettings() {
 
     const steamFriendsSpot = getSettingsElement(
         "switch", "Position:",
-        "Choose which sidebar spot should the Steam Friends be present.",
+        "Choose which sidebar spot the Steam Friends should appear in.",
         null, bucket, "friends-spot", settings.friends.spot, { options: allSidebarSlots }
     )
     const steamFriendsShowOnline = getSettingsElement(
@@ -108,7 +108,7 @@ export function getSidebarSettings() {
     )
     const steamFriendsOnlineColor = getSettingsElement(
         "color", "Online friends border color:",
-        "Choose the color the online friends supposed to be highlighted with.",
+        "Choose the color the online friends are supposed to be highlighted with.",
         null, bucket, "friends-onlineColor", settings.friends.onlineColor
     )
     steamFriendsSegment.append(steamFriendsSpot, steamFriendsShowOnline, steamFriendsOnlineColor)
@@ -125,7 +125,7 @@ export function getSidebarSettings() {
 
     const historicFriendsSpot = getSettingsElement(
         "switch", "Position:",
-        "Choose which sidebar spot should the Historic Friends be present.",
+        "Choose which sidebar spot the Historic Friends should appear in.",
         null, bucket, "historicFriends-spot", settings.historicFriends.spot, { options: allSidebarSlots }
     )
     const seenOnOrigin = getSettingsElement(
@@ -152,7 +152,7 @@ export function getSidebarSettings() {
 
     const publicBansSpot = getSettingsElement(
         "switch", "Position:",
-        "Choose which sidebar spot should the public bans be present.",
+        "Choose which sidebar spot the public bans should appear in.",
         null, bucket, "publicBans-spot", settings.publicBans.spot, { options: allSidebarSlots }
     )
     publicBansSegment.append(publicBansSpot)

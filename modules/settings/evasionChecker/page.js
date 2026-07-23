@@ -74,7 +74,7 @@ export function getEvasionCheckerSettings() {
 
     const caseSensitive = getSettingsElement(
         "toggle", "Case-Sensitive Name Matching",
-        "Treat uppercase and lowercase letters different when matching names.",
+        "Treat uppercase and lowercase letters differently when matching names.",
         null, bucket, "core-nameMatchCaseSensitive", settings.core.nameMatchCaseSensitive
     )
 
@@ -108,7 +108,7 @@ export function getEvasionCheckerSettings() {
     )
     const checking = getSettingsElement(
         "color", "Checking:",
-        "Color of row when it's being checked.",
+        "Color of a row when it's being checked.",
         null, bucket, "color-checking", settings.color.checking,
     )
     const clean = getSettingsElement(

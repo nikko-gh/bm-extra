@@ -11,7 +11,7 @@ export function getIdentifierSettings() {
 
     const showAvatarToggle = getSettingsElement(
         "toggle", "Show avatar on page",
-        "Shows the players avatar when it's available next to his name.",
+        "Shows the player's avatar when it's available next to their name.",
         null, bucket, "showAvatar", settings.showAvatar
     )
     const swapBattleEyeGuid = getSettingsElement(
@@ -94,7 +94,7 @@ export function getIdentifierSettings() {
     )
     const loadDiscordData = getSettingsElement(
         "toggle", "Load Discord Data",
-        `Load and display the discord Account information.`,
+        `Load and display the Discord account information.`,
         ["Player Insight - DD"], bucket, "loadDiscordData", settings.loadDiscordData
     )
     const showEmptyIdInput = getSettingsElement(

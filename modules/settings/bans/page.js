@@ -28,7 +28,7 @@ export function getBanPageSettings() {
 
     const banPresetsEnabled = getSettingsElement(
         "toggle", "Enable Ban Presets",
-        "Ban presets are disabled. If you had previously setup presets, you can use those until they work, but you cannot setup new ones.",
+        "Ban presets are disabled. If you had previously set up presets, you can use those until they work, but you cannot set up new ones.",
         /*"Allows you to create ban presets that you can activate with one click on the sidebar.",*/
         null, settingsBucket, "presets-enabled",
         settings.presets.enabled
@@ -42,7 +42,7 @@ export function getBanPageSettings() {
     ]
     const banPresetSidebarSpot = getSettingsElement(
         "switch", "Position:",
-        "Choose which sidebar spot should the ban presets be present.",
+        "Choose which sidebar spot the ban presets should appear in.",
         null, settingsBucket, "presets-spot", settings.presets.spot, { options: banSidebarSlots }
     )
 

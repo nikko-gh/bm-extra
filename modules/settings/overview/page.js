@@ -11,7 +11,7 @@ export function getOverviewSettings() {
 
     const showAvatar = getSettingsElement(
         "toggle", "Show avatar on page",
-        "Shows the players avatar when it's available next to his name.",
+        "Shows the player's avatar when it's available next to their name.",
         null, settingsBucket, "showAvatar", settings.showAvatar
     )
     const showAlert = getSettingsElement(
@@ -51,12 +51,12 @@ export function getOverviewSettings() {
     )
     const maxNamesOnProfile = getSettingsElement(
         "number", "Maximum names:",
-        "The maximum number of names allowed to be showed in the overview section.",
+        "The maximum number of names allowed to be shown in the overview section.",
         null, settingsBucket, "maxNames", settings.maxNames
     )
     const maxIpsOnProfile = getSettingsElement(
         "number", "Maximum IP addresses:",
-        "The maximum number of IP addresses allowed to be showed in the overview section.",
+        "The maximum number of IP addresses allowed to be shown in the overview section.",
         null, settingsBucket, "maxIps", settings.maxIps
     )
     const resetButton = getResetButton("bm-overview");

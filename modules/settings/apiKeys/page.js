@@ -66,7 +66,7 @@ export function getApiKeysSettings() {
     const currentCacheSize = getPcCacheSize();
     const keepCache = getSettingsElement(
         "toggle", "Keep Cache",
-        `Keep proxycheck data for 24 hours, in order if you reopen a player don't waste resources with requesting the unnecessary data again. Your current cache has ${currentCacheSize} items.`,
+        `Keep proxycheck data for 24 hours, so that reopening a player doesn't waste resources re-requesting the same data. Your current cache has ${currentCacheSize} items.`,
         null, bucket, "keepCache", settings.keepCache
     )
 

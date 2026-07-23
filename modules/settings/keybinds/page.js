@@ -61,7 +61,7 @@ export function getKeybindsSettings(params) {
 
     const showDaysHotkey = getSettingsElement(
         "hotkey", "Keybind:",
-        "Choose your keybind, this will covert all the time durations into days.",
+        "Choose your keybind, this will convert all the time durations into days.",
         null, settingsBucket, "showDays-hotkey", settings.showDays.hotkey
     )
     const showDaysDurationOptions = [
