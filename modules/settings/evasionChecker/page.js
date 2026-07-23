@@ -133,7 +133,7 @@ export function getEvasionCheckerSettings() {
     )
     const oldGameBanColor = getSettingsElement(
         "color", "Old Game ban:",
-        "Color of a game banned row.",
+        "Color of an old game banned row.",
         null, bucket, "color-gameBannedOld", settings.color.gameBannedOld,
     )
 
