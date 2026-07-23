@@ -104,7 +104,8 @@ async function getRelatedPlayers(bmId, token) {
     const data = await fetchRelatedPlayers(`https://api.battlemetrics.com/players/${bmId}/relationships/related-identifiers?&filter[matchIdentifiers]=ip&filter[identifiers]=ip&include=player&page[size]=100`, token);
     if (data.status !== 200){
         sendMessage("Failed to fetch related players.")
-        return console.error(`BM-EXTRA: Failed to fetch related players. | ${bmId} | ${data.status}`);
+        console.error(`BM-EXTRA: Failed to fetch related players. | ${bmId} | ${data.status}`);
+        return { status: data.status };
     } 
 
     const players = new Map();
