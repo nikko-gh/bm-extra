@@ -367,7 +367,7 @@ export function getShowCaseTimeString(timestamp, short, isDuration) {
     if (since > DAY) return plural(since / DAY, "day");
     if (since > HOUR) return plural(since / HOUR, "hour");
     if (since > MINUTE) return plural(since / MINUTE, "minute");
-    if (since > SECOND) return plural(since / MINUTE, "second");
+    if (since > SECOND) return plural(since / SECOND, "second");
     return `${since} ms`;
 }
 function plural(value, unit) {
