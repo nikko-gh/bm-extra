@@ -21,12 +21,12 @@ export function getOverviewSettings() {
     )
     const showBmInfo = getSettingsElement(
         "toggle", "Show BM information",
-        "Shows detailed information that is stored by battlemetrics and usually it is not visible by default",
+        "Shows detailed information that is stored by BattleMetrics and usually it is not visible by default",
         null, settingsBucket, "showInfoPanel", settings.showInfoPanel
     );
     const removeSteamInfo = getSettingsElement(
         "toggle", "Remove steam information",
-        "Remove the default Steam information panel from the battlemetrics RCON profile when it appears",
+        "Remove the default Steam information panel from the BattleMetrics RCON profile when it appears",
         null, settingsBucket, "removeSteamInfo", settings.removeSteamInfo,
     );
     const showServer = getSettingsElement(
@@ -41,7 +41,7 @@ export function getOverviewSettings() {
     )
     const closeAdminLog = getSettingsElement(
         "toggle", "Close admin log",
-        "Close admin log by default when opening a battlemetrics profile.",
+        "Close admin log by default when opening a BattleMetrics profile.",
         null, settingsBucket, "closeAdminLog", settings.closeAdminLog
     )
     const swapBattleEyeGuid = getSettingsElement(
