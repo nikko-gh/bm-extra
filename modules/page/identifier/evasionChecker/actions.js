@@ -17,7 +17,7 @@ export async function loadPlayersPressed(e, autoStart = false) {
 
     modeChanger.classList.add("bme-ec-used", "bme-ec-inactive");
 
-    const loadPlayers = loadPlayersHub(text.toLowerCase());
+    const loadPlayers = await loadPlayersHub(text.toLowerCase());
 
     modeChanger.classList.remove("bme-ec-inactive");
     if (loadPlayers) {
