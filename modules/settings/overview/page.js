@@ -36,7 +36,7 @@ export function getOverviewSettings() {
     )
     const advancedBans = getSettingsElement(
         "toggle", "Advanced bans",
-        "Update ban reasons for a more readable format | May not properly work on other servers.",
+        "Update ban reasons for a more readable format | May not fit your organization's ban reason formatting.",
         null, settingsBucket, "advancedBans", settings.advancedBans
     )
     const closeAdminLog = getSettingsElement(
