@@ -250,6 +250,7 @@ async function getBmActivity(bmId, authToken) {
         return data;
     } catch (error) {
         console.error(`BM-EXTRA: ${error}`);
+        return null;
     }
 }
 async function requestNextPage(url, token, page) {

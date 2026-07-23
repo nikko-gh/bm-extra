@@ -168,7 +168,8 @@ function getBmData(bmId, bmData, bmActivity) {
     returnData.kills = [];
     returnData.deaths = [];
 
-    bmActivity.data.forEach(msg => {
+    //activity can be null if the request failed
+    bmActivity?.data?.forEach(msg => {
         if (msg.type !== "activityMessage" || !msg.attributes) return;
         const data = msg.attributes.data;
         const timestamp = new Date(msg.attributes.timestamp).getTime();
