@@ -136,7 +136,7 @@ async function fetchRelatedPlayers(url, token, count = 0) {
         const resp = await fetch(`${url}&access_token=${token}`);
         if (resp?.status === 429) {
             await new Promise(r => { setTimeout(r, 10000) });
-            throw new Error(`Rate Limit reached while requesting related identifiers for ${bmId} | Status: ${resp.status}`);
+            throw new Error(`Rate Limit reached while requesting related identifiers | Status: ${resp.status}`);
         }
         if (resp?.status !== 200) throw new Error(`Failed to fetch | Status : ${resp?.status || 0}`);
 
