@@ -482,12 +482,14 @@ async function getSteamLinks(bmProfile) {
     return links;
 }
 let discordDataLoading = false;
-export async function getDiscordData(steamLinks) {
-    if (discordDataLoading) return;
-    let loadedAccounts = 0;
+let discordReloadPending = false;
+export async function getDiscordData(steamLinks, retries = 0) {
+    if (discordDataLoading) { discordReloadPending = true; return; }
+    let hadFailure = false;
 
     try {
         discordDataLoading = true;
+        discordReloadPending = false;
         steamLinks = await steamLinks;
         const discordIds = steamLinks
             .map(item => item.discordId)
@@ -503,7 +505,7 @@ export async function getDiscordData(steamLinks) {
 
         for (const promise of promises) {
             const account = await promise
-            if (typeof (account) === "string") continue;
+            if (typeof (account) === "string") { hadFailure = true; continue; }
 
             discordUserData.push(account);
         }
@@ -512,8 +514,8 @@ export async function getDiscordData(steamLinks) {
     } finally {
         discordDataLoading = false;
 
-        //Check again for accounts loaded after start
-        if (loadedAccounts > 0) getDiscordData(steamLinks);
+        //Re-run for failures or links queued mid-load, up to twice
+        if ((hadFailure || discordReloadPending) && retries < 2) getDiscordData(steamLinks, retries + 1);
     }
 }
 
