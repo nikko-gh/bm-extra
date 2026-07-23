@@ -89,7 +89,7 @@ export function getIdentifierSettings() {
 
     const showLinks = getSettingsElement(
         "toggle", "Show Links",
-        `Display linked discord accounts.`,
+        `Display linked Discord accounts.`,
         ["Player Insight - SL"], bucket, "showLinks", settings.showLinks, { segment: linkSegment }
     )
     const loadDiscordData = getSettingsElement(
@@ -99,7 +99,7 @@ export function getIdentifierSettings() {
     )
     const showEmptyIdInput = getSettingsElement(
         "toggle", "Show Input",
-        `Shows an input field in which you can request discord data manually.`,
+        `Shows an input field in which you can request Discord data manually.`,
         ["Player Insight - DD"], bucket, "showEmptyIdInput", settings.showEmptyIdInput
     )
 

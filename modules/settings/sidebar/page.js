@@ -69,7 +69,7 @@ export function getSidebarSettings() {
 
     const friendComparatorEnabled = getSettingsElement(
         "toggle", "Player Comparator",
-        "Allows you to easily compare player's friendlist for common friends between them.",
+        "Allows you to easily compare players friend lists for common friends between them.",
         null, bucket, "friendComparator-enabled",
         settings.friendComparator.enabled, { segment: friendComparatorSegment }
     )
