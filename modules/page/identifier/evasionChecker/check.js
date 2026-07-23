@@ -418,7 +418,7 @@ async function getAssociates(playerData, core) {
     if (cached && cached["associates"]) return cached["associates"];
 
 
-    const steamId = playerData.steamId.identifier;
+    const steamId = playerData.steamId?.identifier;
     if (!steamId) return [];
 
     const associates = {};
