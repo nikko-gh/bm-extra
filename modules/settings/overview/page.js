@@ -21,7 +21,7 @@ export function getOverviewSettings() {
     )
     const showBmInfo = getSettingsElement(
         "toggle", "Show BM information",
-        "Shows detailed information that is stored by BattleMetrics and usually it is not visible by default.",
+        "Shows detailed information that is stored by BattleMetrics and is usually not visible by default.",
         null, settingsBucket, "showInfoPanel", settings.showInfoPanel
     );
     const removeSteamInfo = getSettingsElement(

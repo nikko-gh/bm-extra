@@ -55,7 +55,7 @@ export function getKeybindsSettings(params) {
 
     const showDaysEnabled = getSettingsElement(
         "toggle", "Show Days",
-        "Enables a Hotkey which changes all the durations to be converted into days by default.",
+        "Enables a hotkey which changes all the durations to be converted into days by default.",
         null, settingsBucket, "showDays-enabled", settings.showDays.enabled, { segment: showDaysSegment }
     )
 

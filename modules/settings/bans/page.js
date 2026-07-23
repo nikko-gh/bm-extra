@@ -28,7 +28,7 @@ export function getBanPageSettings() {
 
     const banPresetsEnabled = getSettingsElement(
         "toggle", "Enable Ban Presets",
-        "Ban presets are disabled. If you had previously set up presets, you can use those until they work, but you cannot set up new ones.",
+        "Ban presets are disabled. If you had previously set up presets, you can use those for as long as they still work, but you cannot set up new ones.",
         /*"Allows you to create ban presets that you can activate with one click on the sidebar.",*/
         null, settingsBucket, "presets-enabled",
         settings.presets.enabled

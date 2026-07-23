@@ -31,7 +31,7 @@ export function getIdentifierSettings() {
 
     const showMore = getSettingsElement(
         "toggle", "Show Proxycheck Info",
-        "Shows extra information related to the IP Address from proxycheck.io.",
+        "Shows extra information related to the IP address from proxycheck.io.",
         null, bucket, "requestProxyCheck", settings.requestProxyCheck
     )
     showExtraInfoSegment.append(showMore);
@@ -62,7 +62,7 @@ export function getIdentifierSettings() {
     )
     const vpnOpacity = getSettingsElement(
         "number", "VPN Opacity:",
-        "Choose the Level of Opacity that should be applied to the VPNs.<br />0 - transparent | 1 - fully visible.",
+        "Choose the level of opacity that should be applied to the VPNs.<br />0 - transparent | 1 - fully visible.",
         null, bucket, "vpnOpacity", settings.vpnOpacity, { min: 0, max: 1 }
     )
     vpnSegment.append(removeVpnLabel, vpnAbove, vpnBgColor, vpnOpacity)
@@ -79,7 +79,7 @@ export function getIdentifierSettings() {
 
     const zoomableAvatars = getSettingsElement(
         "toggle", "Zoomable Avatars",
-        "Make the Avatars grow to their full sizes so you can get a better view of them when hovered over.",
+        "Make the avatars grow to their full sizes so you can get a better view of them when hovered over.",
         null, bucket, "zoomableAvatars", settings.zoomableAvatars
     )
     avatarsSegment.append(zoomableAvatars)
