@@ -20,6 +20,6 @@ async function getBmBansData(bmId, token, count = 0) {
     } catch (error) {
         console.error(`Failed to request BattleMetrics Bans: ${error.message}`);
         await new Promise(r => { setTimeout(r, 1000) });
-        return getPlayerData(bmId, token, count + 1);
+        return getBmBansData(bmId, token, count + 1);
     }
 }
