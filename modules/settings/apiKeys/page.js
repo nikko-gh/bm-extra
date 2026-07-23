@@ -29,7 +29,6 @@ export function getApiKeysSettings() {
     const proxyCheckSegment = document.createElement("div")
     proxyCheckSegment.classList.add("bme-settings-segment");
     const proxyCheckApiKeyElement = getApiKeyDiv("Proxycheck API Key:", "BME_PROXY_CHECK_API_KEY", "proxy-check", {
-        segment: proxyCheckSegment,
         detail: `Key can be generated at <a href="https://proxycheck.io/" target="_blank">proxycheck.io</a>.`
     });
 
