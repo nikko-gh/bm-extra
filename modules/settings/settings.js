@@ -390,7 +390,7 @@ export function getResetButton(type) {
         if (type === "bm-info") localStorage.setItem("BME_BM_INFO_SETTINGS", JSON.stringify(getDefaultBmInfoSettings()));
         if (type === "bm-sidebar") localStorage.setItem("BME_SIDEBAR_SETTINGS", JSON.stringify(getDefaultSidebarSettings()));
         if (type === "bm-bans") localStorage.setItem("BME_BAN_PAGE_SETTINGS", JSON.stringify(getDefaultBanPageSettings()));
-        if (type === "bm-keybinds") localStorage.setItem("BME_BAN_PAGE_SETTINGS", JSON.stringify(getDefaultKeybindsSettings()));
+        if (type === "bm-keybinds") localStorage.setItem("BME_KEYBINDS_SETTINGS", JSON.stringify(getDefaultKeybindsSettings()));
         if (type === "bm-evasion") localStorage.setItem("BME_EVASION_CHECKER_SETTINGS", JSON.stringify(getDefaultEvasionCheckerSettings()));
         if (type === "bm-general") localStorage.setItem("BME_GENERAL_SETTINGS", JSON.stringify(getDefaultGeneralSettings()));
 
