@@ -11,7 +11,7 @@ export function getOverviewSettings() {
 
     const showAvatar = getSettingsElement(
         "toggle", "Show avatar on page",
-        "Shows the players avatar when it's available next to his name",
+        "Shows the players avatar when it's available next to his name.",
         null, settingsBucket, "showAvatar", settings.showAvatar
     )
     const showAlert = getSettingsElement(
@@ -21,17 +21,17 @@ export function getOverviewSettings() {
     )
     const showBmInfo = getSettingsElement(
         "toggle", "Show BM information",
-        "Shows detailed information that is stored by BattleMetrics and usually it is not visible by default",
+        "Shows detailed information that is stored by BattleMetrics and usually it is not visible by default.",
         null, settingsBucket, "showInfoPanel", settings.showInfoPanel
     );
     const removeSteamInfo = getSettingsElement(
         "toggle", "Remove steam information",
-        "Remove the default Steam information panel from the BattleMetrics RCON profile when it appears",
+        "Remove the default Steam information panel from the BattleMetrics RCON profile when it appears.",
         null, settingsBucket, "removeSteamInfo", settings.removeSteamInfo,
     );
     const showServer = getSettingsElement(
         "toggle", "Show server",
-        "Show either the current or the last server the user has played on, as well as displaying connection details",
+        "Show either the current or the last server the user has played on, as well as displaying connection details.",
         null, settingsBucket, "showServer", settings.showServer
     )
     const advancedBans = getSettingsElement(
@@ -46,7 +46,7 @@ export function getOverviewSettings() {
     )
     const swapBattleEyeGuid = getSettingsElement(
         "toggle", "Swap BattlEye GUID",
-        "Swap BattlEye GUID to the player's streamer mode name",
+        "Swap BattlEye GUID to the player's streamer mode name.",
         ["SM Names"], settingsBucket, "swapBattleEyeGuid", settings.swapBattleEyeGuid
     )
     const maxNamesOnProfile = getSettingsElement(

@@ -118,7 +118,7 @@ export function getSidebarSettings() {
 
     const historicFriendsEnabled = getSettingsElement(
         "toggle", "Show Historic Friends",
-        "Show Historic Friends on the sidebar",
+        "Show Historic Friends on the sidebar.",
         ["Player Insight - HF"], bucket, "historicFriends-enabled",
         settings.historicFriends.enabled, { segment: historicFriendsSegment }
     )
@@ -130,12 +130,12 @@ export function getSidebarSettings() {
     )
     const seenOnOrigin = getSettingsElement(
         "color", "Seen On Origin:",
-        "Choose the background color of the friends who were seen on the origin",
+        "Choose the background color of the friends who were seen on the origin.",
         null, bucket, "historicFriends-seenOnOrigin", settings.historicFriends.seenOnOrigin
     )
     const seenOnFriend = getSettingsElement(
         "color", "Seen On Friend:",
-        "Choose the background color of the friends who were seen on the friend alone",
+        "Choose the background color of the friends who were seen on the friend alone.",
         null, bucket, "historicFriends-seenOnFriend", settings.historicFriends.seenOnFriend
     )
     historicFriendsSegment.append(historicFriendsSpot, seenOnOrigin, seenOnFriend)
@@ -145,7 +145,7 @@ export function getSidebarSettings() {
 
     const publicBansEnabled = getSettingsElement(
         "toggle", "Show Public bans",
-        "Shows the Public Bans on the sidebar",
+        "Shows the Public Bans on the sidebar.",
         ["Player Insight - PB"], bucket, "publicBans-enabled",
         settings.publicBans.enabled, { segment: publicBansSegment }
     )

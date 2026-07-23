@@ -38,7 +38,7 @@ export function getApiKeysSettings() {
 
     const maxIps = getSettingsElement(
         "number", "Maximum IPs",
-        "The maximum number of IPs to request for one player",
+        "The maximum number of IPs to request for one player.",
         null, bucket, "maxIps", settings.maxIps
     )
 
@@ -53,13 +53,13 @@ export function getApiKeysSettings() {
     ]
     const checkIpsNewerThan = getSettingsElement(
         "select", "Recent IPs",
-        "Only check IPs that have been used in the selected time period",
+        "Only check IPs that have been used in the selected time period.",
         null, bucket, "checkAfter", settings.checkAfter, { options: pcIpDurations }
     )
 
     const ignoreKnownVpns = getSettingsElement(
         "toggle", "Ignore Known VPNs",
-        "Do not request known VPNs from proxycheck.io",
+        "Do not request known VPNs from proxycheck.io.",
         null, bucket, "ignoreKnownVpns", settings.ignoreKnownVpns
     )
 

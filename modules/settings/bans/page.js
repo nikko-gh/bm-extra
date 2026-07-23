@@ -42,7 +42,7 @@ export function getBanPageSettings() {
     ]
     const banPresetSidebarSpot = getSettingsElement(
         "switch", "Position:",
-        "Choose which sidebar spot should the ban presets be present",
+        "Choose which sidebar spot should the ban presets be present.",
         null, settingsBucket, "presets-spot", settings.presets.spot, { options: banSidebarSlots }
     )
 

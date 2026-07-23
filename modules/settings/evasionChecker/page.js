@@ -19,7 +19,7 @@ export function getEvasionCheckerSettings() {
 
     const enabled = getSettingsElement(
         "toggle", "Enabled",
-        "Enables Evasion Checker",
+        "Enables Evasion Checker.",
         null, bucket, "enabled", settings.enabled, { segment: specialSegment }
     )
 
@@ -29,52 +29,52 @@ export function getEvasionCheckerSettings() {
     ]
     const placement = getSettingsElement(
         "switch", "Placement",
-        "Choose where the Evasion Checker panel appears",
+        "Choose where the Evasion Checker panel appears.",
         null, bucket, "panelPlacement", settings.panelPlacement, { options: panelPlacementOptions }
     )
 
     const autoStart = getSettingsElement(
         "toggle", "Auto Start",
-        "Auto-start evasion checks when conditions are met",
+        "Auto-start evasion checks when conditions are met.",
         null, bucket, "core-autoStart", settings.core.autoStart
     )
     const autoStartLimit = getSettingsElement(
         "number", "Auto Start Limit",
-        "Maximum number of accounts to start the process automatically. Use -1 for unlimited",
+        "Maximum number of accounts to start the process automatically. Use -1 for unlimited.",
         null, bucket, "core-autoStartLimit", settings.core.autoStartLimit
     )
     const serverBanPriority = getSettingsElement(
         "toggle", "Server Ban Priority",
-        "Prioritize server bans over EAC game bans",
+        "Prioritize server bans over EAC game bans.",
         null, bucket, "core-serverBanPriority", settings.core.serverBanPriority
     )
     const oldServerBan = getSettingsElement(
         "number", "Old Server Ban",
-        "Days until a server ban is marked as old. Use -1 for never",
+        "Days until a server ban is marked as old. Use -1 for never.",
         null, bucket, "core-oldServerBan", settings.core.oldServerBan
     )
 
     const oldGameBan = getSettingsElement(
         "number", "Old Game Ban",
-        "Days until a game ban is marked as old. Use -1 for never",
+        "Days until a game ban is marked as old. Use -1 for never.",
         null, bucket, "core-oldGameBan", settings.core.oldGameBan
     )
 
     const matchMinAssociate = getSettingsElement(
         "number", "Min Associates",
-        "Minimum number of associates required to consider it a match",
+        "Minimum number of associates required to consider it a match.",
         null, bucket, "core-matchMinAssociate", settings.core.matchMinAssociate
     )
 
     const matchMinName = getSettingsElement(
         "number", "Min Name Match",
-        "Minimum name match percentage required to consider it a match",
+        "Minimum name match percentage required to consider it a match.",
         null, bucket, "core-matchMinNamePercentage", settings.core.matchMinNamePercentage
     )
 
     const caseSensitive = getSettingsElement(
         "toggle", "Case-Sensitive Name Matching",
-        "Treat uppercase and lowercase letters different when matching names",
+        "Treat uppercase and lowercase letters different when matching names.",
         null, bucket, "core-nameMatchCaseSensitive", settings.core.nameMatchCaseSensitive
     )
 
@@ -93,7 +93,7 @@ export function getEvasionCheckerSettings() {
     )
     const friendsFromRustApi = getSettingsElement(
         "toggle", "Friends from Player Insight",
-        "Load friends from Player Insight",
+        "Load friends from Player Insight.",
         ["Player Insight - HF"], bucket, "core-requestFriendsFromRustApi", settings.core.requestFriendsFromRustApi,
     )
 
@@ -108,7 +108,7 @@ export function getEvasionCheckerSettings() {
     )
     const checking = getSettingsElement(
         "color", "Checking:",
-        "Color of row when it's being checked",
+        "Color of row when it's being checked.",
         null, bucket, "color-checking", settings.color.checking,
     )
     const clean = getSettingsElement(
