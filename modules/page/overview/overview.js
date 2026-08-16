@@ -189,7 +189,8 @@ function getBmData(bmId, bmData, bmActivity) {
     return returnData;
 }
 function isAimTrainingServer(server) {
-    const serverName = server.attributes.name.toLowerCase();
+    const serverName = server.attributes.name?.toLowerCase();
+    if (!serverName) return false;
     if (serverName.includes("ukn.gg")) return true;
     if (serverName.includes("rustoria") && serverName.includes("rtg")) return true;
     if (/helli['’`]?s(?![a-z])/.test(serverName)) return true;
