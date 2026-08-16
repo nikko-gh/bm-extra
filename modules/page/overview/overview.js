@@ -189,9 +189,17 @@ function getBmData(bmId, bmData, bmActivity) {
     return returnData;
 }
 function isAimTrainingServer(server) {
-    const serverName = server.attributes.name;
-    if (serverName.includes("UKN")) return true;
-    if (serverName.includes("Aim Training")) return true;
+    const serverName = server.attributes.name.toLowerCase();
+    if (serverName.includes("ukn.gg")) return true;
+    if (serverName.includes("rustoria") && serverName.includes("rtg")) return true;
+    if (/helli['’`]?s(?![a-z])/.test(serverName)) return true;
+    if (serverName.includes("atlas hub")) return true;
+    if (serverName.includes("aim") && serverName.includes("train")) return true;
+    if (serverName.includes("facechecks")) return true;
+    if (serverName.includes("shopfronts")) return true;
+    if (serverName.includes("duels")) return true;
+    if (/(?<![a-z])ffa(?![a-z])/.test(serverName)) return true;
+    if (/(?<![a-z])ukn(?![a-z])/.test(serverName)) return true;
 
     return false;
 }
