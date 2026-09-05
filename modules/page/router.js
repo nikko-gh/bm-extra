@@ -45,6 +45,9 @@ export async function router(url) {
     removeSidebars();
 }
 
+//A key was verified after the page was built, so run again with it
+window.addEventListener("BME_BM_KEY_SAVED", () => router(new URL(window.location.href)));
+
 //Nothing loads without a working key, so only offer the way to fix it
 async function onMissingBmKey(isOverview) {
     if (isOverview) await displaySettingsButton();

@@ -131,6 +131,8 @@ function getApiKeyDiv(titleText, storageName, id, meta) {
 
         const detailItem = document.getElementById(`${id}-key-detail`);
 
+        let bmKeyVerified = false;
+
         //A bad battlemetrics key breaks every panel, so never store one
         if (storageName === "BME_BATTLEMETRICS_API_KEY" && newKey) {
             detailItem.innerText = "Checking your key...";
@@ -144,6 +146,7 @@ function getApiKeyDiv(titleText, storageName, id, meta) {
             }
 
             setBmKeyState("ok");
+            bmKeyVerified = true;
         }
 
         browser.storage.local.set({ [storageName]: newKey });
@@ -155,6 +158,9 @@ function getApiKeyDiv(titleText, storageName, id, meta) {
         }
 
         insertKey(detailItem, "N/A", meta, newKey);
+
+        //The page was built without a usable key, let the router fill it in now
+        if (bmKeyVerified) window.dispatchEvent(new CustomEvent("BME_BM_KEY_SAVED"));
     })
 
     if (meta?.detail) {
