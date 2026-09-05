@@ -31,7 +31,8 @@
     "browser_specific_settings": {
         "gecko": {
             "id": "bm-extra@nikko-gh",
-            "strict_min_version": "147.0"
+            "strict_min_version": "147.0",
+            "update_url": "https://raw.githubusercontent.com/nikko-gh/bm-extra/main/updates.json"
         }
     },
     "web_accessible_resources": [

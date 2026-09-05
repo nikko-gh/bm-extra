@@ -1,0 +1,12 @@
+{
+    "addons": {
+        "bm-extra@nikko-gh": {
+            "updates": [
+                {
+                    "version": "1.4.0",
+                    "update_link": "https://github.com/nikko-gh/bm-extra/releases/download/v1.4.0/bm-extra-1.4.0.xpi"
+                }
+            ]
+        }
+    }
+}
