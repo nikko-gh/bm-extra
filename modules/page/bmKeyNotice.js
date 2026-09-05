@@ -21,6 +21,7 @@ export function displayBmKeyNotice(sidebar) {
     element.appendChild(text);
 
     sidebar.left.children[0].appendChild(element);
+    return element;
 }
 
 export function markSettingsButton() {

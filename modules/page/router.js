@@ -24,10 +24,9 @@ export async function router(url) {
         if (isNaN(Number(bmId))) return;
 
         const ready = await setupCacheFor(bmId, "RCON_PROFILE");
-        if (!ready) return onMissingBmKey(path[3] === undefined);
 
-        if (path[3] === undefined) return onOverviewPage(bmId);
-        if (path[3] === "identifiers") return onIdentifierPage(bmId);
+        if (path[3] === undefined) return ready ? onOverviewPage(bmId) : onMissingBmKey("overview");
+        if (path[3] === "identifiers") return ready ? onIdentifierPage(bmId) : onMissingBmKey("identifiers");
     }
 
     //rcon/bans/add...
@@ -36,7 +35,7 @@ export async function router(url) {
         if (!bmId || isNaN(Number(bmId))) return;
 
         const ready = await setupCacheFor(bmId, "BAN_PAGE");
-        if (!ready) return onMissingBmKey(false);
+        if (!ready) return onMissingBmKey("ban");
 
         return onAddBanPage(bmId);
     }
@@ -49,11 +48,19 @@ export async function router(url) {
 window.addEventListener("BME_BM_KEY_SAVED", () => router(new URL(window.location.href)));
 
 //Nothing loads without a working key, so only offer the way to fix it
-async function onMissingBmKey(isOverview) {
-    if (isOverview) await displaySettingsButton();
+async function onMissingBmKey(page, attempt = 0) {
+    if (page === "overview") await displaySettingsButton();
 
     const sidebar = await insertSidebars();
-    displayBmKeyNotice(sidebar);
+    const notice = displayBmKeyNotice(sidebar);
+
+    //Without a key we render before react is done and it wipes us off the page
+    if (attempt >= 3) return;
+
+    await new Promise(r => { setTimeout(r, 700) });
+    if (notice?.isConnected) return;
+
+    return onMissingBmKey(page, attempt + 1);
 }
 
 async function onOverviewPage(bmId) {
