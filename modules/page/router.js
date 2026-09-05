@@ -25,8 +25,8 @@ export async function router(url) {
 
         const ready = await setupCacheFor(bmId, "RCON_PROFILE");
 
-        if (path[3] === undefined) return ready ? onOverviewPage(bmId) : onMissingBmKey("overview");
-        if (path[3] === "identifiers") return ready ? onIdentifierPage(bmId) : onMissingBmKey("identifiers");
+        if (path[3] === undefined) return ready ? onOverviewPage(bmId) : onMissingBmKey(bmId, "overview");
+        if (path[3] === "identifiers") return ready ? onIdentifierPage(bmId) : onMissingBmKey(bmId, "identifiers");
     }
 
     //rcon/bans/add...
@@ -35,7 +35,7 @@ export async function router(url) {
         if (!bmId || isNaN(Number(bmId))) return;
 
         const ready = await setupCacheFor(bmId, "BAN_PAGE");
-        if (!ready) return onMissingBmKey("ban");
+        if (!ready) return onMissingBmKey(bmId, "ban");
 
         return onAddBanPage(bmId);
     }
@@ -48,8 +48,8 @@ export async function router(url) {
 window.addEventListener("BME_BM_KEY_SAVED", () => router(new URL(window.location.href)));
 
 //Nothing loads without a working key, so only offer the way to fix it
-async function onMissingBmKey(page, attempt = 0) {
-    if (page === "overview") await displaySettingsButton();
+async function onMissingBmKey(bmId, page, attempt = 0) {
+    if (page === "overview") await displaySettingsButton(bmId);
 
     const sidebar = await insertSidebars();
     const notice = displayBmKeyNotice(sidebar);
@@ -60,7 +60,7 @@ async function onMissingBmKey(page, attempt = 0) {
     await new Promise(r => { setTimeout(r, 700) });
     if (notice?.isConnected) return;
 
-    return onMissingBmKey(page, attempt + 1);
+    return onMissingBmKey(bmId, page, attempt + 1);
 }
 
 async function onOverviewPage(bmId) {
@@ -71,7 +71,7 @@ async function onOverviewPage(bmId) {
     const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
     sidebar(bmId, playerCache, sidebarSettings, "overview")
 
-    displaySettingsButton();
+    displaySettingsButton(bmId);
     if (settings.showAlert) displayAlertLink(bmId);
     if (settings.showServer) displayServerActivity(bmId, playerCache.bmProfile);
     if (settings.showInfoPanel) displayInfoPanel(bmId, playerCache.bmProfile, playerCache.bmActivity, playerCache.rustPremium);
