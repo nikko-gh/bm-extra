@@ -4,11 +4,24 @@ BattleMetrics extension providing quality-of-life features for Rust admins.
 > **Warning:** BattleMetrics has been updating their site recently, so some features such as Ban Presets might be unstable or not work at all.
 
 ## Installation
-1. Download: Go to the [Github repository](https://github.com/nikko-gh/bm-extra) and download the latest release.
+
+### Firefox
+1. Download the `-firefox.xpi` file from the [latest release](https://github.com/nikko-gh/bm-extra/releases/latest).
+2. Open `about:addons`, click the gear icon, and choose `Install Add-on From File...`
+3. Select the downloaded file.
+
+Requires **Firefox 147 or later**. The current ESR release (140) is not supported.
+
+Firefox installs update themselves automatically when a new version is released.
+
+### Chrome
+1. Download the `-chrome.zip` file from the [latest release](https://github.com/nikko-gh/bm-extra/releases/latest).
 2. Unpack the ZIP file.
-3. Open Chrome Extensions Settings: Navigate to `chrome://extensions/` in Google Chrome.
+3. Navigate to `chrome://extensions/`.
 4. Turn on `Developer mode` in the top right corner.
 5. Click `Load Unpacked` and select the unpacked `bm-extra` directory.
+
+Chrome installs must be updated manually by repeating these steps.
 
 > **Note:** Some features will not work properly on smaller screen sizes.
 
