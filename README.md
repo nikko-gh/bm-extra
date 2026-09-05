@@ -1,5 +1,5 @@
 # bm-extra
-Chromium-based BattleMetrics extension providing quality-of-life features for Rust admins.
+BattleMetrics extension providing quality-of-life features for Rust admins.
 
 > **Warning:** BattleMetrics has been updating their site recently, so some features such as Ban Presets might be unstable or not work at all.
 
