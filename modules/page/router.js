@@ -5,6 +5,7 @@ import { convertTimestampsToDay, displayAvatar, displaySettingsButton, redactIde
 import { insertBanPresets, insertFriendComparator, insertFriendsSidebarElement, insertHistoricFriendsSidebarElement, insertRelatedPlayers, insertPublicBansSidebarElement, insertSidebars, insertTeaminfoSidebarElement } from "../sidebar.js";
 import { getElementWhenAppears, removeSidebars } from "../misc.js";
 import { checkAndSetupSettingsIfMissing } from "../settings/settings.js";
+import { displayBmKeyNotice } from "./bmKeyNotice.js";
 
 let setup = false;
 export async function router(url) {
@@ -22,7 +23,8 @@ export async function router(url) {
         const bmId = path[2];
         if (isNaN(Number(bmId))) return;
 
-        await setupCacheFor(bmId, "RCON_PROFILE");
+        const ready = await setupCacheFor(bmId, "RCON_PROFILE");
+        if (!ready) return onMissingBmKey(path[3] === undefined);
 
         if (path[3] === undefined) return onOverviewPage(bmId);
         if (path[3] === "identifiers") return onIdentifierPage(bmId);
@@ -33,13 +35,22 @@ export async function router(url) {
         const bmId = url.searchParams.get("player");
         if (!bmId || isNaN(Number(bmId))) return;
 
-        await setupCacheFor(bmId, "BAN_PAGE");
+        const ready = await setupCacheFor(bmId, "BAN_PAGE");
+        if (!ready) return onMissingBmKey(false);
 
         return onAddBanPage(bmId);
     }
 
     //Remove sidebar in any other case
     removeSidebars();
+}
+
+//Nothing loads without a working key, so only offer the way to fix it
+async function onMissingBmKey(isOverview) {
+    if (isOverview) await displaySettingsButton();
+
+    const sidebar = await insertSidebars();
+    displayBmKeyNotice(sidebar);
 }
 
 async function onOverviewPage(bmId) {
