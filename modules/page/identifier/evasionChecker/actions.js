@@ -1,4 +1,5 @@
 import { getAuthToken } from "../../../misc.js";
+import { bmFetch } from "../../../bmApi.js";
 import { checkPlayer } from "./check.js";
 import { getEcSettings } from "./panel.js";
 
@@ -130,29 +131,23 @@ async function getRelatedPlayers(bmId, token) {
     relatedPlayerCache[bmId] = returnObject; //Cache it for later use
     return returnObject;
 }
-async function fetchRelatedPlayers(url, token, count = 0) {
-    if (count > 2) return { status: null };
-    try {
-        const resp = await fetch(`${url}&access_token=${token}`);
-        if (resp?.status === 429) {
-            await new Promise(r => { setTimeout(r, 10000) });
-            throw new Error(`Rate Limit reached while requesting related identifiers | Status: ${resp.status}`);
-        }
-        if (resp?.status !== 200) throw new Error(`Failed to fetch | Status : ${resp?.status || 0}`);
-
-        const data = await resp.json();
-        data.status = resp.status;
-        if (data.links?.next) {
-            const nextPage = await fetchRelatedPlayers(data.links.next, token);
-            data.data.push(...nextPage.data);
-            data.included.push(...nextPage.included);
-        }
-
-        return data;
-    } catch (error) {
-        sendMessage(`BM-EXTRA: ${error}`);
-        return fetchRelatedPlayers(url, token, count + 1);
+async function fetchRelatedPlayers(url, token) {
+    const data = await bmFetch(`${url}&access_token=${token}`);
+    if (typeof (data) === "string") {
+        sendMessage(`BM-EXTRA: Failed to fetch related identifiers. | ${data}`);
+        return { status: null };
     }
+
+    data.status = 200;
+    if (data.links?.next) {
+        const nextPage = await fetchRelatedPlayers(data.links.next, token);
+        if (nextPage.status !== 200) return data;
+
+        data.data.push(...nextPage.data);
+        data.included.push(...nextPage.included);
+    }
+
+    return data;
 }
 
 function setupPlayersForCheck(players) {

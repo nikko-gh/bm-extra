@@ -1,4 +1,5 @@
 import { getKey } from "./settings/apiKeys/page.js";
+import { bmFetch, setBmKeyState } from "./bmApi.js";
 
 export const rustApiKeyPermissionBits = {
     historicFriends: 54,
@@ -192,6 +193,8 @@ export async function getMyServers(onlyIds) {
     }
 
 
+    if (!token) return null;
+
     const data = await requestMyServers('https://api.battlemetrics.com/servers?filter[rcon]=true&page[size]=100', token)
     if (!data) {
         console.error(`Failed to request your servers | Returned type: ${typeof (data)}`);
@@ -207,34 +210,27 @@ export async function getMyServers(onlyIds) {
     if (onlyIds) return myServers.servers.map(server => server.id);
     else return myServers.servers;
 }
-async function requestMyServers(url, token, count = 0) {
-    if (count > 2) return null;
-    try {
-        const resp = await fetch(`${url}&access_token=${token}`);
-        const data = await resp.json();
+async function requestMyServers(url, token) {
+    const data = await bmFetch(`${url}&access_token=${token}`);
+    if (typeof (data) === "string") return null;
 
-        const servers = data.data.map(server => {
-            return {
-                id: server.id,
-                name: server?.attributes?.name,
-                orgId: server?.relationships?.organization?.data?.id
-            }
-        })
-
-        if (data.links.next) {
-            await new Promise(r => { setTimeout(r, 1000) });
-            const nextPage = await requestMyServers(data.links.next, token);
-            if (!nextPage) return servers;
-
-            servers.push(...nextPage);
+    const servers = data.data.map(server => {
+        return {
+            id: server.id,
+            name: server?.attributes?.name,
+            orgId: server?.relationships?.organization?.data?.id
         }
+    })
 
-        return servers;
-    } catch (error) {
-        console.error(`Failed to request your servers. | ${error.message}`);
+    if (data.links.next) {
         await new Promise(r => { setTimeout(r, 1000) });
-        return await requestMyServers(url, token, count + 1);
+        const nextPage = await requestMyServers(data.links.next, token);
+        if (!nextPage) return servers;
+
+        servers.push(...nextPage);
     }
+
+    return servers;
 }
 
 export async function getAuthToken() {
@@ -294,6 +290,9 @@ export function talkToBackgroundScript(type, subject, rejectTime = 10000, token)
 
             clearTimeout(timer);
             browser.runtime.onMessage.removeListener(handler);
+
+            //The background hit a 401 on our behalf
+            if (response.value === "INVALID_API_KEY" && type.startsWith("BME_BM_")) setBmKeyState("invalid");
 
             resolve(response.value);
         }
