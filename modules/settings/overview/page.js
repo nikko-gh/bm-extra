@@ -11,7 +11,7 @@ export function getOverviewSettings() {
 
     const showAvatar = getSettingsElement(
         "toggle", "Show avatar on page",
-        "Shows the players avatar when it's available next to his name",
+        "Shows the player's avatar when it's available next to their name.",
         null, settingsBucket, "showAvatar", settings.showAvatar
     )
     const showAlert = getSettingsElement(
@@ -21,42 +21,42 @@ export function getOverviewSettings() {
     )
     const showBmInfo = getSettingsElement(
         "toggle", "Show BM information",
-        "Shows detailed information that is stored by battlemetrics and usually it is not visible by default",
+        "Shows detailed information that is stored by BattleMetrics and is usually not visible by default.",
         null, settingsBucket, "showInfoPanel", settings.showInfoPanel
     );
     const removeSteamInfo = getSettingsElement(
         "toggle", "Remove steam information",
-        "Remove the default Steam information panel from the battlemetrics RCON profile when it appears",
+        "Remove the default Steam information panel from the BattleMetrics RCON profile when it appears.",
         null, settingsBucket, "removeSteamInfo", settings.removeSteamInfo,
     );
     const showServer = getSettingsElement(
         "toggle", "Show server",
-        "Show either the current or the last server the user has played on, as well as displaying connection details",
+        "Show either the current or the last server the user has played on, as well as displaying connection details.",
         null, settingsBucket, "showServer", settings.showServer
     )
     const advancedBans = getSettingsElement(
         "toggle", "Advanced bans",
-        "Update ban reasons for a more readable format | May not properly work on other servers.",
+        "Update ban reasons for a more readable format | May not fit your organization's ban reason formatting.",
         null, settingsBucket, "advancedBans", settings.advancedBans
     )
     const closeAdminLog = getSettingsElement(
         "toggle", "Close admin log",
-        "Close admin log by default when opening a battlemetrics profile.",
+        "Close admin log by default when opening a BattleMetrics profile.",
         null, settingsBucket, "closeAdminLog", settings.closeAdminLog
     )
     const swapBattleEyeGuid = getSettingsElement(
         "toggle", "Swap BattlEye GUID",
-        "Swap BattlEye GUID to the player's streamer mode name",
+        "Swap BattlEye GUID to the player's streamer mode name.",
         ["SM Names"], settingsBucket, "swapBattleEyeGuid", settings.swapBattleEyeGuid
     )
     const maxNamesOnProfile = getSettingsElement(
         "number", "Maximum names:",
-        "The maximum number of names allowed to be showed in the overview section.",
+        "The maximum number of names allowed to be shown in the overview section.",
         null, settingsBucket, "maxNames", settings.maxNames
     )
     const maxIpsOnProfile = getSettingsElement(
         "number", "Maximum IP addresses:",
-        "The maximum number of IP addresses allowed to be showed in the overview section.",
+        "The maximum number of IP addresses allowed to be shown in the overview section.",
         null, settingsBucket, "maxIps", settings.maxIps
     )
     const resetButton = getResetButton("bm-overview");

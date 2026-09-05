@@ -7,7 +7,7 @@ export function checkBmInfoSettings() {
         if (!bmInfoSettings.steamCombinedHoursColors) throw new Error("Settings error");
         if (!bmInfoSettings.steamRustHoursColors) throw new Error("Settings error");
         if (!bmInfoSettings.bmAccountAgeColors) throw new Error("Settings error");
-        if (!bmInfoSettings.bmAccountAgeColors) throw new Error("Settings error");
+        if (!bmInfoSettings.gamesLastCheckedColors) throw new Error("Settings error");
         if (!bmInfoSettings.serverCountColors) throw new Error("Settings error");
         if (!bmInfoSettings.allReportsBarrier) throw new Error("Settings error");
         if (!bmInfoSettings.allReportsColor) throw new Error("Settings error");

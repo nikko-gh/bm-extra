@@ -5,6 +5,7 @@ import { convertTimestampsToDay, displayAvatar, displaySettingsButton, redactIde
 import { insertBanPresets, insertFriendComparator, insertFriendsSidebarElement, insertHistoricFriendsSidebarElement, insertRelatedPlayers, insertPublicBansSidebarElement, insertSidebars, insertTeaminfoSidebarElement } from "../sidebar.js";
 import { getElementWhenAppears, removeSidebars } from "../misc.js";
 import { checkAndSetupSettingsIfMissing } from "../settings/settings.js";
+import { displayBmKeyNotice } from "./bmKeyNotice.js";
 
 let setup = false;
 export async function router(url) {
@@ -22,10 +23,10 @@ export async function router(url) {
         const bmId = path[2];
         if (isNaN(Number(bmId))) return;
 
-        await setupCacheFor(bmId, "RCON_PROFILE");
+        const ready = await setupCacheFor(bmId, "RCON_PROFILE");
 
-        if (path[3] === undefined) return onOverviewPage(bmId);
-        if (path[3] === "identifiers") return onIdentifierPage(bmId);
+        if (path[3] === undefined) return ready ? onOverviewPage(bmId) : onMissingBmKey(bmId, "overview");
+        if (path[3] === "identifiers") return ready ? onIdentifierPage(bmId) : onMissingBmKey(bmId, "identifiers");
     }
 
     //rcon/bans/add...
@@ -33,13 +34,33 @@ export async function router(url) {
         const bmId = url.searchParams.get("player");
         if (!bmId || isNaN(Number(bmId))) return;
 
-        await setupCacheFor(bmId, "BAN_PAGE");
+        const ready = await setupCacheFor(bmId, "BAN_PAGE");
+        if (!ready) return onMissingBmKey(bmId, "ban");
 
         return onAddBanPage(bmId);
     }
 
     //Remove sidebar in any other case
     removeSidebars();
+}
+
+//A key was verified after the page was built, so run again with it
+window.addEventListener("BME_BM_KEY_SAVED", () => router(new URL(window.location.href)));
+
+//Nothing loads without a working key, so only offer the way to fix it
+async function onMissingBmKey(bmId, page, attempt = 0) {
+    if (page === "overview") await displaySettingsButton(bmId);
+
+    const sidebar = await insertSidebars();
+    const notice = displayBmKeyNotice(sidebar);
+
+    //Without a key we render before react is done and it wipes us off the page
+    if (attempt >= 3) return;
+
+    await new Promise(r => { setTimeout(r, 700) });
+    if (notice?.isConnected) return;
+
+    return onMissingBmKey(bmId, page, attempt + 1);
 }
 
 async function onOverviewPage(bmId) {
@@ -50,7 +71,7 @@ async function onOverviewPage(bmId) {
     const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
     sidebar(bmId, playerCache, sidebarSettings, "overview")
 
-    displaySettingsButton();
+    displaySettingsButton(bmId);
     if (settings.showAlert) displayAlertLink(bmId);
     if (settings.showServer) displayServerActivity(bmId, playerCache.bmProfile);
     if (settings.showInfoPanel) displayInfoPanel(bmId, playerCache.bmProfile, playerCache.bmActivity, playerCache.rustPremium);

@@ -10,7 +10,7 @@ export async function sendPremiumStatus(steamId, tabId, returnObject) {
     });
     if (resp?.status !== 200) {
         console.error(`Failed to fetch premium status! | ${steamId} | ${resp?.status}`);
-        sendResponse(tabId, returnObject, errorString.failedToFetch);
+        return sendResponse(tabId, returnObject, errorString.failedToFetch);
     }
 
     const data = await resp.json();

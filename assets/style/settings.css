@@ -814,3 +814,8 @@
     background: #00ff0040 !important;
     border-color: #00ff0080 !important;
 }
+
+#bme-settings-button.bme-settings-button-alert {
+    background: #c0392b60;
+    outline: 2px solid #c0392b;
+}

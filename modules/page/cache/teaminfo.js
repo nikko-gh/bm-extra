@@ -48,7 +48,7 @@ class Atlas {
             return result;
         } catch (error) {
             console.error(`Failed to request teaminfo: ${error}`);
-            await this.getTeamInfo(steamId, serverId, token, count + 1)
+            return await this.getTeamInfo(steamId, serverId, token, count + 1)
         }
     }
 }

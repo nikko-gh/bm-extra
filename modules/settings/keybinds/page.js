@@ -20,7 +20,7 @@ export function getKeybindsSettings(params) {
 
     const privacyHotkey = getSettingsElement(
         "hotkey", "Keybind:",
-        "Choose your keybind, this will trigger the redaction of the current page",
+        "Choose your keybind, this will trigger the redaction of the current page.",
         null, settingsBucket, "privacy-hotkey", settings.privacy.hotkey,
         { max: 5 }
     )
@@ -55,13 +55,13 @@ export function getKeybindsSettings(params) {
 
     const showDaysEnabled = getSettingsElement(
         "toggle", "Show Days",
-        "Enables a Hotkey which changes all the durations to be converted into days by default.",
+        "Enables a hotkey which changes all the durations to be converted into days by default.",
         null, settingsBucket, "showDays-enabled", settings.showDays.enabled, { segment: showDaysSegment }
     )
 
     const showDaysHotkey = getSettingsElement(
         "hotkey", "Keybind:",
-        "Choose your keybind, this will covert all the time durations into days",
+        "Choose your keybind, this will convert all the time durations into days.",
         null, settingsBucket, "showDays-hotkey", settings.showDays.hotkey
     )
     const showDaysDurationOptions = [
@@ -75,7 +75,7 @@ export function getKeybindsSettings(params) {
     ]
     const showDaysDuration = getSettingsElement(
         "select", "Duration:",
-        "Choose the duration of the time conversion",
+        "Choose the duration of the time conversion.",
         null, settingsBucket, "showDays-duration", settings.showDays.duration, { options: showDaysDurationOptions }
     )
     showDaysSegment.append(showDaysHotkey, showDaysDuration);

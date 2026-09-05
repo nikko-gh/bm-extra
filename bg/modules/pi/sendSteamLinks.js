@@ -32,7 +32,7 @@ export async function sendSteamLinks(steamId, tabId, returnObject) {
 
         links[index].owners.push(link.owner);
 
-        if (link.attached.length === 0) return
+        if (link.attached.length === 0) continue;
         link.attached.forEach(attached => {
             if (links[index].attached.includes(attached)) return;
 

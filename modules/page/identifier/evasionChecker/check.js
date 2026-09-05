@@ -18,7 +18,16 @@ export async function checkPlayer(playerElement, settings, check) {
         colorPlayer(playerElement, "checking")
 
         const player = await getPlayerProfile(bmId, authToken, settings)
-        if (main instanceof Promise) main = await main;
+        if (main instanceof Promise) {
+            const awaited = main;
+            try {
+                main = await awaited;
+            } catch (error) {
+                if (main === awaited) main = null; //Let the next check retry the main load
+                throw error;
+            }
+        }
+        if (!main) throw new Error("Main profile isn't available");
 
         const outcome = getOutcome(main, player, settings.core, check);
         setupPlayerElement(playerElement, outcome, player, settings);
@@ -418,7 +427,7 @@ async function getAssociates(playerData, core) {
     if (cached && cached["associates"]) return cached["associates"];
 
 
-    const steamId = playerData.steamId.identifier;
+    const steamId = playerData.steamId?.identifier;
     if (!steamId) return [];
 
     const associates = {};

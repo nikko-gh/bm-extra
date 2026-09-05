@@ -1,6 +1,7 @@
 import { talkToBackgroundScript } from "../../misc.js";
 import { getPcCacheSize } from "../../page/cache/cache.js";
 import { getSettingsElement, loadPiPerms } from "../settings.js";
+import { setBmKeyState, validateBmKey } from "../../bmApi.js";
 
 export function getApiKeysSettings() {
     const element = document.createElement("div");
@@ -17,7 +18,7 @@ export function getApiKeysSettings() {
         detail: `Key can be generated at <a href="https://steamcommunity.com/dev/apikey" target="_blank">Steam Web API</a>.`
     });
     const battleMetricsKeyElements = getApiKeyDiv("BattleMetrics API Key:", "BME_BATTLEMETRICS_API_KEY", "bm-api", {
-        detail: "OPTIONAL: Provided key will take priority, but it isn't necessary."
+        detail: `REQUIRED: Without this key the extension cannot request anything.`
     });
     const piPermsSegment = document.createElement("div");
     piPermsSegment.classList.add("bme-settings-segment");
@@ -29,7 +30,6 @@ export function getApiKeysSettings() {
     const proxyCheckSegment = document.createElement("div")
     proxyCheckSegment.classList.add("bme-settings-segment");
     const proxyCheckApiKeyElement = getApiKeyDiv("Proxycheck API Key:", "BME_PROXY_CHECK_API_KEY", "proxy-check", {
-        segment: proxyCheckSegment,
         detail: `Key can be generated at <a href="https://proxycheck.io/" target="_blank">proxycheck.io</a>.`
     });
 
@@ -39,7 +39,7 @@ export function getApiKeysSettings() {
 
     const maxIps = getSettingsElement(
         "number", "Maximum IPs",
-        "The maximum number of IPs to request for one player",
+        "The maximum number of IPs to request for one player.",
         null, bucket, "maxIps", settings.maxIps
     )
 
@@ -54,20 +54,20 @@ export function getApiKeysSettings() {
     ]
     const checkIpsNewerThan = getSettingsElement(
         "select", "Recent IPs",
-        "Only check IPs that have been used in the selected time period",
+        "Only check IPs that have been used in the selected time period.",
         null, bucket, "checkAfter", settings.checkAfter, { options: pcIpDurations }
     )
 
     const ignoreKnownVpns = getSettingsElement(
         "toggle", "Ignore Known VPNs",
-        "Do not request known VPNs from proxycheck.io",
+        "Do not request known VPNs from proxycheck.io.",
         null, bucket, "ignoreKnownVpns", settings.ignoreKnownVpns
     )
 
     const currentCacheSize = getPcCacheSize();
     const keepCache = getSettingsElement(
         "toggle", "Keep Cache",
-        `Keep proxycheck data for 24 hours, in order if you reopen a player don't waste resources with requesting the unnecessary data again. Your current cache has ${currentCacheSize} items.`,
+        `Keep proxycheck data for 24 hours, so that reopening a player doesn't waste resources re-requesting the same data. Your current cache has ${currentCacheSize} items.`,
         null, bucket, "keepCache", settings.keepCache
     )
 
@@ -129,7 +129,27 @@ function getApiKeyDiv(titleText, storageName, id, meta) {
         let newKey = input.value;
         input.value = "";
 
-        chrome.storage.local.set({ [storageName]: newKey });
+        const detailItem = document.getElementById(`${id}-key-detail`);
+
+        let bmKeyVerified = false;
+
+        //A bad battlemetrics key breaks every panel, so never store one
+        if (storageName === "BME_BATTLEMETRICS_API_KEY" && newKey) {
+            detailItem.innerText = "Checking your key...";
+
+            const outcome = await validateBmKey(newKey);
+            if (outcome !== "ok") {
+                detailItem.innerText = outcome === "invalid" ?
+                    "BattleMetrics rejected that key, it was not saved." :
+                    "Could not reach BattleMetrics to check that key, it was not saved.";
+                return;
+            }
+
+            setBmKeyState("ok");
+            bmKeyVerified = true;
+        }
+
+        browser.storage.local.set({ [storageName]: newKey });
         _keys[storageName] = newKey;
 
         if (storageName === "BME_PLAYER_INSIGHT_API_KEY") {
@@ -137,8 +157,10 @@ function getApiKeyDiv(titleText, storageName, id, meta) {
             generatePlayerInsightSegment(meta.segment)
         }
 
-        const detailItem = document.getElementById(`${id}-key-detail`);
         insertKey(detailItem, "N/A", meta, newKey);
+
+        //The page was built without a usable key, let the router fill it in now
+        if (bmKeyVerified) window.dispatchEvent(new CustomEvent("BME_BM_KEY_SAVED"));
     })
 
     if (meta?.detail) {
@@ -290,7 +312,7 @@ export async function getKey(storageName) {
     }
 }
 async function loadKey(storageName) {
-    let key = await chrome.storage.local.get(storageName);
+    let key = await browser.storage.local.get(storageName);
     key = key[storageName];
     return key;
 }

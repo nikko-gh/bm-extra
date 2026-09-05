@@ -1,12 +1,13 @@
 import { shouldAbort, getElementWhenAppears, getLastServer, getStreamerModeName, getSteamIdObject, setNativeValue, getIdentifierType, getTimeSpan, getIdentifiers, cssAnchors, getHiddenTableRow } from "../misc.js";
 import { displaySettings } from "../settings/settings.js";
+import { markSettingsButton } from "./bmKeyNotice.js";
 
 export async function displaySettingsButton(bmId) {
     const rconElement = await getElementWhenAppears("RCONPlayerPage");
 
     const button = document.createElement("img");
     button.id = "bme-settings-button"
-    button.src = chrome.runtime.getURL('assets/img/settings.png');
+    button.src = browser.runtime.getURL('assets/img/settings.png');
 
     button.addEventListener("click", displaySettings)
 
@@ -14,6 +15,7 @@ export async function displaySettingsButton(bmId) {
     if (testElement) return;
         
     rconElement.before(button);
+    markSettingsButton();
     invokeRerender(button, bmId, "overview", displaySettingsButton, [bmId]);
 }
 

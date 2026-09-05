@@ -18,7 +18,7 @@ export function getGeneralSettings() {
 
     const locale = getSettingsElement(
         "select", "Locale",
-        "Sets how dates and times are formatted. Automatic picks it based on your timezone. Reload the page to apply.",
+        "Sets how dates and times are formatted. 'Automatic' picks it based on your timezone. Reload the page to apply.",
         null, bucket, "locale", settings.locale, { options: getLocaleOptions() }
     )
 

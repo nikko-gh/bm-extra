@@ -282,10 +282,6 @@ async function colorBasedOnValidity(span, requirement) {
             const smData = localStorage.getItem("BME_SM_NAMES");
             if (!smData) throw new Error("Not valid");
 
-        } else if (requirement === "PROXYCHECK") {
-            const key = await getKey("BME_PROXY_CHECK_API_KEY");
-            if (!key) throw new Error("Not valid");
-
         } else if (requirement.startsWith("Player Insight - ")) {
             const key = await getKey("BME_PLAYER_INSIGHT_API_KEY");
             if(key.length !== 64) throw new Error("Not valid");
@@ -390,7 +386,7 @@ export function getResetButton(type) {
         if (type === "bm-info") localStorage.setItem("BME_BM_INFO_SETTINGS", JSON.stringify(getDefaultBmInfoSettings()));
         if (type === "bm-sidebar") localStorage.setItem("BME_SIDEBAR_SETTINGS", JSON.stringify(getDefaultSidebarSettings()));
         if (type === "bm-bans") localStorage.setItem("BME_BAN_PAGE_SETTINGS", JSON.stringify(getDefaultBanPageSettings()));
-        if (type === "bm-keybinds") localStorage.setItem("BME_BAN_PAGE_SETTINGS", JSON.stringify(getDefaultKeybindsSettings()));
+        if (type === "bm-keybinds") localStorage.setItem("BME_KEYBINDS_SETTINGS", JSON.stringify(getDefaultKeybindsSettings()));
         if (type === "bm-evasion") localStorage.setItem("BME_EVASION_CHECKER_SETTINGS", JSON.stringify(getDefaultEvasionCheckerSettings()));
         if (type === "bm-general") localStorage.setItem("BME_GENERAL_SETTINGS", JSON.stringify(getDefaultGeneralSettings()));
 

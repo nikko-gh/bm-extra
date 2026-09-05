@@ -28,7 +28,7 @@ export function getBanPageSettings() {
 
     const banPresetsEnabled = getSettingsElement(
         "toggle", "Enable Ban Presets",
-        "Ban presets are disabled. If you had previously setup presets, you can use those until they work, but you cannot setup new ones.",
+        "Ban presets are disabled. If you had previously set up presets, you can use those for as long as they still work, but you cannot set up new ones.",
         /*"Allows you to create ban presets that you can activate with one click on the sidebar.",*/
         null, settingsBucket, "presets-enabled",
         settings.presets.enabled
@@ -42,7 +42,7 @@ export function getBanPageSettings() {
     ]
     const banPresetSidebarSpot = getSettingsElement(
         "switch", "Position:",
-        "Choose which sidebar spot should the ban presets be present",
+        "Choose which sidebar spot the ban presets should appear in.",
         null, settingsBucket, "presets-spot", settings.presets.spot, { options: banSidebarSlots }
     )
 
@@ -357,15 +357,15 @@ function getPresetElement(preset, index, max) {
     const arrowUp = document.createElement("img");
     arrowUp.classList.add(`up-arrow`)
     if (index === 0) arrowUp.classList.add("arrow-disabled")
-    arrowUp.src = chrome.runtime.getURL('assets/img/arrow.png');
+    arrowUp.src = browser.runtime.getURL('assets/img/arrow.png');
 
     const deleteButton = document.createElement("img");
-    deleteButton.src = chrome.runtime.getURL('assets/img/trash.png');
+    deleteButton.src = browser.runtime.getURL('assets/img/trash.png');
 
     const arrowDown = document.createElement("img");
     arrowDown.classList.add(`down-arrow`)
     if (index === max - 1) arrowDown.classList.add("arrow-disabled")
-    arrowDown.src = chrome.runtime.getURL('assets/img/arrow.png');
+    arrowDown.src = browser.runtime.getURL('assets/img/arrow.png');
 
     arrowUp.addEventListener("click", e => {
         if (!e.target.classList.contains("arrow-disabled")) processBanPresetChange(index, "up");
@@ -507,7 +507,7 @@ function exportButtonPressed() {
     if (presets.length === 0) {
         message = "You have no presets to export."
     } else {
-        chrome.runtime.sendMessage({
+        browser.runtime.sendMessage({
             type: "BME_JSON_DOWNLOAD",
             filename: "banPresets.json",
             data: presets

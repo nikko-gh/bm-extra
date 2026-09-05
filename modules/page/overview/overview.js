@@ -65,8 +65,8 @@ function getCurrentServersElement(servers) {
         thirdLine.appendChild(ipText);
 
         const copyImg = document.createElement("img");
-        if (server.online) copyImg.src = chrome.runtime.getURL('assets/img/copy.png');
-        else copyImg.src = chrome.runtime.getURL('assets/img/copy-gray.png');
+        if (server.online) copyImg.src = browser.runtime.getURL('assets/img/copy.png');
+        else copyImg.src = browser.runtime.getURL('assets/img/copy-gray.png');
         copyImg.addEventListener("click", () => {
             try {
                 navigator.clipboard.writeText(`connect ${server.ip}`)
@@ -163,12 +163,14 @@ function getBmData(bmId, bmData, bmActivity) {
     returnData.combinedPlaytime = Math.floor(returnData.combinedPlaytime / 60 / 60);
     returnData.aimTrainPlaytime = Math.floor(returnData.aimTrainPlaytime / 60 / 60);
 
+    returnData.activityFailed = !bmActivity;
     returnData.allReports = [];
     returnData.cheatReports = [];
     returnData.kills = [];
     returnData.deaths = [];
 
-    bmActivity.data.forEach(msg => {
+    //activity can be null if the request failed
+    bmActivity?.data?.forEach(msg => {
         if (msg.type !== "activityMessage" || !msg.attributes) return;
         const data = msg.attributes.data;
         const timestamp = new Date(msg.attributes.timestamp).getTime();
@@ -187,9 +189,18 @@ function getBmData(bmId, bmData, bmActivity) {
     return returnData;
 }
 function isAimTrainingServer(server) {
-    const serverName = server.attributes.name;
-    if (serverName.includes("UKN")) return true;
-    if (serverName.includes("Aim Training")) return true;
+    const serverName = server.attributes.name?.toLowerCase();
+    if (!serverName) return false;
+    if (serverName.includes("ukn.gg")) return true;
+    if (serverName.includes("rustoria") && serverName.includes("rtg")) return true;
+    if (/helli['’`]?s(?![a-z])/.test(serverName)) return true;
+    if (serverName.includes("atlas hub")) return true;
+    if (serverName.includes("aim") && serverName.includes("train")) return true;
+    if (serverName.includes("facechecks")) return true;
+    if (serverName.includes("shopfronts")) return true;
+    if (serverName.includes("duels")) return true;
+    if (/(?<![a-z])ffa(?![a-z])/.test(serverName)) return true;
+    if (/(?<![a-z])ukn(?![a-z])/.test(serverName)) return true;
 
     return false;
 }
@@ -336,7 +347,7 @@ export async function displayAlertLink(bmId) {
         link.classList.add("bme-alert-element")
         link.innerHTML = `
         <a href="/alerts/add?player=${bmId}" target="_blank" id="bme-alert-link">
-            <img class="bme-alert-icon" src="${chrome.runtime.getURL("assets/img/add-alert.png")}">
+            <img class="bme-alert-icon" src="${browser.runtime.getURL("assets/img/add-alert.png")}">
             <p>Add Alert</p>
         </a>`;
         navElement.before(link);

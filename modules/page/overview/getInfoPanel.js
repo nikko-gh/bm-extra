@@ -19,7 +19,7 @@ export function getInfoPanel(bmSteamData, bmData, rustPremium) {
     element.appendChild(header);
 
     const img = document.createElement("img");
-    img.src = chrome.runtime.getURL('assets/img/arrow.png');
+    img.src = browser.runtime.getURL('assets/img/arrow.png');
     img.id = "bme-info-panel-arrow";
     header.appendChild(img);
 
@@ -119,9 +119,9 @@ function getLimitedAccountElements(steam) {
 function getGameBanCountElements(steam) {
     const title = createHtmlElement("dt", "Game Bans:");
 
-    const valueString = !steam || steam.vacBanCount === null ? "Unknown" : `${steam.vacBanCount}`;
+    const valueString = !steam || steam.gameBanCount === null ? "Unknown" : `${steam.gameBanCount}`;
 
-    const currentClass = steam && (steam.vacBanCount > 0 && steam.daysSinceLastBan < 180) ? "bme-red-text" : "";
+    const currentClass = steam && (steam.gameBanCount > 0 && steam.daysSinceLastBan < 180) ? "bme-red-text" : "";
     const value = createHtmlElement("dd", valueString, currentClass ? [currentClass] : []);
     return [title, value];
 
@@ -261,6 +261,7 @@ function getServerCountElements(bm, settings) {
 }
 function getReportElements(bm, settings, recent) {
     const title = createHtmlElement("dt", "Reports:");
+    if (bm.activityFailed) return getUnknownRow(title);
 
     const reportCount = bm.allReports.length
     let valueString = "" + reportCount;
@@ -278,6 +279,7 @@ function getReportElements(bm, settings, recent) {
 }
 function getCheatReportElements(bm, settings, recent) {
     const title = createHtmlElement("dt", "Cheat Reports:");
+    if (bm.activityFailed) return getUnknownRow(title);
 
     const reportCount = bm.cheatReports.length
     let valueString = "" + reportCount;
@@ -309,6 +311,7 @@ function getAimTrainingElements(bm, settings) {
 }
 function getKillCountElements(bm, settings, recent) {
     const title = createHtmlElement("dt", "Kills:");
+    if (bm.activityFailed) return getUnknownRow(title);
 
     const killCount = bm.kills.length
     let killValueString = "" + killCount;
@@ -326,6 +329,7 @@ function getKillCountElements(bm, settings, recent) {
 }
 function getDeathElements(bm, settings, recent) {
     const title = createHtmlElement("dt", "Deaths:");
+    if (bm.activityFailed) return getUnknownRow(title);
 
     const deathCount = bm.deaths.length
     let deathValueString = "" + deathCount;
@@ -342,6 +346,7 @@ function getDeathElements(bm, settings, recent) {
 }
 function getKdElements(bm, settings, recent) {
     const title = createHtmlElement("dt", "K/D:");
+    if (bm.activityFailed) return getUnknownRow(title);
 
     const kd = bm.kills.length / Math.max(bm.deaths.length, 1);
     let kdValueString = kd.toFixed(2);
@@ -382,6 +387,9 @@ function createHtmlElement(node, innerText, classList = []) {
     if (classList.length > 0) element.classList.add(...classList)
     element.innerHTML = innerText;
     return element;
+}
+function getUnknownRow(title) {
+    return [title, createHtmlElement("dd", "Unknown")];
 }
 
 const ONE_SECOND = 1000;

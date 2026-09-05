@@ -11,12 +11,12 @@ export function getIdentifierSettings() {
 
     const showAvatarToggle = getSettingsElement(
         "toggle", "Show avatar on page",
-        "Shows the players avatar when it's available next to his name",
+        "Shows the player's avatar when it's available next to their name.",
         null, bucket, "showAvatar", settings.showAvatar
     )
     const swapBattleEyeGuid = getSettingsElement(
         "toggle", "Swap BattlEye GUID",
-        "Swap BattlEye GUID to the player's streamer mode name",
+        "Swap BattlEye GUID to the player's streamer mode name.",
         ["SM Names"], bucket, "swapBattleEyeGuid", settings.swapBattleEyeGuid
     )
 
@@ -31,8 +31,8 @@ export function getIdentifierSettings() {
 
     const showMore = getSettingsElement(
         "toggle", "Show Proxycheck Info",
-        "Shows extra information related to the IP Address from proxycheck.io",
-        ["PROXYCHECK"], bucket, "requestProxyCheck", settings.requestProxyCheck
+        "Shows extra information related to the IP address from proxycheck.io.",
+        null, bucket, "requestProxyCheck", settings.requestProxyCheck
     )
     showExtraInfoSegment.append(showMore);
 
@@ -62,7 +62,7 @@ export function getIdentifierSettings() {
     )
     const vpnOpacity = getSettingsElement(
         "number", "VPN Opacity:",
-        "Choose the Level of Opacity that should be applied to the VPNs.<br />0 - transparent | 1 - fully visible",
+        "Choose the level of opacity that should be applied to the VPNs.<br />0 - transparent | 1 - fully visible.",
         null, bucket, "vpnOpacity", settings.vpnOpacity, { min: 0, max: 1 }
     )
     vpnSegment.append(removeVpnLabel, vpnAbove, vpnBgColor, vpnOpacity)
@@ -79,7 +79,7 @@ export function getIdentifierSettings() {
 
     const zoomableAvatars = getSettingsElement(
         "toggle", "Zoomable Avatars",
-        "Make the Avatars grow to their full sizes so you can get a better view of them when hovered over.",
+        "Make the avatars grow to their full sizes so you can get a better view of them when hovered over.",
         null, bucket, "zoomableAvatars", settings.zoomableAvatars
     )
     avatarsSegment.append(zoomableAvatars)
@@ -89,17 +89,17 @@ export function getIdentifierSettings() {
 
     const showLinks = getSettingsElement(
         "toggle", "Show Links",
-        `Display linked discord accounts`,
+        `Display linked Discord accounts.`,
         ["Player Insight - SL"], bucket, "showLinks", settings.showLinks, { segment: linkSegment }
     )
     const loadDiscordData = getSettingsElement(
         "toggle", "Load Discord Data",
-        `Load and display the discord Account information.`,
+        `Load and display the Discord account information.`,
         ["Player Insight - DD"], bucket, "loadDiscordData", settings.loadDiscordData
     )
     const showEmptyIdInput = getSettingsElement(
         "toggle", "Show Input",
-        `Shows an input field in which you can request discord data manually.`,
+        `Shows an input field in which you can request Discord data manually.`,
         ["Player Insight - DD"], bucket, "showEmptyIdInput", settings.showEmptyIdInput
     )
 
