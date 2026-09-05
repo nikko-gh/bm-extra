@@ -2,5 +2,6 @@ dist/
 *.zip
 *.xpi
 
-#Local release build script, not part of the extension
+#Local release scripts, not part of the extension
 build-release.ps1
+publish-release.ps1
