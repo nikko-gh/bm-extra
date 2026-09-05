@@ -83,10 +83,14 @@ export async function getKey(storageName) {
 
 function downloadJsonFile(name, content) {
     const json = JSON.stringify(content, null, 4);
-    const dataUrl = `data:application/json;charset=utf-8,${encodeURIComponent(json)}`;
+
+    //Firefox rejects data: urls here, service workers have no createObjectURL
+    const url = typeof URL.createObjectURL === "function" ?
+        URL.createObjectURL(new Blob([json], { type: "application/json" })) :
+        `data:application/json;charset=utf-8,${encodeURIComponent(json)}`;
 
     browser.downloads.download({
-        url: dataUrl,
+        url,
         filename: name,
         saveAs: true,
     });
