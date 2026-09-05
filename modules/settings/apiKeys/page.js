@@ -1,6 +1,7 @@
 import { talkToBackgroundScript } from "../../misc.js";
 import { getPcCacheSize } from "../../page/cache/cache.js";
 import { getSettingsElement, loadPiPerms } from "../settings.js";
+import { setBmKeyState, validateBmKey } from "../../bmApi.js";
 
 export function getApiKeysSettings() {
     const element = document.createElement("div");
@@ -128,6 +129,23 @@ function getApiKeyDiv(titleText, storageName, id, meta) {
         let newKey = input.value;
         input.value = "";
 
+        const detailItem = document.getElementById(`${id}-key-detail`);
+
+        //A bad battlemetrics key breaks every panel, so never store one
+        if (storageName === "BME_BATTLEMETRICS_API_KEY" && newKey) {
+            detailItem.innerText = "Checking your key...";
+
+            const outcome = await validateBmKey(newKey);
+            if (outcome !== "ok") {
+                detailItem.innerText = outcome === "invalid" ?
+                    "BattleMetrics rejected that key, it was not saved." :
+                    "Could not reach BattleMetrics to check that key, it was not saved.";
+                return;
+            }
+
+            setBmKeyState("ok");
+        }
+
         browser.storage.local.set({ [storageName]: newKey });
         _keys[storageName] = newKey;
 
@@ -136,7 +154,6 @@ function getApiKeyDiv(titleText, storageName, id, meta) {
             generatePlayerInsightSegment(meta.segment)
         }
 
-        const detailItem = document.getElementById(`${id}-key-detail`);
         insertKey(detailItem, "N/A", meta, newKey);
     })
 
