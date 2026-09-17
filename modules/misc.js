@@ -155,6 +155,9 @@ export function shouldAbort(bmId, elementId, pageId) {
 }
 
 export async function getLastServer(bmProfile, onlyMyServer) {
+    bmProfile = await bmProfile;
+    if (!bmProfile?.included) return null; //The profile request failed
+
     const myServers = await getMyServers(true);
     if (!myServers) return null;
 

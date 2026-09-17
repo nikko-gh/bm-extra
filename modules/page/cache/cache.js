@@ -111,6 +111,7 @@ function validate(section, { overview, identifier, sidebar, banPage }, bmId) {
     if (section === "bmProfile") {
         if (cache[bmId]?.bmProfile !== undefined) return false; //Already Cached
 
+        //Every section below that is handed bmProfile has to be listed here, or it gets undefined
         const needed =
             banPage?.selectLastServer ||
             banPage?.presets.enabled ||
@@ -122,10 +123,12 @@ function validate(section, { overview, identifier, sidebar, banPage }, bmId) {
             identifier?.showIspAndAsnData ||
             identifier?.swapBattleEyeGuid ||
             identifier?.displayAvatars ||
+            identifier?.showLinks ||
             sidebar?.currentTeam.enabled ||
             sidebar?.friends.enabled ||
             sidebar?.historicFriends.enabled ||
-            sidebar?.publicBans.enabled;
+            sidebar?.publicBans.enabled ||
+            sidebar?.relatedPlayers?.enabled;
         if (needed) return true;
     } else if (section === "rustPremium") {
         if (cache[bmId]?.rustPremium !== undefined) return false;//Already Cached
@@ -214,6 +217,7 @@ async function getRustPremiumStatus(bmProfile) {
 }
 async function getRelatedPlayers(bmProfile, authToken) {
     bmProfile = await bmProfile;
+    if (!bmProfile?.included) return "FAILED_TO_FETCH";
 
     const servers = bmProfile.included.filter(item => item.type === "server").map(item => new Date(item.meta.lastSeen).getTime());
     servers.sort((a, b) => b - a)
@@ -376,6 +380,7 @@ async function getCurrentServersPopulation(bmProfile, authToken) {
 
 async function getSteamAvatars(bmProfile) {
     bmProfile = await bmProfile;
+    if (!bmProfile?.included) return [];
 
     const steamIdObject = bmProfile.included.find(identifier => identifier?.attributes?.type === "steamID");
     const steamId = steamIdObject?.attributes?.identifier;
@@ -531,6 +536,8 @@ export async function getDiscordData(steamLinks, retries = 0) {
 
 
 function getSteamIdFromBmProfile(bmProfile) {
+    if (!bmProfile?.included) return null; //The profile request failed
+
     const steamIdObject = bmProfile.included.find(identifier => identifier?.attributes?.type === "steamID");
     return steamIdObject?.attributes?.identifier ?? null;
 }
