@@ -337,10 +337,11 @@ function getBanItem(banData, banId) {
 }
 
 export async function displayAlertLink(bmId) {
-    if (document.querySelector("#bme-alert-link")) return;
-
     const navbar = (await getElementWhenAppears("container", true))?.children[1]?.children;
     if (!navbar) return console.error(`BM-EXTRA: Failed to locate navbar!`);
+
+    //Checked here and not above, as awaiting the navbar lets concurrent runs each insert a button
+    if (shouldAbort(bmId, "bme-alert-link")) return;
     for (const navElement of navbar) {
         if (navElement.innerText.trim() !== "Ban Player") continue
         const link = document.createElement("li");
@@ -355,7 +356,7 @@ export async function displayAlertLink(bmId) {
     }
     
     const item = document.querySelector("#bme-alert-link");
-    if (!item) return; //Already there
+    if (!item) return; //Insert landed in a detached navbar
 
     invokeRerender(item, bmId, "overview", displayAlertLink, [bmId], 20);
 }
