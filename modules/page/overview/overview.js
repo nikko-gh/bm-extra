@@ -22,6 +22,9 @@ export async function displayServerActivity(bmId, bmProfile) {
         })
         .sort((a, b) => b.lastSeen - a.lastSeen);
 
+    //A key that can't see any of this player's servers is normal, there is just nothing to show
+    if (!servers.length) return;
+
     const onlineServers = servers.filter(server => server.online);
 
     const rconElement = await getElementWhenAppears("RCONPlayerPage");
