@@ -35,7 +35,8 @@ export async function checkPlayer(playerElement, settings, check) {
         colorPlayer(playerElement, outcome.color)
         playerElement.classList.remove("bme-ec-unchecked")
         playerElement.classList.add("bme-ec-active")
-        playerElement.children[0].addEventListener("click", () => { showcaseDetails(main, player, outcome, settings) })
+        //Assigned, not added: a re-checked player replaces its handler instead of stacking another
+        playerElement.children[0].onclick = () => { showcaseDetails(main, player, outcome, settings) };
 
         outcomeCollection.set(player.account.bmId, { element: playerElement, onClick: () => { showcaseDetails(main, player, outcome, settings) } });
 
