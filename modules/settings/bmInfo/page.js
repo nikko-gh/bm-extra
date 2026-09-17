@@ -75,8 +75,8 @@ function getColorElement(index, settings, settingsName) {
     input.addEventListener("change", e => {
         const target = e.target;
 
-        const newValue = target.value;
-        if (isNaN(Number(newValue))) return updateStatus(target, false);
+        const newValue = Number(target.value);
+        if (isNaN(newValue)) return updateStatus(target, false);
 
         const settings = JSON.parse(localStorage.getItem("BME_BM_INFO_SETTINGS"));
         settings[settingsName][index] = newValue;
