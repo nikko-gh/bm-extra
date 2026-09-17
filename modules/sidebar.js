@@ -752,7 +752,10 @@ function stripGyazoImgLink(html) {
 }
 async function getBanHeaderElement(type) {
     const banForm = await getElementWhenAppears("ban-form", true);
-    const elements = Array.from(banForm?.firstChild?.children);
+    //Array.from(undefined) throws, so the chaining above never produced the null callers check for
+    if (!banForm?.firstChild) return null;
+
+    const elements = Array.from(banForm.firstChild.children);
 
     let prime = false;
     for (const element of elements) {

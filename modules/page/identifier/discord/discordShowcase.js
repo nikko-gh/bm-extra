@@ -143,15 +143,18 @@ function requestAndFillShowcase(group, token, focusMsgId) {
     const data = discordCache.data[id];
 
     const guildName = document.querySelector("#bme-dc-guild-name");
+    const channelName = document.querySelector("#bme-dc-channel-name");
+    const messageContainer = document.querySelector("#bme-showcase-messages");
+    //The showcase can be closed while the request is still out
+    if (!guildName || !channelName || !messageContainer) return;
+
     guildName.innerText = data.guild.name;
 
     const guildIcon = document.querySelector("#bme-dc-guild-icon");
     if (data?.guild?.icon && guildIcon) guildIcon.src = `https://cdn.discordapp.com/icons/${data.guild.guildId}/${data.guild.icon}.png`
 
-    const channelName = document.querySelector("#bme-dc-channel-name");
     channelName.innerText = data.channel.name;
 
-    const messageContainer = document.querySelector("#bme-showcase-messages");
     messageContainer.innerText = "";
 
     messageContainer.appendChild(loadMoreButton(group, "before", data.messages[0], token));

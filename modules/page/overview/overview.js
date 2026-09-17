@@ -238,6 +238,7 @@ export async function limitItem(bmId, limit, item) {
     
     const identifiers = await getIdentifiers();
     if (window.location.href.split("/").length !== 6) return; //Not overview page
+    if (!identifiers.length) return;
     
     let count = 0;
     let removed = false;
@@ -250,7 +251,14 @@ export async function limitItem(bmId, limit, item) {
         if (!removed) removed = true;
         identifier.classList.add("bme-hidden");
     }
+    if (!removed) return; //Nothing was hidden, so there is nothing to rebuild later
+
+    //The row is an invisible marker for the rerender watch, one per limited type is enough
+    const markerId = `bme-limit-marker-${item}`;
+    if (document.getElementById(markerId)) return;
+
     const hidden = getHiddenTableRow();
+    hidden.id = markerId;
     identifiers[0].parentNode.append(hidden);
     invokeRerender(hidden, bmId, "overview", limitItem, [bmId, limit, item]);
 }
