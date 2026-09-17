@@ -299,7 +299,7 @@ export async function displayAvatars(bmId, avatars, zoomable) {
 
 const storedLinks = {};
 export async function displaySteamLinks(bmId, steamLinks, loadData, showInput) {
-    if (document.body.querySelector("#bme-discord-title")) return;
+    if (document.getElementById("bme-steam-links")) return; //The title carries this id, not the class name
 
     steamLinks = await steamLinks;
     if (steamLinks.length === 0 && !showInput) return;
@@ -322,7 +322,7 @@ export async function displaySteamLinks(bmId, steamLinks, loadData, showInput) {
     invokeRerender(discordTitle, bmId, "identifiers", displaySteamLinks, [bmId, steamLinks, loadData, showInput]);
 
 
-    if (showInput) discordTitle.insertAdjacentElement("afterend", getDiscordInput(bmId, discordTitle))
+    if (showInput) discordTitle.insertAdjacentElement("afterend", getDiscordInput(bmId))
 
     steamLinks.forEach(link => {
         const element = getSteamLinkElement(link.discordId, link.lastSeen, link.owners ?? [], link.attached ?? [])
@@ -379,7 +379,7 @@ function getSteamLinkElement(discordId, lastSeen, owners, attached) {
 
     return element;
 }
-function getDiscordInput(bmId, title) {
+function getDiscordInput(bmId) {
     const element = document.createElement("tr");
     element.id = "bme-discord-input"
 
@@ -413,7 +413,8 @@ function getDiscordInput(bmId, title) {
             steamLinks.push(link)
 
             const linkElement = getSteamLinkElement(link.discordId, link.lastSeen, link.owner, link.attached);
-            title.insertAdjacentElement("afterend", linkElement);
+            //Looked up now rather than captured, a rerender replaces the title element
+            document.getElementById("bme-steam-links")?.insertAdjacentElement("afterend", linkElement);
 
             getDiscordData([link]);
             highlightElement(e.target, "green");
