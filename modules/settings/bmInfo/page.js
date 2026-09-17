@@ -153,5 +153,18 @@ function getBarrierSettingsRow(settings, settingsName, settingsTitle, settingsDe
     input.value = settings[settingsName];
     actualRow.appendChild(input);
 
+    input.addEventListener("change", e => {
+        const target = e.target;
+
+        const newValue = Number(target.value);
+        //A barrier of 0 fails the settings check, which resets every bm info setting
+        if (isNaN(newValue) || newValue <= 0) return updateStatus(target, false);
+
+        const settings = JSON.parse(localStorage.getItem("BME_BM_INFO_SETTINGS"));
+        settings[settingsName] = newValue;
+        localStorage.setItem("BME_BM_INFO_SETTINGS", JSON.stringify(settings));
+        return updateStatus(target, true);
+    })
+
     return row;
 }
