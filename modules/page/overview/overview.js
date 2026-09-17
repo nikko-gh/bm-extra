@@ -254,10 +254,12 @@ export async function limitItem(bmId, limit, item) {
 
 export async function advancedBans(bmId, banData) {
     banData = await banData;
+    //A failed request comes back as a status string, every lookup below needs the list
+    if (!banData?.data) return console.error(`BM-EXTRA: Failed to request ban data. | Status: ${banData}`);
 
     const rconElement = await getElementWhenAppears("RCONPlayerPage");
     const sections = rconElement?.lastChild?.firstChild?.childNodes;
-    if (!sections) console.error("BM-EXTRA: Failed to find sections.");
+    if (!sections) return console.error("BM-EXTRA: Failed to find sections.");
 
     let banSection = null;
     for (const section of sections) {
@@ -265,6 +267,7 @@ export async function advancedBans(bmId, banData) {
         banSection = section;
         break;
     }
+    if (!banSection) return console.error("BM-EXTRA: Failed to find the bans section.");
     
     const observer = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
