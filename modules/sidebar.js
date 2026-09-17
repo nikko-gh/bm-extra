@@ -1,8 +1,16 @@
 import { getCurrentFriends, getElementWhenAppears, getHistoricFriends, getLastServer, getLocale, getTimeSpan, removeSidebars, setNativeValue } from "./misc.js";
 
+//router() runs several times over on one page load, so only the newest run may build
+let sidebarGeneration = 0;
 export async function insertSidebars() {
+    const generation = ++sidebarGeneration;
+
     const mainElement = await getElementWhenAppears("main", true);
-    if (!mainElement) return console.error("BM-EXTRA: Failed to locate parent of rconContainer for sidebar placements.");
+    if (!mainElement) {
+        console.error("BM-EXTRA: Failed to locate parent of rconContainer for sidebar placements.");
+        return null;
+    }
+    if (generation !== sidebarGeneration) return null; //A newer run took over while we waited
 
     removeSidebars();
 
@@ -584,13 +592,11 @@ function getSidebarHeader(content) {
 //.......................//
 ///////////////////////////
 
-export function insertBanPresets(settings, bmProfile) {
+export function insertBanPresets(sidebar, settings, bmProfile) {
     const spot = settings.presets.spot;
-    const sidebarSlot = document.getElementById(`bme-sidebar-${spot}`);
-    if (!sidebarSlot) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
 
     const banPresetsElement = getBanPresetsElement(settings.presets, bmProfile)
-    sidebarSlot.append(banPresetsElement);
+    if (!insertIntoSidebar(sidebar, spot, banPresetsElement)) return;
 
 
     if (!settings.presets.setupBansAfterFirst) return;
@@ -600,7 +606,8 @@ export function insertBanPresets(settings, bmProfile) {
     //Wasn't used recently
     if ((Date.now() - (2 * 60 * 1000)) > Number(lastUse.timestamp)) return;
 
-    const banPresetsBody = document.getElementsByClassName("bme-sidebar-preset-body")[0];
+    //Scoped to the presets we just built, so a stale run can't click a newer run's button
+    const banPresetsBody = banPresetsElement.querySelector(".bme-sidebar-preset-body");
     const button = banPresetsBody?.children[lastUse.index];
     if (button) button.click();
 }
@@ -763,12 +770,24 @@ function getBanDurationString(timestamp, locale = "en-us") {
 
 
 function insertIntoSidebar(sidebar, spot, element) {
+    if (!sidebar) return false;
+
     let target = null;
     if (spot.includes("left")) target = sidebar.left;
     else target = sidebar.right;
 
+    if (!target?.isConnected) return false; //Superseded run, its sidebars are off the page
+
     const container = target.querySelector(`#bme-sidebar-${spot}`);
-    if (container.hasChildNodes()) return console.error(`BME-EXTRA: Spot(${spot}), already occupied!`);
-    
+    if (!container) {
+        console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`);
+        return false;
+    }
+    if (container.hasChildNodes()) {
+        console.error(`BME-EXTRA: Spot(${spot}), already occupied!`);
+        return false;
+    }
+
     container.append(element);
+    return true;
 }

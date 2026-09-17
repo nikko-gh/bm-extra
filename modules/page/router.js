@@ -113,7 +113,8 @@ async function onAddBanPage(bmId) {
     if (settings.selectLastServer) selectLastServer(bmId, playerCache.bmProfile);
 }
 async function sidebar(bmId, playerCache, settings, page) {
-    const sidebar = await insertSidebars(page);
+    const sidebar = await insertSidebars();
+    if (!sidebar) return; //A newer run owns the sidebars
 
     if (settings.friendComparator?.enabled) insertFriendComparator(sidebar);
     if (settings.friends?.enabled) insertFriendsSidebarElement(sidebar, playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData, playerCache.serverPop, settings);
@@ -122,7 +123,7 @@ async function sidebar(bmId, playerCache, settings, page) {
     if (settings.publicBans?.enabled) insertPublicBansSidebarElement(sidebar, playerCache.publicBans);
     if (settings.relatedPlayers?.enabled) insertRelatedPlayers(sidebar, playerCache.relatedPlayers, settings.relatedPlayers);
 
-    if (settings.presets?.enabled) insertBanPresets(settings, playerCache.bmProfile);
+    if (settings.presets?.enabled) insertBanPresets(sidebar, settings, playerCache.bmProfile);
 }
 
 let currentHotkeyTimeout = null;
