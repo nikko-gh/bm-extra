@@ -660,6 +660,9 @@ async function banPresetButtonClicked(preset, bmProfile, pasteEvidence) {
     if (server === "last") {
         bmProfile = await bmProfile;
         const lastServer = await getLastServer(bmProfile, true);
+        //Null when the player never played on one of my servers
+        if (!lastServer) return console.error("BM-EXTRA: Failed to locate the last server for the preset!");
+
         serverId = lastServer.id;
     }
 
