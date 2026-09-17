@@ -63,14 +63,17 @@ function loadMoreButton(group, type, message, token) {
     const button = document.createElement("button");
     button.classList.add("bme-showcase-load-more")
 
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
         if (button.classList.contains("bme-active-button")) return;
         button.classList.add("bme-active-button");
 
         const messageId = message.messageId;
-        requestAndCacheData(group, messageId, type, token);
-
         button.innerText = "Loading messages...";
+
+        if (await requestAndCacheData(group, messageId, type, token)) return;
+
+        button.classList.remove("bme-active-button");
+        button.innerText = "Load more messages!";
     })
     button.innerText = "Load more messages!";
     return button;
@@ -88,6 +91,12 @@ async function requestAndCacheData(group, focusMsgId, type, token, baseMsg) {
         return requestAnimationFrame(() => { return requestAndFillShowcase(group, token, focusMsgId) })
 
     const data = await talkToBackgroundScript("BME_DISCORD_MESSAGES", `${type}/${group[0]}/${group[1]}/${focusMsgId}`);
+    //A cached failure poisons the entry above and blocks every retry for the session
+    if (typeof (data) === "string" || !data?.users) {
+        console.error(`BM-EXTRA: Failed to request discord messages. | Status: ${data}`);
+        if (type === "around") showShowcaseError(); //Otherwise the skeleton sits there forever
+        return false;
+    }
 
     if (!discordCache.data[id]) discordCache.data[id] = {};
     discordCache.data[id].channel = data.channel;
@@ -117,6 +126,16 @@ async function requestAndCacheData(group, focusMsgId, type, token, baseMsg) {
     });
 
     requestAndFillShowcase(group, token, focusMsgId);
+    return true;
+}
+function showShowcaseError() {
+    const messageContainer = document.querySelector("#bme-showcase-messages");
+    if (!messageContainer) return;
+
+    messageContainer.innerText = "";
+    const text = document.createElement("p");
+    text.innerText = "Failed to load messages";
+    messageContainer.append(text);
 }
 function requestAndFillShowcase(group, token, focusMsgId) {
     const id = `${group[0]}-${group[1]}-${group[2]}`;

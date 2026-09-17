@@ -256,6 +256,12 @@ async function getMessagesAndFillContainer(container, page, guild, userId, token
     if (messages) return fillMessageContainer(container, messages, guild.id, userId);
 
     const requestedMessages = await requestMessages(guild, page, userId, token)
+    if (!requestedMessages) {
+        container.innerHTML = "";
+        const text = document.createElement("p");
+        text.innerText = "Failed to load messages";
+        return container.append(text);
+    }
     fillMessageContainer(container, requestedMessages, guild.id, userId);
 
     async function requestMessages(guild, page, userId, token) {
@@ -263,6 +269,11 @@ async function getMessagesAndFillContainer(container, page, guild, userId, token
         if (messages) return messages;
 
         const requestedMessages = await talkToBackgroundScript("BME_DISCORD_MESSAGES", `last/${guild.id}/${userId}/${page}`)
+        //Caching a status string would serve it back as messages and iterate its characters
+        if (typeof (requestedMessages) === "string") {
+            console.error(`BM-EXTRA: Failed to request discord messages. | Status: ${requestedMessages}`);
+            return null;
+        }
 
         guild.lastMessages[page] = requestedMessages;
         return requestedMessages;
