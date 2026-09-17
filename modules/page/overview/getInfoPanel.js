@@ -101,8 +101,10 @@ function getSetupStateElements(steam) {
 function getPremiumStateElement(rustPremium) {
     const title = createHtmlElement("dt", "Premium:");
 
-    const valueString = rustPremium === null ? "Unknown" : rustPremium;
-    const currentClass = rustPremium === null ? null : rustPremium ? "bme-green-text" : "bme-red-text";
+    //Steam-less players give undefined and a failed lookup gives a status string, neither is an answer
+    const known = typeof (rustPremium) === "boolean";
+    const valueString = known ? rustPremium : "Unknown";
+    const currentClass = !known ? null : rustPremium ? "bme-green-text" : "bme-red-text";
     const value = createHtmlElement("dd", valueString, currentClass ? [currentClass] : []);
     return [title, value];
 
