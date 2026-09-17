@@ -20,7 +20,7 @@ export function checkOverviewSettings() {
 
 export function getDefaultOverviewSettings() {
     const settings = {};
-    settings.showAlert = true;
+    settings.showAlert = false;
     settings.showAvatar = true;
     settings.showServer = true;
     settings.showInfoPanel = true;
