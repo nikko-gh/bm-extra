@@ -154,6 +154,8 @@ function redactIdentifierTable(table, redactSteamId, redactIps) {
 }
 function redactIdentifier(identifier, span, type) {
     const spanValue = span.title;
+    if (!spanValue) return; //An empty needle would put REDACTED between every character
+
     const originalValue = span.innerHTML;
 
     span.innerHTML = span.innerHTML.replaceAll(spanValue, "REDACTED");
