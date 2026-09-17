@@ -277,6 +277,7 @@ function isButtonUseable(btn) {
 }
 function sendMessage(text) {
     const paragraph = document.getElementById("bme-ec-msg");
+    if (!paragraph) return console.error(`Failed to find message to display: ${text}`)
     paragraph.innerText = text;
 }
 
@@ -306,6 +307,6 @@ export async function autoStart(settings) {
 
 function sendEcMessage(msg) {
     const paragraph = document.getElementById("bme-ec-msg");
-    if (!paragraph) console.error(`Failed to find message to display: ${msg}`)
+    if (!paragraph) return console.error(`Failed to find message to display: ${msg}`)
     paragraph.innerText = msg;
 }
