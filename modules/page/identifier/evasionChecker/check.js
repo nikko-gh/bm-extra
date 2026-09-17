@@ -85,14 +85,18 @@ function getOutcome(main, player, settings, check) {
     const gameBanned = player.account.steamId?.rustBans || null;
     if (gameBanned?.banned) gameBanned.days = getDaysSince(gameBanned.lastBan);
 
-    if (color === "clean" && serverBanned?.days < settings.oldServerBan) color = `serverBanned${isMatch ? "Match" : ""}`;
+    //A ban exactly on the barrier counts as old, and -1 means it is never marked old
+    const serverBanIsOld = settings.oldServerBan !== -1 && serverBanned?.days >= settings.oldServerBan;
+    const gameBanIsOld = settings.oldGameBan !== -1 && gameBanned?.days >= settings.oldGameBan;
+
+    if (color === "clean" && serverBanned && !serverBanIsOld) color = `serverBanned${isMatch ? "Match" : ""}`;
     if (color === "clean" || !settings.serverBanPriority) {
-        if (gameBanned?.banned && gameBanned.days < settings.oldGameBan) color = `gameBanned${isMatch ? "Match" : ""}`;
+        if (gameBanned?.banned && !gameBanIsOld) color = `gameBanned${isMatch ? "Match" : ""}`;
     }
 
-    if (color === "clean" && serverBanned?.days > settings.oldServerBan) color = `serverBannedOld${isMatch ? "Match" : ""}`;
+    if (color === "clean" && serverBanIsOld) color = `serverBannedOld${isMatch ? "Match" : ""}`;
     if (color === "clean" || !settings.serverBanPriority) {
-        if (gameBanned?.banned && gameBanned.days > settings.oldGameBan) color = `gameBannedOld${isMatch ? "Match" : ""}`;
+        if (gameBanned?.banned && gameBanIsOld) color = `gameBannedOld${isMatch ? "Match" : ""}`;
     }
 
     if (color === "clean" && !player.account.steamId) color = "inconclusive";
