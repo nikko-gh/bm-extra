@@ -516,7 +516,7 @@ function getBanElement(ban) {
 
     const org = document.createElement("p");
     org.innerHTML = `<span class="bme-bold">Org: </span>`;
-    org.innerText += ban?.org?.name ?? "N/A"
+    org.append(ban?.org?.name ?? "N/A"); //innerText would replace the span with plain text
     innerDiv.appendChild(org);
 
     const timestamp = document.createElement("p");
