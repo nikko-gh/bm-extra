@@ -75,11 +75,13 @@ function convertIdentifier(identifier, ipObject, padEndValues, requestProxyCheck
     }
 
     if (!ipObject.proxyCheck) return;
-    const pcDataElement = getPcDataElement(ipObject);
     ipElement.classList.add("bme-pc-ip-main")
 
-    if (!document.querySelector(`#bme-ip-nest-${ipObject.id}`))
-        ipElement.after(pcDataElement)
+    //An earlier run already built the nest and took the listener, a second one would orphan both
+    if (document.querySelector(`#bme-ip-nest-${ipObject.id}`)) return;
+
+    const pcDataElement = getPcDataElement(ipObject);
+    ipElement.after(pcDataElement)
 
     ipElement.addEventListener("click", e => {
         if (pcDataElement.classList.contains("bme-pc-open"))
