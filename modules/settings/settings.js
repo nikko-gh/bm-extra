@@ -222,7 +222,8 @@ function getSwitchInputElement(type, bucket, key, value, meta) {
 }
 function getDisplayValue(value, options) {
     const item = options.find(line => line.value === value);
-    return item.display || "N/A";
+    //A stored value dropped from the options would otherwise take the whole tab down
+    return item?.display || "N/A";
 }
 function getSelectInputElement(type, bucket, key, value, meta) {
     const select = document.createElement("select");
