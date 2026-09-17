@@ -283,9 +283,10 @@ export function getIdentifierType(identifier) {
     return { type, id }
 }
 
+//A random id can be drawn twice, which lets two requests of one type resolve each other
+let requestId = 0;
 export function talkToBackgroundScript(type, subject, rejectTime = 10000, token) {
-    const requestId = Math.floor(Math.random() * 1000000);
-    type = `${type}_${requestId}`;
+    type = `${type}_${++requestId}`;
 
     return new Promise((resolve, reject) => {
         function handler(response) {
