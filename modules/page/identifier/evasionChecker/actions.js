@@ -10,29 +10,36 @@ export async function loadPlayersPressed(e, autoStart = false) {
     btn.classList.add("bme-ec-inactive")
 
     const modeChanger = document.getElementById("bme-ec-load-mode-changer");
-    const text = modeChanger.innerText;
-    const labels = JSON.parse(modeChanger.dataset.labels);
-    const index = labels.findIndex(item => item === text);
-    const current = modeChanger.dataset.used.split("|");
-    current[index] = 1;
+    try {
+        const text = modeChanger.innerText;
+        const labels = JSON.parse(modeChanger.dataset.labels);
+        const index = labels.findIndex(item => item === text);
+        const current = modeChanger.dataset.used.split("|");
+        current[index] = 1;
 
-    modeChanger.classList.add("bme-ec-used", "bme-ec-inactive");
+        modeChanger.classList.add("bme-ec-used", "bme-ec-inactive");
 
-    const loadPlayers = await loadPlayersHub(text.toLowerCase());
+        const loadPlayers = await loadPlayersHub(text.toLowerCase());
 
-    modeChanger.classList.remove("bme-ec-inactive");
-    if (loadPlayers) {
-        modeChanger.dataset.used = current.join("|");
-    } else {
-        modeChanger.classList.remove("bme-ec-used");
-        btn.classList.remove("bme-ec-inactive")
-    }
+        modeChanger.classList.remove("bme-ec-inactive");
+        if (loadPlayers) {
+            modeChanger.dataset.used = current.join("|");
+        } else {
+            modeChanger.classList.remove("bme-ec-used");
+            btn.classList.remove("bme-ec-inactive")
+        }
 
-    if (autoStart) {
-        await new Promise(r => { setTimeout(r, 100); })
-        const checkButton = document.getElementById("bme-ec-check-button")
-        const event = { target: checkButton };
-        checkPlayersPressed(event);
+        if (autoStart) {
+            await new Promise(r => { setTimeout(r, 100); })
+            const checkButton = document.getElementById("bme-ec-check-button")
+            const event = { target: checkButton };
+            checkPlayersPressed(event);
+        }
+    } catch (error) {
+        //Both controls are disabled above, a throw would leave them that way until a reload
+        console.error(`BM-EXTRA: Failed to load players. | ${error.message}`);
+        btn.classList.remove("bme-ec-inactive");
+        modeChanger?.classList.remove("bme-ec-inactive", "bme-ec-used");
     }
 }
 async function loadPlayersHub(type) {
@@ -63,7 +70,7 @@ async function loadPlayers(bmId, authToken, ignoreVpns) {
 
     for (const identifier of identifiers) {
         const meta = identifier.meta;
-        if (ignoreVpns && (meta.datacenter || meta.proxy || meta.tor)) continue;
+        if (ignoreVpns && (meta?.datacenter || meta?.proxy || meta?.tor)) continue;
 
         identifier.players.forEach(player => {
             if (loadedPlayers.includes(player)) return;
@@ -125,7 +132,7 @@ async function getRelatedPlayers(bmId, token) {
                 return player.id;
             }).filter(player => player)
         }
-    });
+    }).filter(item => item);
 
     const returnObject = { status: 200, players, identifiers };
     relatedPlayerCache[bmId] = returnObject; //Cache it for later use
