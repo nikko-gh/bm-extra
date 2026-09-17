@@ -127,6 +127,7 @@ function getFriendlistBody(friends, settings, isHistoric) {
         if (friends === "ERROR") p.innerText = "Something went wrong!";
         if (friends === "NO_API_KEY") p.innerText = "Missing API Key";
         if (friends === "PRIVATE") p.innerText = "Friend list is private";
+        if (friends === "NO_STEAM_ID") p.innerText = "No Steam account linked";
 
         if (isHistoric && friends.length === 0) p.innerText = "No friends were recorded";
         if (!isHistoric && friends.length === 0) p.innerText = "Empty friends list";
@@ -487,6 +488,7 @@ function getPublicBansBody(publicBans) {
         if (publicBans === "ERROR") text.innerText = "Failed to request bans";
         if (publicBans === "AUTH_ERROR") text.innerText = "Missing authorization";
         if (publicBans === "NO_API_KEY") text.innerText = "Missing API Key";
+        if (publicBans === "NO_STEAM_ID") text.innerText = "No Steam account linked";
         if (publicBans.length === 0) text.innerText = "No bans were recorded";
         body.append(text);
         return body

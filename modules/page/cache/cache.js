@@ -281,7 +281,7 @@ async function requestNextPage(url, token, page) {
 async function getSteamFriends(bmProfile, type) {
     bmProfile = await bmProfile;
     const steamId = getSteamIdFromBmProfile(bmProfile)
-    if (!steamId) return null;
+    if (!steamId) return "NO_STEAM_ID"; //The panels render sentinels, null would crash them
 
     if (type === "current") return getCurrentFriends(steamId);
     if (type === "historic") return getHistoricFriends(steamId);
@@ -479,7 +479,7 @@ async function getCurrentTeam(bmProfile, authToken) {
 async function getPublicBans(bmProfile) {
     bmProfile = await bmProfile;
     const steamId = getSteamIdFromBmProfile(bmProfile)
-    if (!steamId) return null;
+    if (!steamId) return "NO_STEAM_ID"; //The panels render sentinels, null would crash them
 
     return requestPublicBansFor(steamId);
 }
