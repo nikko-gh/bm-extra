@@ -62,14 +62,21 @@ function convertIdentifier(identifier, ipObject, padEndValues, requestProxyCheck
     const asnValue = `${ipObject.asn || ipObject.proxyCheck?.net?.asn || "N/A"}`.padEnd(padEndValues.asn);
 
     const conTypeValue = getConType(ipObject.proxyCheck);
-    const conTypeString = conTypeValue && typeof (conTypeValue) === "object" ?
-        `<span class="${conTypeValue.color}">${conTypeValue.value}</span>` :
-        conTypeValue;
+    const isColored = conTypeValue && typeof (conTypeValue) === "object";
 
-    let text = `${ipValue}  |  ISP: ${ispValue}  |  ${asnValue}`;
-    if (requestProxyCheck) text += `  |  ${conTypeString || ""}`
-    ipElement.innerHTML = text;
-    if (!conTypeString && requestProxyCheck && !ipElement.parentNode.querySelector("button")) {
+    //The isp, asn and type come from battlemetrics and proxycheck, so they are never parsed as markup
+    ipElement.innerHTML = "";
+    ipElement.append(`${ipValue}  |  ISP: ${ispValue}  |  ${asnValue}`);
+    if (requestProxyCheck && isColored) {
+        const conType = document.createElement("span");
+        conType.classList.add(conTypeValue.color);
+        conType.innerText = conTypeValue.value;
+        ipElement.append("  |  ", conType);
+    } else if (requestProxyCheck) {
+        ipElement.append(`  |  ${conTypeValue || ""}`);
+    }
+
+    if (!conTypeValue && requestProxyCheck && !ipElement.parentNode.querySelector("button")) {
         const pcButton = getPcButton(identifier, ipObject, padEndValues, requestProxyCheck);
         if (pcButton) ipElement.after(pcButton);
     }
