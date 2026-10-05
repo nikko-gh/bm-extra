@@ -81,7 +81,7 @@ function getHeader(main, player) {
                 <div>
                     <p id="bme-sc-name">NAME_PLACEHOLDER</p>
                     <div>
-                        <a target="_blank" href="${`https://www.battlemetrics.com/rcon/players/${bmId}`}">BM Profile</a>
+                        <a target="_blank" href="${`/rcon/players/${bmId}`}">BM Profile</a>
                         ${steamId ?
                 `<a target="_blank" href="${`https://steamcommunity.com/profiles/${steamId}`}">Steam Profile</a>` :
                 `<p>Steam Profile</p>`

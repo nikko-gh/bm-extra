@@ -363,7 +363,7 @@ function getSteamLinkElement(discordId, lastSeen, owners, attached) {
         placeholders.push({
             query: `li > #bme-dc-attached-${idx}`,
             key: "href",
-            value: `https://www.battlemetrics.com/rcon/players?filter%5Bsearch%5D=${steamId}&filter%5Bservers%5D=false&filter%5BplayerFlags%5D=&sort=score&showServers=false&method=quick&redirect=1`,
+            value: `/rcon/players?filter%5Bsearch%5D=${steamId}&filter%5Bservers%5D=false&filter%5BplayerFlags%5D=&sort=score&showServers=false&method=quick&redirect=1`,
         },
             {
                 query: `li > #bme-dc-attached-${idx}`,

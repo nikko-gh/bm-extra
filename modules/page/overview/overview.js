@@ -49,7 +49,7 @@ function getCurrentServersElement(servers) {
 
         const firstLine = document.createElement("p");
         const prefix = server.online ? "Current server" : "Last server";
-        firstLine.innerHTML = `${prefix}: <a href="https://www.battlemetrics.com/rcon/servers/${server.id}" target="_blank">PLACEHOLDER</a> (${server.pop.current}/${server.pop.max})`
+        firstLine.innerHTML = `${prefix}: <a href="/rcon/servers/${server.id}" target="_blank">PLACEHOLDER</a> (${server.pop.current}/${server.pop.max})`
         
         const link = firstLine.querySelector("a");
         link.innerText = server.name;

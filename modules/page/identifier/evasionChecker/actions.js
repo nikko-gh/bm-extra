@@ -190,7 +190,7 @@ function getPlayerElement(player) {
 
     const name = document.createElement("a");
     name.target = "_blank";
-    name.href = `https://www.battlemetrics.com/rcon/players/${player.id}`;
+    name.href = `/rcon/players/${player.id}`;
     name.innerText = player.name;
 
     const statLine = document.createElement("span");

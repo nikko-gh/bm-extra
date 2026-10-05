@@ -434,7 +434,7 @@ function getWarningSign() {
 }
 function getBmButton(steamId) {
     const element = document.createElement("a");
-    element.href = `https://www.battlemetrics.com/rcon/players?filter[search]=${steamId}&redirect=1`;
+    element.href = `/rcon/players?filter[search]=${steamId}&redirect=1`;
     element.target = "_blank";
     element.classList.add("player-bm-button");
 
@@ -554,7 +554,7 @@ function getRelatedPlayersBody(relatedPlayers) {
     relatedPlayers.forEach(player => {
         const playerElement = document.createElement("a");
         playerElement.classList.add("bme-sb-rp-element");
-        playerElement.href = `https://www.battlemetrics.com/rcon/players/${player.bmId}`;
+        playerElement.href = `/rcon/players/${player.bmId}`;
         playerElement.target = "_blank";
         playerElement.innerHTML = `<p></p><p></p>`;
 
