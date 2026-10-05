@@ -461,7 +461,7 @@ function getIdentifierTableElement(type, payload, lastSeen, meta, placeholders =
         <td data-title="Type">
             <div class="${cssAnchors.identifierTableType}">${type}</div>
             ${meta?.owners?.length > 0 ? `
-                <button title="Show organizations that have this identifier." type="button" class="${cssAnchors.identifierTableTypeButton}">
+                <button title="Show organizations that have this identifier." type="button" class="${cssAnchors.identifierTableTypeButton} ${cssAnchors.identifierTableTypeButtonOld}">
                     <i class="glyphicon glyphicon-info-sign"></i>
                 </button>
             ` : ``}

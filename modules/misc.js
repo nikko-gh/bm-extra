@@ -14,7 +14,8 @@ export const cssAnchors = {
     identifierArrowIcon: "css-1c83ua",
     identifierTableTitleContainer: "css-y5msm0",
     identifierTableType: "css-1d6fayl",
-    identifierTableTypeButton: "css-dz605m",
+    identifierTableTypeButton: "css-1jw0i20",
+    identifierTableTypeButtonOld: "css-dz605m", //Pre-update class, remove once the BM update is live on www
     identifierTableTime: "css-1d6fayl",
 }
 
