@@ -3,8 +3,8 @@
         "bm-extra@nikko-gh": {
             "updates": [
                 {
-                    "version": "1.4.0",
-                    "update_link": "https://github.com/nikko-gh/bm-extra/releases/download/v1.4.0/bm-extra-1.4.0-firefox.xpi"
+                    "version": "1.4.1",
+                    "update_link": "https://github.com/nikko-gh/bm-extra/releases/download/v1.4.1/bm-extra-1.4.1-firefox.xpi"
                 }
             ]
         }
