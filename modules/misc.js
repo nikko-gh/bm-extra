@@ -15,7 +15,7 @@ export const cssAnchors = {
     identifierTableTitleContainer: "css-y5msm0",
     identifierTableType: "css-1d6fayl",
     identifierTableTypeButton: "css-1jw0i20",
-    identifierTableTypeButtonOld: "css-dz605m", //Pre-update class, remove once the BM update is live on www
+    identifierTableTypeButtonOld: "css-dz605m", //Pre-update class. www served both versions during BM's rollout, keep both
     identifierTableTime: "css-1d6fayl",
 }
 
